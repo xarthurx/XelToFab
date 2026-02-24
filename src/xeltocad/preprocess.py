@@ -1,0 +1,45 @@
+"""Density field preprocessing: threshold, smooth, cleanup."""
+
+from __future__ import annotations
+
+import numpy as np
+from scipy.ndimage import gaussian_filter
+from skimage.morphology import closing, opening, remove_small_objects
+
+from xeltocad.state import PipelineState
+
+
+def preprocess(state: PipelineState) -> PipelineState:
+    """Preprocess density field: smooth -> threshold -> morphology -> keep largest component."""
+    params = state.params
+    density = state.density
+
+    # Record original volume fraction
+    volume_fraction = float(np.mean(density))
+
+    # Gaussian smooth
+    smoothed = gaussian_filter(density, sigma=params.smooth_sigma)
+
+    # Threshold to binary
+    binary = (smoothed >= params.threshold).astype(np.uint8)
+
+    # Morphological cleanup
+    if params.morph_radius > 0:
+        if state.ndim == 2:
+            from skimage.morphology import disk
+
+            selem = disk(params.morph_radius)
+        else:
+            from skimage.morphology import ball
+
+            selem = ball(params.morph_radius)
+        binary = opening(binary, selem).astype(np.uint8)
+        binary = closing(binary, selem).astype(np.uint8)
+
+    # Remove small disconnected components
+    binary_bool = binary.astype(bool)
+    max_size = max(binary.size // 200, 8) - 1  # remove objects <= this size
+    cleaned = remove_small_objects(binary_bool, max_size=max_size)
+    binary = cleaned.astype(np.uint8)
+
+    return state.model_copy(update={"binary": binary, "volume_fraction": volume_fraction})
