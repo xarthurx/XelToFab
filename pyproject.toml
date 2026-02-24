@@ -12,6 +12,7 @@ dependencies = [
   "pydantic>=2.12.5",
   "matplotlib>=3.10.8",
   "click>=8.3.1",
+  "engibench>=0.1.0",
 ]
 
 [project.scripts]
@@ -26,6 +27,9 @@ quote-style = "double"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.pytest.ini_options]
+markers = ["network: tests requiring network access"]
 
 [build-system]
 requires = ["hatchling"]

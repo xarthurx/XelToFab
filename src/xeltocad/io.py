@@ -42,3 +42,31 @@ def save_mesh(state: PipelineState, path: str | Path) -> None:
         mesh.export(path)
     else:
         raise ValueError(f"2D contour export to {path.suffix} not supported — use viz for 2D output")
+
+
+def load_engibench(
+    dataset_id: str,
+    index: int = 0,
+    design_key: str = "optimal_design",
+    split: str = "train",
+    params: PipelineParams | None = None,
+) -> PipelineState:
+    """Load a density field from EngiBench/IDEALLab HuggingFace datasets.
+
+    Args:
+        dataset_id: HuggingFace dataset ID, e.g. "IDEALLab/beams_2d_25_50_v0".
+        index: Sample index within the split.
+        design_key: Column name containing the density array.
+        split: Dataset split to load from.
+        params: Pipeline parameters.
+    """
+    from datasets import load_dataset
+
+    if params is None:
+        params = PipelineParams()
+
+    dataset = load_dataset(dataset_id, split=split)
+    sample = dataset[index]
+    density = np.array(sample[design_key])
+
+    return PipelineState(density=density, params=params)
