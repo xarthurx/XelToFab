@@ -27,3 +27,27 @@ Session log of learnings, failures, solutions discovered, and context gathered d
 **Resolution:** Explored HuggingFace API to find actual dataset IDs and column names. Updated `load_engibench()` to accept full `dataset_id` and configurable `design_key`. Fix: `bd65188`
 
 **Prevention:** When integrating with external data sources, always probe the actual API/schema before implementing — don't trust plan assumptions about third-party data formats.
+
+---
+
+### 2026-02-24 — Code Review: Taubin Lambda Default Destroys Meshes
+
+**Problem:** `taubin_pass_band=0.1` was passed as `lamb` to `trimesh.smoothing.filter_taubin()`. This is the shrinkage factor, not a pass-band frequency. With `lamb=0.1` and trimesh's default `nu=0.5`, the Taubin constraint `0 < 1/λ - 1/ν < 0.1` evaluates to 8.0 — massively violated. A sphere's volume went from 1555 to -1159 (inverted faces).
+
+**Root cause:** The plan conflated "pass band" (a frequency-domain concept) with the `lamb` shrinkage parameter. The test only checked that vertices changed, not that the result was geometrically valid.
+
+**Resolution:** Renamed to `taubin_lambda`, changed default to `0.5` (trimesh's own default). Added `test_smooth_3d_preserves_volume` asserting volume ratio > 0.9. Fix: `22ac85e`
+
+**Prevention:** When wrapping a library's smoothing/filtering function, verify parameter semantics against the library's own defaults — don't invent parameter names that imply different semantics. Always test geometric validity (volume, orientation), not just "something changed."
+
+---
+
+### 2026-02-24 — Code Review: Test Infrastructure Issues
+
+**Problem:** (1) Test fixtures (`_make_2d_circle`, `_make_3d_sphere`) duplicated across 4 test files. (2) Matplotlib `Agg` backend set via module-level `matplotlib.use("Agg")` in `test_viz.py` — fragile if import order changes. (3) No tests for error paths (extract without preprocess, save_mesh on 2D, CLI 2D process). (4) `plot_comparison_3d` code path with `ax2.remove()` was untested. (5) CLI leaked matplotlib figures (no `plt.close`).
+
+**Root cause:** Parallel session followed the plan's test code verbatim without consolidating shared helpers or adding negative tests.
+
+**Resolution:** Created `tests/conftest.py` with shared fixtures and Agg backend. Added 7 edge-case tests. Added `plt.close(fig)` in CLI. Wrapped `save_mesh` errors with `click.ClickException`. Fix: `22ac85e`
+
+**Prevention:** When writing tests via TDD: (1) create `conftest.py` with shared fixtures from the start, (2) always test error/guard paths, not just happy paths, (3) set matplotlib backend in conftest, not per-file, (4) close figures after saving in CLI code.
