@@ -1,0 +1,31 @@
+[project]
+name = "xeltocad"
+version = "0.1.0"
+description = "Topology optimization post-processing: density fields to meshes to CAD"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+  "numpy",
+  "scipy",
+  "scikit-image",
+  "trimesh",
+]
+
+[tool.ruff]
+line-length = 120
+indent-width = 4
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "ruff>=0.15.2",
+]
