@@ -1,6 +1,7 @@
 # tests/test_state.py
 import numpy as np
 import pytest
+from pydantic import ValidationError
 
 from xeltocad.state import PipelineParams, PipelineState
 
@@ -30,17 +31,17 @@ def test_pipeline_state_3d():
 
 
 def test_pipeline_state_rejects_1d():
-    with pytest.raises(Exception):
+    with pytest.raises(ValidationError):
         PipelineState(density=np.array([1.0, 2.0, 3.0]))
 
 
 def test_pipeline_state_rejects_4d():
-    with pytest.raises(Exception):
+    with pytest.raises(ValidationError):
         PipelineState(density=np.random.rand(2, 3, 4, 5))
 
 
 def test_pipeline_params_validates_threshold():
-    with pytest.raises(Exception):
+    with pytest.raises(ValidationError):
         PipelineParams(threshold=1.5)
-    with pytest.raises(Exception):
+    with pytest.raises(ValidationError):
         PipelineParams(threshold=-0.1)

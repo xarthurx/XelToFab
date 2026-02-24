@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import matplotlib.pyplot as plt
-import numpy as np
 from matplotlib.figure import Figure
 
 from xeltocad.state import PipelineState
@@ -24,7 +23,7 @@ def plot_density(state: PipelineState) -> Figure:
             (d[:, d.shape[1] // 2, :], "XZ (mid-Y)"),
             (d[:, :, d.shape[2] // 2], "YZ (mid-X)"),
         ]
-        for ax, (sl, title) in zip(axes, slices):
+        for ax, (sl, title) in zip(axes, slices, strict=True):
             im = ax.imshow(sl, cmap="viridis", origin="lower", vmin=0, vmax=1)
             ax.set_title(title)
             fig.colorbar(im, ax=ax)

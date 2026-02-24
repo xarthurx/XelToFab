@@ -1,13 +1,14 @@
 # tests/test_viz.py
 import matplotlib
+
 matplotlib.use("Agg")  # non-interactive backend for testing
 
-import numpy as np
-from matplotlib.figure import Figure
+import numpy as np  # noqa: E402
+from matplotlib.figure import Figure  # noqa: E402
 
-from xeltocad.pipeline import process
-from xeltocad.state import PipelineState
-from xeltocad.viz import plot_density, plot_result, plot_comparison
+from xeltocad.pipeline import process  # noqa: E402
+from xeltocad.state import PipelineState  # noqa: E402
+from xeltocad.viz import plot_comparison, plot_density, plot_result  # noqa: E402
 
 
 def _process_2d():

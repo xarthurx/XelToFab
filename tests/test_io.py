@@ -4,8 +4,8 @@ from pathlib import Path
 import numpy as np
 import trimesh
 
-from xeltocad.io import load_density, save_mesh
 from xeltocad.extract import extract
+from xeltocad.io import load_density, save_mesh
 from xeltocad.preprocess import preprocess
 from xeltocad.smooth import smooth
 from xeltocad.state import PipelineState

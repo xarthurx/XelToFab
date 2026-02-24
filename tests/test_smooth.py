@@ -36,4 +36,4 @@ def test_smooth_2d_is_noop():
     state = extract(preprocess(PipelineState(density=_make_2d_circle())))
     result = smooth(state)
     assert result.smoothed_vertices is None  # no 3D mesh to smooth
-    assert result.contours is not None       # contours unchanged
+    assert result.contours is not None  # contours unchanged

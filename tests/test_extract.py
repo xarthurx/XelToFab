@@ -32,7 +32,7 @@ def test_extract_3d_produces_mesh():
     assert result.vertices is not None
     assert result.faces is not None
     assert result.vertices.shape[1] == 3  # (N, 3)
-    assert result.faces.shape[1] == 3     # (M, 3)
+    assert result.faces.shape[1] == 3  # (M, 3)
 
 
 def test_extract_3d_mesh_is_nonempty():

@@ -38,7 +38,7 @@ def test_preprocess_removes_small_components():
     """Small disconnected blobs should be removed."""
     density = np.zeros((50, 50))
     density[10:40, 10:40] = 1.0  # large block
-    density[2:4, 2:4] = 1.0      # tiny island (4 pixels)
+    density[2:4, 2:4] = 1.0  # tiny island (4 pixels)
     state = PipelineState(density=density)
     result = preprocess(state)
     # tiny island should be removed

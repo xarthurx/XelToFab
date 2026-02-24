@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import numpy as np
 from skimage.measure import find_contours, marching_cubes
 
 from xeltocad.state import PipelineState
