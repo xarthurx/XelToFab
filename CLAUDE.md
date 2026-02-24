@@ -21,9 +21,12 @@ Collaboration: M4X–IDEAL Lab with Prof. Mark Fuge.
 | Task | Command |
 |------|---------|
 | Install dependencies | `uv sync` |
+| Run tests | `uv run pytest tests/ -v` |
+| Run tests (no network) | `uv run pytest tests/ -v --ignore=tests/test_engibench.py` |
 | Lint | `ruff check` |
 | Format | `ruff format` |
 | Type check | `ty check` |
+| CLI help | `uv run xtc --help` |
 
 ## Core Dependencies
 
@@ -45,13 +48,24 @@ Collaboration: M4X–IDEAL Lab with Prof. Mark Fuge.
 - Re-verify connectivity after decimation (thin TO features can collapse)
 - B-spline fitting: keep < 100 points per parametric direction to avoid oscillation
 
-## TODO.md — Feature Backlog
+## Documentation Layout
 
-`TODO.md` tracks deferred features and future work tiers. Update it when scoping new work or deferring functionality. Current tiers: quality-enhanced post-processing, Polyscope visualization, mesh-to-CAD, neural-enhanced pipeline.
+| File | Location | Purpose |
+|------|----------|---------|
+| `CLAUDE.md` | repo root | Agent instructions (this file) |
+| `README.md` | `.github/` | Project overview, quick start, API examples |
+| `ARCHITECTURE.md` | `docs/` | Module map, data flow, dependency table |
+| `TODO.md` | `docs/` | Feature backlog (tiered) |
+| `PROGRESS.md` | `docs/` | Incident log & project memory |
+| `docs/plans/` | `docs/plans/` | Design and implementation plans |
 
-## PROGRESS.md — Incident Log & Project Memory
+## docs/TODO.md — Feature Backlog
 
-`PROGRESS.md` is a living record of problems, solutions, and hard-won knowledge. Update it **immediately** when:
+`docs/TODO.md` tracks deferred features and future work tiers. Update it when scoping new work or deferring functionality. Current tiers: quality-enhanced post-processing, Polyscope visualization, mesh-to-CAD, neural-enhanced pipeline.
+
+## docs/PROGRESS.md — Incident Log & Project Memory
+
+`docs/PROGRESS.md` is a living record of problems, solutions, and hard-won knowledge. Update it **immediately** when:
 - A bug is found and fixed
 - A failed approach is abandoned
 - A non-obvious design decision is made
@@ -64,11 +78,11 @@ Each entry **must** include:
 3. **Resolution** — How it was fixed (include the **Git commit ID**, e.g. `fix: 8e2ab7e`)
 4. **Prevention** — How to avoid this class of problem in the future
 
-**Critical rule: Do NOT repeat the same type of mistake.** Before starting any work, review `PROGRESS.md` for past issues in the same area. If a similar problem has already been documented, follow the prevention guidance — repeating a documented mistake is unacceptable.
+**Critical rule: Do NOT repeat the same type of mistake.** Before starting any work, review `docs/PROGRESS.md` for past issues in the same area. If a similar problem has already been documented, follow the prevention guidance — repeating a documented mistake is unacceptable.
 
 ## Keeping Documentation in Sync
 
 Before finishing a session:
 1. Check changes made and update any stale docs
-2. Update `PROGRESS.md` with any issues encountered
+2. Update `docs/PROGRESS.md` with any issues encountered
 3. Re-read this file for any instructions updated during the session
