@@ -12,7 +12,7 @@ def test_pipeline_params_defaults():
     assert params.smooth_sigma == 1.0
     assert params.morph_radius == 1
     assert params.taubin_iterations == 20
-    assert params.taubin_pass_band == 0.1
+    assert params.taubin_lambda == 0.5
 
 
 def test_pipeline_state_2d():

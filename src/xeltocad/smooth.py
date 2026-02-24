@@ -16,6 +16,6 @@ def smooth(state: PipelineState) -> PipelineState:
     trimesh.smoothing.filter_taubin(
         mesh,
         iterations=state.params.taubin_iterations,
-        lamb=state.params.taubin_pass_band,
+        lamb=state.params.taubin_lambda,
     )
     return state.model_copy(update={"smoothed_vertices": mesh.vertices})

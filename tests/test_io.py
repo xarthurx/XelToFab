@@ -2,12 +2,10 @@
 from pathlib import Path
 
 import numpy as np
+import pytest
 import trimesh
 
-from xeltocad.extract import extract
 from xeltocad.io import load_density, save_mesh
-from xeltocad.preprocess import preprocess
-from xeltocad.smooth import smooth
 from xeltocad.state import PipelineState
 
 
@@ -29,21 +27,26 @@ def test_load_density_npz(tmp_path: Path):
     assert np.array_equal(state.density, arr)
 
 
-def test_save_mesh_stl(tmp_path: Path):
-    z, y, x = np.mgrid[-1:1:30j, -1:1:30j, -1:1:30j]
-    density = (x**2 + y**2 + z**2 < 0.5**2).astype(float)
-    state = smooth(extract(preprocess(PipelineState(density=density))))
+def test_save_mesh_stl(tmp_path: Path, processed_3d: PipelineState):
     out = tmp_path / "output.stl"
-    save_mesh(state, out)
+    save_mesh(processed_3d, out)
     assert out.exists()
     loaded = trimesh.load(out)
     assert len(loaded.vertices) > 0
 
 
-def test_save_mesh_obj(tmp_path: Path):
-    z, y, x = np.mgrid[-1:1:30j, -1:1:30j, -1:1:30j]
-    density = (x**2 + y**2 + z**2 < 0.5**2).astype(float)
-    state = smooth(extract(preprocess(PipelineState(density=density))))
+def test_save_mesh_obj(tmp_path: Path, processed_3d: PipelineState):
     out = tmp_path / "output.obj"
-    save_mesh(state, out)
+    save_mesh(processed_3d, out)
     assert out.exists()
+
+
+def test_save_mesh_2d_raises(processed_2d: PipelineState, tmp_path: Path):
+    with pytest.raises(ValueError, match="2D contour export"):
+        save_mesh(processed_2d, tmp_path / "output.stl")
+
+
+def test_save_mesh_before_extract_raises(sphere_density: np.ndarray, tmp_path: Path):
+    state = PipelineState(density=sphere_density)
+    with pytest.raises(ValueError, match="No mesh to save"):
+        save_mesh(state, tmp_path / "output.stl")

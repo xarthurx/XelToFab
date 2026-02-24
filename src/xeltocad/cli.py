@@ -27,14 +27,20 @@ def process_cmd(input_path: Path, output_path: Path, threshold: float, sigma: fl
     """Process a density field into a mesh."""
     params = PipelineParams(threshold=threshold, smooth_sigma=sigma)
     state = load_density(input_path, params=params)
+    import matplotlib.pyplot as plt
+
     state = process(state)
-    save_mesh(state, output_path)
+    try:
+        save_mesh(state, output_path)
+    except ValueError as e:
+        raise click.ClickException(str(e)) from None
     click.echo(f"Saved mesh to {output_path}")
 
     if viz:
         fig = plot_comparison(state)
         viz_path = output_path.with_suffix(".png")
         fig.savefig(viz_path, dpi=150)
+        plt.close(fig)
         click.echo(f"Saved visualization to {viz_path}")
 
 
@@ -51,7 +57,10 @@ def viz(input_path: Path, output_path: Path | None, threshold: float, sigma: flo
     fig = plot_comparison(state)
 
     if output_path:
+        import matplotlib.pyplot as plt
+
         fig.savefig(output_path, dpi=150)
+        plt.close(fig)
         click.echo(f"Saved visualization to {output_path}")
     else:
         import matplotlib.pyplot as plt

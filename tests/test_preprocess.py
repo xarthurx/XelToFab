@@ -6,7 +6,6 @@ from xeltocad.state import PipelineState
 
 
 def test_preprocess_2d_produces_binary():
-    """Preprocessing a 2D density field should produce a binary array."""
     density = np.random.rand(50, 100)
     state = PipelineState(density=density)
     result = preprocess(state)
@@ -16,7 +15,6 @@ def test_preprocess_2d_produces_binary():
 
 
 def test_preprocess_3d_produces_binary():
-    """Preprocessing a 3D density field should produce a binary array."""
     density = np.random.rand(10, 20, 30)
     state = PipelineState(density=density)
     result = preprocess(state)
@@ -26,7 +24,6 @@ def test_preprocess_3d_produces_binary():
 
 
 def test_preprocess_records_volume_fraction():
-    """Volume fraction of original field should be recorded."""
     density = np.ones((10, 10)) * 0.7
     state = PipelineState(density=density)
     result = preprocess(state)
@@ -35,13 +32,28 @@ def test_preprocess_records_volume_fraction():
 
 
 def test_preprocess_removes_small_components():
-    """Small disconnected blobs should be removed."""
     density = np.zeros((50, 50))
     density[10:40, 10:40] = 1.0  # large block
     density[2:4, 2:4] = 1.0  # tiny island (4 pixels)
     state = PipelineState(density=density)
     result = preprocess(state)
-    # tiny island should be removed
-    assert result.binary[3, 3] == 0
-    # large block should remain
-    assert result.binary[25, 25] == 1
+    assert result.binary[3, 3] == 0  # tiny island removed
+    assert result.binary[25, 25] == 1  # large block remains
+
+
+def test_preprocess_all_zero_density():
+    """All-zero density field should produce all-zero binary."""
+    density = np.zeros((30, 30))
+    state = PipelineState(density=density)
+    result = preprocess(state)
+    assert result.binary is not None
+    assert np.all(result.binary == 0)
+
+
+def test_preprocess_all_one_density():
+    """All-one density field should produce all-one binary."""
+    density = np.ones((30, 30))
+    state = PipelineState(density=density)
+    result = preprocess(state)
+    assert result.binary is not None
+    assert np.all(result.binary == 1)

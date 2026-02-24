@@ -38,7 +38,9 @@ def preprocess(state: PipelineState) -> PipelineState:
 
     # Remove small disconnected components
     binary_bool = binary.astype(bool)
-    max_size = max(binary.size // 200, 8) - 1  # remove objects <= this size
+    # remove_small_objects(max_size=N) removes objects with N pixels or fewer.
+    # The -1 compensates for the <= semantics: we want to keep objects >= 0.5% of total (or >= 8 px).
+    max_size = max(binary.size // 200, 8) - 1
     cleaned = remove_small_objects(binary_bool, max_size=max_size)
     binary = cleaned.astype(np.uint8)
 

@@ -13,11 +13,16 @@ class PipelineParams(BaseModel):
     smooth_sigma: float = Field(default=1.0, ge=0.0)
     morph_radius: int = Field(default=1, ge=0)
     taubin_iterations: int = Field(default=20, ge=0)
-    taubin_pass_band: float = Field(default=0.1, gt=0.0, le=1.0)
+    taubin_lambda: float = Field(default=0.5, gt=0.0, le=1.0)  # shrinkage factor for Taubin smoothing
 
 
 class PipelineState(BaseModel):
-    """Immutable pipeline state threaded through stage functions."""
+    """Pipeline state threaded through stage functions.
+
+    Stage functions use model_copy(update={...}) to return new state objects.
+    Note: model_copy is a shallow copy — numpy arrays are shared between copies.
+    Do NOT mutate arrays in-place; always create new arrays in stage functions.
+    """
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
