@@ -51,3 +51,27 @@ Session log of learnings, failures, solutions discovered, and context gathered d
 **Resolution:** Created `tests/conftest.py` with shared fixtures and Agg backend. Added 7 edge-case tests. Added `plt.close(fig)` in CLI. Wrapped `save_mesh` errors with `click.ClickException`. Fix: `22ac85e`
 
 **Prevention:** When writing tests via TDD: (1) create `conftest.py` with shared fixtures from the start, (2) always test error/guard paths, not just happy paths, (3) set matplotlib backend in conftest, not per-file, (4) close figures after saving in CLI code.
+
+---
+
+### 2026-02-25 — Multi-Format I/O: TYPE_CHECKING Guard on Runtime Type Alias
+
+**Problem:** `LoaderFunc` type alias in `loaders/__init__.py` used `Callable` under `TYPE_CHECKING` guard, but the alias was evaluated at runtime (used in function signatures).
+
+**Root cause:** Plan placed `Callable` import inside `if TYPE_CHECKING:` block — correct for annotations-only usage but not for runtime type aliases.
+
+**Resolution:** Moved `from collections.abc import Callable` to unconditional import. Fix: `004366a`
+
+**Prevention:** Type aliases used at runtime (not just in annotations) must import their components unconditionally, not under `TYPE_CHECKING`.
+
+---
+
+### 2026-02-25 — Multi-Format I/O: VTK Cell Data Ordering
+
+**Problem:** VTK loader test compared `result.ravel()` against original flat density array, but VTK stores cell data in Fortran (column-major) order while numpy's `ravel()` default is C (row-major).
+
+**Root cause:** Test assumed flat data ordering would be preserved through reshape+transpose. The loader correctly restructures data to C-order spatial layout, but the flat representations differ.
+
+**Resolution:** Changed test assertion to use `result.ravel(order="F")` for comparison against the original VTK-ordered density. Fix: `e5f9858`
+
+**Prevention:** When testing VTK data roundtrips, always account for VTK's Fortran-like cell ordering. Use `order="F"` for ravel comparisons or compare spatial indexing directly.
