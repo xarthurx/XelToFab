@@ -1,5 +1,4 @@
 """Density field loading and mesh export."""
-
 from __future__ import annotations
 
 from pathlib import Path
@@ -7,25 +6,26 @@ from pathlib import Path
 import numpy as np
 import trimesh
 
+from xeltocad.loaders import resolve_loader
 from xeltocad.state import PipelineParams, PipelineState
 
 
 def load_density(
     path: str | Path,
+    field_name: str | None = None,
+    shape: tuple[int, ...] | None = None,
     params: PipelineParams | None = None,
 ) -> PipelineState:
-    """Load a density field from .npy or .npz file."""
+    """Load a density field from a supported file format.
+
+    Supported formats: .npy, .npz, .mat, .vtk, .vtr, .vti, .csv, .txt, .h5, .hdf5, .xdmf
+    """
     path = Path(path)
     if params is None:
         params = PipelineParams()
 
-    if path.suffix == ".npz":
-        data = np.load(path)
-        # Use first array, or 'density' key if present
-        key = "density" if "density" in data else list(data.keys())[0]
-        density = data[key]
-    else:
-        density = np.load(path)
+    loader = resolve_loader(path)
+    density = loader(path, field_name, shape)
 
     return PipelineState(density=density, params=params)
 
