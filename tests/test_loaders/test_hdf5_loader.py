@@ -1,4 +1,5 @@
 """Tests for HDF5/XDMF loader."""
+
 from pathlib import Path
 
 import numpy as np
@@ -6,7 +7,7 @@ import pytest
 
 h5py = pytest.importorskip("h5py")
 
-from xeltocad.loaders.hdf5_loader import load
+from xeltocad.loaders.hdf5_loader import load  # noqa: E402
 
 
 def test_load_h5_auto_detect(tmp_path: Path):

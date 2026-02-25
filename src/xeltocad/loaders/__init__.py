@@ -1,8 +1,9 @@
 """Loader registry — dispatches file loading by extension."""
+
 from __future__ import annotations
 
-from pathlib import Path
 from collections.abc import Callable
+from pathlib import Path
 
 import numpy as np
 
@@ -43,10 +44,7 @@ def resolve_loader(path: Path) -> LoaderFunc:
         try:
             __import__(dep_name)
         except ImportError:
-            raise ImportError(
-                f"Loading {ext} files requires {dep_name}.\n"
-                f"Install it with: {install_hint}"
-            ) from None
+            raise ImportError(f"Loading {ext} files requires {dep_name}.\nInstall it with: {install_hint}") from None
 
     import importlib
 
@@ -59,8 +57,18 @@ _FORMAT_INFO = [
     {"name": "numpy", "extensions": [".npy", ".npz"], "dep": None, "install_hint": "(built-in)"},
     {"name": "matlab", "extensions": [".mat"], "dep": None, "install_hint": "(built-in, via scipy)"},
     {"name": "csv", "extensions": [".csv", ".txt"], "dep": None, "install_hint": "(built-in)"},
-    {"name": "vtk", "extensions": [".vtk", ".vtr", ".vti"], "dep": "pyvista", "install_hint": "uv add --optional vtk pyvista"},
-    {"name": "hdf5", "extensions": [".h5", ".hdf5", ".xdmf"], "dep": "h5py", "install_hint": "uv add --optional hdf5 h5py"},
+    {
+        "name": "vtk",
+        "extensions": [".vtk", ".vtr", ".vti"],
+        "dep": "pyvista",
+        "install_hint": "uv add --optional vtk pyvista",
+    },
+    {
+        "name": "hdf5",
+        "extensions": [".h5", ".hdf5", ".xdmf"],
+        "dep": "h5py",
+        "install_hint": "uv add --optional hdf5 h5py",
+    },
 ]
 
 
@@ -74,10 +82,12 @@ def get_supported_formats() -> list[dict]:
                 __import__(info["dep"])
             except ImportError:
                 available = False
-        result.append({
-            "name": info["name"],
-            "extensions": info["extensions"],
-            "available": available,
-            "install_hint": info["install_hint"],
-        })
+        result.append(
+            {
+                "name": info["name"],
+                "extensions": info["extensions"],
+                "available": available,
+                "install_hint": info["install_hint"],
+            }
+        )
     return result

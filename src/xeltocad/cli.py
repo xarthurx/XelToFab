@@ -1,4 +1,5 @@
 """CLI entrypoint for xelToCAD."""
+
 from __future__ import annotations
 
 from pathlib import Path

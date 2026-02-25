@@ -1,8 +1,8 @@
 """Tests for CLI format-related features."""
+
 from pathlib import Path
 
 import numpy as np
-import pytest
 import scipy.io
 from click.testing import CliRunner
 
@@ -35,9 +35,7 @@ def test_cli_process_mat_with_field_name(tmp_path: Path, small_sphere_density: n
     output_path = tmp_path / "output.stl"
 
     runner = CliRunner()
-    result = runner.invoke(
-        main, ["process", str(input_path), "-o", str(output_path), "--field-name", "custom_name"]
-    )
+    result = runner.invoke(main, ["process", str(input_path), "-o", str(output_path), "--field-name", "custom_name"])
     assert result.exit_code == 0
     assert output_path.exists()
 
@@ -49,9 +47,7 @@ def test_cli_process_csv_with_shape(tmp_path: Path):
     output_path = tmp_path / "output.png"
 
     runner = CliRunner()
-    result = runner.invoke(
-        main, ["viz", str(input_path), "-o", str(output_path), "--shape", "50x100"]
-    )
+    result = runner.invoke(main, ["viz", str(input_path), "-o", str(output_path), "--shape", "50x100"])
     assert result.exit_code == 0
     assert output_path.exists()
 

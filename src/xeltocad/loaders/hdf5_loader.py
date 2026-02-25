@@ -1,4 +1,5 @@
 """HDF5 and XDMF loader for density fields."""
+
 from __future__ import annotations
 
 import xml.etree.ElementTree as ET
@@ -30,10 +31,7 @@ def _load_h5(path: Path, field_name: str | None) -> np.ndarray:
         if field_name is not None:
             if field_name not in f:
                 all_datasets = _find_datasets(f)
-                raise KeyError(
-                    f"Field '{field_name}' not found in {path.name}. "
-                    f"Available: {all_datasets}"
-                )
+                raise KeyError(f"Field '{field_name}' not found in {path.name}. Available: {all_datasets}")
             return np.asarray(f[field_name], dtype=np.float64)
 
         all_datasets = _find_datasets(f)
@@ -48,10 +46,7 @@ def _load_h5(path: Path, field_name: str | None) -> np.ndarray:
         if len(all_datasets) == 1:
             return np.asarray(f[all_datasets[0]], dtype=np.float64)
 
-        raise ValueError(
-            f"Multiple datasets found in {path.name}: {all_datasets}\n"
-            "Specify which one with --field-name"
-        )
+        raise ValueError(f"Multiple datasets found in {path.name}: {all_datasets}\nSpecify which one with --field-name")
 
 
 def _load_xdmf(path: Path, field_name: str | None) -> np.ndarray:

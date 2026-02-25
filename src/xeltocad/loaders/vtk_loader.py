@@ -1,4 +1,5 @@
 """VTK structured grid loader (.vtk, .vtr, .vti)."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -22,9 +23,7 @@ def _find_density_field(mesh: pyvista.DataSet, field_name: str | None) -> tuple[
 
     if field_name is not None:
         if field_name not in all_fields:
-            raise KeyError(
-                f"Field '{field_name}' not found. Available: {list(all_fields.keys())}"
-            )
+            raise KeyError(f"Field '{field_name}' not found. Available: {list(all_fields.keys())}")
         return all_fields[field_name], field_name
 
     # Auto-detect: check cell_data first (TO densities are per-element)
@@ -39,8 +38,7 @@ def _find_density_field(mesh: pyvista.DataSet, field_name: str | None) -> tuple[
         return all_fields[name], name
 
     raise ValueError(
-        f"Could not auto-detect density field. Available: {list(all_fields.keys())}\n"
-        "Specify with --field-name"
+        f"Could not auto-detect density field. Available: {list(all_fields.keys())}\nSpecify with --field-name"
     )
 
 

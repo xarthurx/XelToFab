@@ -1,10 +1,10 @@
 """Tests for loader registry dispatch."""
+
 from pathlib import Path
 
-import numpy as np
 import pytest
 
-from xeltocad.loaders import LOADER_REGISTRY, _REGISTRY, get_supported_formats, resolve_loader
+from xeltocad.loaders import _REGISTRY, LOADER_REGISTRY, get_supported_formats, resolve_loader
 
 
 def test_registry_has_numpy_extensions():

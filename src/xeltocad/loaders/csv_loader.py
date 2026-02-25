@@ -1,4 +1,5 @@
 """CSV/TXT loader for density fields."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -36,10 +37,7 @@ def load(path: Path, field_name: str | None, shape: tuple[int, ...] | None) -> n
         total = int(np.prod(shape))
         flat = data.ravel()
         if flat.size != total:
-            raise ValueError(
-                f"Cannot reshape {flat.size} values into shape {shape} "
-                f"(requires {total} values)"
-            )
+            raise ValueError(f"Cannot reshape {flat.size} values into shape {shape} (requires {total} values)")
         return flat.reshape(shape)
 
     return data

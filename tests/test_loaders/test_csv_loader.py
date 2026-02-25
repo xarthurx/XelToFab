@@ -1,4 +1,5 @@
 """Tests for CSV/TXT loader."""
+
 from pathlib import Path
 
 import numpy as np

@@ -1,9 +1,9 @@
 """Density field loading and mesh export."""
+
 from __future__ import annotations
 
 from pathlib import Path
 
-import numpy as np
 import trimesh
 
 from xeltocad.loaders import resolve_loader

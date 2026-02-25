@@ -1,4 +1,5 @@
 """Tests for VTK loader."""
+
 from pathlib import Path
 
 import numpy as np
@@ -6,7 +7,7 @@ import pytest
 
 pyvista = pytest.importorskip("pyvista")
 
-from xeltocad.loaders.vtk_loader import load
+from xeltocad.loaders.vtk_loader import load  # noqa: E402
 
 
 def test_load_vtr_cell_data(tmp_path: Path):

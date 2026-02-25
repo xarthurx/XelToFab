@@ -1,4 +1,5 @@
 """MATLAB .mat file loader."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -40,7 +41,4 @@ def load(path: Path, field_name: str | None, shape: tuple[int, ...] | None) -> n
     if len(user_keys) == 1:
         return np.asarray(data[user_keys[0]], dtype=np.float64)
 
-    raise ValueError(
-        f"Multiple variables found in {path.name}: {user_keys}\n"
-        "Specify which one with --field-name"
-    )
+    raise ValueError(f"Multiple variables found in {path.name}: {user_keys}\nSpecify which one with --field-name")
