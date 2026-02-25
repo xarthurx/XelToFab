@@ -119,12 +119,12 @@ tests/
 ├── test_cli.py             CLI invocation (4 tests)
 └── test_loaders/
     ├── test_dispatch.py        Registry + format resolution (6 tests)
-    ├── test_numpy_loader.py    NumPy .npy/.npz (6 tests)
+    ├── test_numpy_loader.py    NumPy .npy/.npz (7 tests)
     ├── test_matlab_loader.py   MATLAB .mat (7 tests)
     ├── test_csv_loader.py      CSV/TXT (6 tests)
-    ├── test_vtk_loader.py      VTK .vtk/.vtr/.vti (6 tests)
-    ├── test_hdf5_loader.py     HDF5/XDMF (7 tests)
-    └── test_cli_formats.py     CLI format features (5 tests)
+    ├── test_vtk_loader.py      VTK .vtk/.vtr/.vti (7 tests)
+    ├── test_hdf5_loader.py     HDF5/XDMF (9 tests)
+    └── test_cli_formats.py     CLI format features (6 tests)
 ```
 
 Run with `uv run pytest tests/ -v`.
