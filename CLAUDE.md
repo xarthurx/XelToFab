@@ -53,7 +53,7 @@ Collaboration: M4X–IDEAL Lab with Prof. Mark Fuge.
 | File | Location | Purpose |
 |------|----------|---------|
 | `CLAUDE.md` | repo root | Agent instructions (this file) |
-| `README.md` | `.github/` | Project overview, quick start, API examples |
+| `README.md` | repo root | Project overview, quick start, API examples |
 | `ARCHITECTURE.md` | `docs/` | Module map, data flow, dependency table |
 | `TODO.md` | `docs/` | Feature backlog (tiered) |
 | `PROGRESS.md` | `docs/` | Incident log & project memory |
