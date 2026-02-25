@@ -47,7 +47,7 @@ def process_cmd(
 
     try:
         state = load_density(input_path, field_name=field_name, shape=shape, params=params)
-    except (ValueError, ImportError) as e:
+    except (ValueError, KeyError, ImportError) as e:
         raise click.ClickException(str(e)) from None
 
     import matplotlib.pyplot as plt
@@ -88,7 +88,7 @@ def viz(
 
     try:
         state = load_density(input_path, field_name=field_name, shape=shape, params=params)
-    except (ValueError, ImportError) as e:
+    except (ValueError, KeyError, ImportError) as e:
         raise click.ClickException(str(e)) from None
 
     state = process(state)

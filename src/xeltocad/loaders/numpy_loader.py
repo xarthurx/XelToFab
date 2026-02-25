@@ -9,7 +9,7 @@ import numpy as np
 
 def load(path: Path, field_name: str | None, shape: tuple[int, ...] | None) -> np.ndarray:
     """Load density array from .npy or .npz file."""
-    if path.suffix == ".npz":
+    if path.suffix.lower() == ".npz":
         data = np.load(path)
         if field_name is not None:
             if field_name not in data:

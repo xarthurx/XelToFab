@@ -75,3 +75,28 @@ Session log of learnings, failures, solutions discovered, and context gathered d
 **Resolution:** Changed test assertion to use `result.ravel(order="F")` for comparison against the original VTK-ordered density. Fix: `e5f9858`
 
 **Prevention:** When testing VTK data roundtrips, always account for VTK's Fortran-like cell ordering. Use `order="F"` for ravel comparisons or compare spatial indexing directly.
+
+---
+
+### 2026-02-25 — Code Review: 6 Loader Bugs (Codex Review)
+
+**Problem:** External code review (Codex) identified 6 bugs across 4 loader files:
+1. **(High)** XDMF loader iterated all `DataItem` elements globally; geometry DataItems (under `Geometry`) appear before density Attributes, silently returning coordinates.
+2. **(High)** VTK loader always reshaped using cell dimensions, but `_find_density_field` could return point_data arrays (n_points ≠ n_cells), causing a crash.
+3. **(Medium)** CLI `process`/`viz` only caught `ValueError`/`ImportError`, letting `KeyError` from `--field-name` miss bubble out as a raw traceback.
+4. **(Medium)** `numpy_loader.py` checked `path.suffix == ".npz"` case-sensitively. Since `resolve_loader()` lowercases extensions, `.NPZ` dispatched correctly but the npz branch was skipped, returning an `NpzFile` object instead of `ndarray`.
+5. **(Medium)** XDMF parser used literal tag names (`"DataItem"`, `"Attribute"`); XML namespaces prefix these, causing no matches.
+6. **(Medium)** XDMF `partition(":")` split Windows drive-letter paths (`C:/dir/file.h5:/density`) at the wrong colon.
+
+**Root cause:** Each bug was a missed edge case in the original implementation plan — no tests covered these paths.
+
+**Resolution:**
+- Issue 1: Rewrote `_load_xdmf` to iterate only `Attribute` elements, then find child DataItems. Added `_strip_ns()` helper (also fixes issue 5).
+- Issue 2: `_find_density_field` now returns `is_cell_data` flag; `_grid_dimensions` takes `cell` kwarg to return node or cell dims appropriately.
+- Issue 3: Added `KeyError` to CLI except clauses.
+- Issue 4: Changed to `path.suffix.lower() == ".npz"`.
+- Issue 5: `_strip_ns()` strips `{namespace}` prefix from XML tags before comparison.
+- Issue 6: Changed `partition(":")` to `rpartition(":")` via `_parse_hdf_ref()` helper.
+- Added 4 regression tests covering all 6 issues.
+
+**Prevention:** For file format loaders: (1) always test with realistic multi-element files (geometry + density), not just minimal single-field files; (2) normalize case at the point of comparison, not just at dispatch; (3) catch all exception types loaders can raise in CLI wrappers; (4) use `rpartition` for path-like splits that may contain the delimiter in the prefix; (5) never match XML tag names literally — always handle namespaces.

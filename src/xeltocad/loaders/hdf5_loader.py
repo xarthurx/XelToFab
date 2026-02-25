@@ -49,44 +49,58 @@ def _load_h5(path: Path, field_name: str | None) -> np.ndarray:
         raise ValueError(f"Multiple datasets found in {path.name}: {all_datasets}\nSpecify which one with --field-name")
 
 
+def _strip_ns(tag: str) -> str:
+    """Strip XML namespace prefix from a tag, e.g. '{http://...}DataItem' -> 'DataItem'."""
+    if tag.startswith("{"):
+        return tag.split("}", 1)[1]
+    return tag
+
+
+def _parse_hdf_ref(text: str) -> tuple[str, str] | None:
+    """Parse an XDMF HDF reference like 'file.h5:/dataset'.
+
+    Uses rpartition to handle Windows drive-letter paths (e.g. C:/dir/file.h5:/ds).
+    """
+    h5_filename, sep, dataset_path = text.strip().rpartition(":")
+    if not sep or not dataset_path:
+        return None
+    return h5_filename, dataset_path
+
+
 def _load_xdmf(path: Path, field_name: str | None) -> np.ndarray:
     """Load from an XDMF file (XML metadata pointing to HDF5 data)."""
     tree = ET.parse(path)
     root = tree.getroot()
 
-    # Find all DataItem elements with HDF format
-    for data_item in root.iter("DataItem"):
-        fmt = data_item.get("Format", "")
-        if fmt.upper() != "HDF":
+    # Only search DataItems under Attribute elements (skip Geometry, Topology, etc.)
+    for elem in root.iter():
+        if _strip_ns(elem.tag) != "Attribute":
             continue
 
-        text = data_item.text.strip()
-        # Format: "filename.h5:/path/to/dataset"
-        h5_filename, _, dataset_path = text.partition(":")
-        if not dataset_path:
+        attr_name = elem.get("Name", "")
+        if field_name is not None and attr_name != field_name:
             continue
 
-        # Check if this is the field we want (from parent Attribute element)
-        parent = None
-        for attr_elem in root.iter("Attribute"):
-            for child in attr_elem.iter("DataItem"):
-                if child is data_item:
-                    parent = attr_elem
-                    break
-
-        if field_name is not None and parent is not None:
-            attr_name = parent.get("Name", "")
-            if attr_name != field_name:
+        for data_item in elem.iter():
+            if _strip_ns(data_item.tag) != "DataItem":
+                continue
+            fmt = data_item.get("Format", "")
+            if fmt.upper() != "HDF":
+                continue
+            if data_item.text is None:
                 continue
 
-        # Resolve HDF5 path relative to XDMF file
-        h5_path = path.parent / h5_filename
+            parsed = _parse_hdf_ref(data_item.text)
+            if parsed is None:
+                continue
+            h5_filename, dataset_path = parsed
 
-        with h5py.File(h5_path, "r") as f:
-            dataset_path = dataset_path.lstrip("/")
-            return np.asarray(f[dataset_path], dtype=np.float64)
+            h5_path = path.parent / h5_filename
+            with h5py.File(h5_path, "r") as f:
+                dataset_path = dataset_path.lstrip("/")
+                return np.asarray(f[dataset_path], dtype=np.float64)
 
-    raise ValueError(f"No HDF data items found in {path.name}")
+    raise ValueError(f"No HDF Attribute data items found in {path.name}")
 
 
 def load(path: Path, field_name: str | None, shape: tuple[int, ...] | None) -> np.ndarray:

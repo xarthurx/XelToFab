@@ -49,6 +49,20 @@ def test_load_npz_missing_field_name(tmp_path: Path):
         load(path, field_name="nonexistent", shape=None)
 
 
+def test_load_npz_uppercase_extension(tmp_path: Path):
+    """Uppercase .NPZ should be handled correctly (not return NpzFile)."""
+    arr = np.random.rand(10, 20)
+    # Save as .npz, then rename to .NPZ
+    lower_path = tmp_path / "test.npz"
+    np.savez(lower_path, density=arr)
+    upper_path = tmp_path / "test.NPZ"
+    lower_path.rename(upper_path)
+
+    result = load(upper_path, field_name=None, shape=None)
+    assert isinstance(result, np.ndarray)
+    assert np.array_equal(result, arr)
+
+
 def test_load_returns_ndarray(tmp_path: Path):
     arr = np.random.rand(10, 20)
     path = tmp_path / "test.npy"

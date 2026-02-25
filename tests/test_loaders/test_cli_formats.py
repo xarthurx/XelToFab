@@ -61,3 +61,17 @@ def test_cli_process_unsupported_format(tmp_path: Path):
     result = runner.invoke(main, ["process", str(input_path), "-o", str(output_path)])
     assert result.exit_code != 0
     assert "Unsupported file format" in result.output
+
+
+def test_cli_missing_field_name_shows_error(tmp_path: Path, small_sphere_density: np.ndarray):
+    """Missing --field-name should produce a friendly Click error, not a raw KeyError."""
+    input_path = tmp_path / "test.mat"
+    scipy.io.savemat(input_path, {"real_field": small_sphere_density})
+    output_path = tmp_path / "output.stl"
+
+    runner = CliRunner()
+    result = runner.invoke(main, ["process", str(input_path), "-o", str(output_path), "--field-name", "nonexistent"])
+    assert result.exit_code != 0
+    assert "nonexistent" in result.output
+    # ClickException raises SystemExit(1), not the raw KeyError
+    assert not isinstance(result.exception, KeyError)

@@ -97,3 +97,19 @@ def test_load_vtk_missing_field_name_raises(tmp_path: Path):
 
     with pytest.raises(KeyError, match="nonexistent"):
         load(path, field_name="nonexistent", shape=None)
+
+
+def test_load_vtk_point_data(tmp_path: Path):
+    """Point data should load correctly (node dims, not cell dims)."""
+    grid = pyvista.RectilinearGrid(
+        np.linspace(0, 1, 6),  # 5 cells, 6 nodes in x
+        np.linspace(0, 1, 8),  # 7 cells, 8 nodes in y
+    )
+    density = np.random.rand(grid.n_points)
+    grid.point_data["density"] = density
+    path = tmp_path / "test.vtr"
+    grid.save(path)
+
+    result = load(path, field_name=None, shape=None)
+    assert result.ndim == 2
+    assert result.shape == (6, 8)  # node dimensions, not cell dimensions
