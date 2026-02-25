@@ -16,6 +16,8 @@ dependencies = [
 
 [project.optional-dependencies]
 vtk = ["pyvista>=0.43"]
+hdf5 = ["h5py>=3.10"]
+all-formats = ["pyvista>=0.43", "h5py>=3.10"]
 
 [project.scripts]
 xtc = "xeltocad.cli:main"
