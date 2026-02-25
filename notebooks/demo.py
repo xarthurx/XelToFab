@@ -65,7 +65,7 @@ def _():
 @app.cell
 def _(Path, np):
     # Locate examples/data relative to the notebook
-    _data_dir = Path(__file__).resolve().parent.parent / "examples" / "data"
+    _data_dir = Path(__file__).resolve().parent.parent / "data" / "examples"
 
     def _load_example(name):
         return np.load(_data_dir / name)

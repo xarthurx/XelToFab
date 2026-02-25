@@ -55,13 +55,13 @@ save_mesh(result, "sphere.stl")
 
 ### Using Example Data
 
-Pre-computed topology optimization results are included in `examples/data/` (sourced from [IDEALLab EngiBench](https://huggingface.co/IDEALLab)):
+Pre-computed topology optimization results are included in `data/examples/` (sourced from [IDEALLab EngiBench](https://huggingface.co/IDEALLab)):
 
 ```python
 from xeltocad.io import load_density
 from xeltocad.pipeline import process
 
-state = load_density("examples/data/beams_2d_50x100_sample0.npy")
+state = load_density("data/examples/beams_2d_50x100_sample0.npy")
 result = process(state)
 ```
 
