@@ -38,6 +38,7 @@ Collaboration: M4X–IDEAL Lab with Prof. Mark Fuge.
 | Quality metrics | `pyvista` (`mesh.quality()`) |
 | NURBS / CAD export | `pythonocc-core`, `cadquery` |
 | Format conversion | `meshio` |
+| I/O formats | `scipy.io` (.mat), `pyvista` (.vtk), `h5py` (.h5/.xdmf) |
 
 ## Conventions
 

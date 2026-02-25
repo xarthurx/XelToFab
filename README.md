@@ -65,6 +65,19 @@ state = load_density("data/examples/beams_2d_50x100_sample0.npy")
 result = process(state)
 ```
 
+## Supported Input Formats
+
+| Format | Extensions | Install |
+|--------|-----------|---------|
+| NumPy | .npy, .npz | Built-in |
+| MATLAB | .mat | Built-in (via scipy) |
+| CSV/Text | .csv, .txt | Built-in |
+| VTK | .vtk, .vtr, .vti | `uv sync --extra vtk` |
+| HDF5/XDMF | .h5, .hdf5, .xdmf | `uv sync --extra hdf5` |
+| All formats | — | `uv sync --extra all-formats` |
+
+List available formats: `uv run xtc formats`
+
 ## Development
 
 ```bash
@@ -84,7 +97,8 @@ src/xeltocad/
 ├── extract.py      Mesh/contour extraction
 ├── smooth.py       Taubin smoothing
 ├── pipeline.py     Orchestrator
-├── io.py           File I/O (load .npy/.npz, export mesh)
+├── io.py           File I/O (multi-format load, mesh export)
+├── loaders/        Format-specific loaders (numpy, matlab, csv, vtk, hdf5)
 ├── viz.py          Matplotlib visualization
 └── cli.py          CLI (xtc)
 ```
