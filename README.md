@@ -53,13 +53,15 @@ result = process(state)
 save_mesh(result, "sphere.stl")
 ```
 
-### Loading EngiBench Datasets
+### Using Example Data
+
+Pre-computed topology optimization results are included in `examples/data/` (sourced from [IDEALLab EngiBench](https://huggingface.co/IDEALLab)):
 
 ```python
-from xeltocad.io import load_engibench
+from xeltocad.io import load_density
 from xeltocad.pipeline import process
 
-state = load_engibench("IDEALLab/beams_2d_25_50_v0", index=0)
+state = load_density("examples/data/beams_2d_50x100_sample0.npy")
 result = process(state)
 ```
 
@@ -67,10 +69,10 @@ result = process(state)
 
 ```bash
 uv sync                          # Install deps
-uv run pytest tests/ -v          # Run tests (30 tests)
+uv run pytest tests/ -v          # Run tests
 uv run ruff check src/ tests/    # Lint
 uv run ruff format src/ tests/   # Format
-uv run marimo edit notebook.py   # Interactive notebooks
+uv run marimo edit notebooks/demo.py  # Interactive demo
 ```
 
 ## Project Structure
@@ -82,12 +84,12 @@ src/xeltocad/
 ├── extract.py      Mesh/contour extraction
 ├── smooth.py       Taubin smoothing
 ├── pipeline.py     Orchestrator
-├── io.py           File I/O + EngiBench loading
+├── io.py           File I/O (load .npy/.npz, export mesh)
 ├── viz.py          Matplotlib visualization
 └── cli.py          CLI (xtc)
 ```
 
-See [docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md) for detailed architecture documentation.
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for detailed architecture documentation.
 
 ## Requirements
 

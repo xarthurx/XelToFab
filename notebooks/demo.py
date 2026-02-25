@@ -52,41 +52,45 @@ def _():
 
 @app.cell
 def _():
+    from pathlib import Path
+
+    from xeltocad.io import load_density
     from xeltocad.pipeline import process
     from xeltocad.state import PipelineParams, PipelineState
     from xeltocad.viz import plot_comparison, plot_density, plot_result
 
-    return PipelineParams, PipelineState, plot_comparison, plot_density, plot_result, process
+    return Path, PipelineParams, PipelineState, load_density, plot_comparison, plot_density, plot_result, process
 
 
 @app.cell
-def _(np):
+def _(Path, np):
+    # Locate examples/data relative to the notebook
+    _data_dir = Path(__file__).resolve().parent.parent / "examples" / "data"
+
+    def _load_example(name):
+        return np.load(_data_dir / name)
+
     def make_2d_circle(res=100):
-        """2D density field: filled circle."""
+        """Synthetic 2D circle."""
         y, x = np.mgrid[-1 : 1 : complex(res), -1 : 1 : complex(res * 2)]
         return (x**2 + y**2 < 0.5**2).astype(float)
 
     def make_3d_sphere(res=30):
-        """3D density field: filled sphere."""
+        """Synthetic 3D sphere."""
         z, y, x = np.mgrid[-1 : 1 : complex(res), -1 : 1 : complex(res), -1 : 1 : complex(res)]
         return (x**2 + y**2 + z**2 < 0.5**2).astype(float)
 
-    def make_2d_bridge(res=100):
-        """2D density field: bridge-like structure with supports and deck."""
-        field = np.zeros((res // 2, res))
-        # deck
-        field[res // 2 - 8 : res // 2 - 2, 5:-5] = 1.0
-        # left support
-        field[5 : res // 2 - 2, 5:15] = 1.0
-        # right support
-        field[5 : res // 2 - 2, -15:-5] = 1.0
-        # middle support
-        field[10 : res // 2 - 2, res // 2 - 5 : res // 2 + 5] = 0.8
-        # add some noise for realism
-        field += np.random.rand(*field.shape) * 0.15
-        return np.clip(field, 0, 1)
+    # Build geometry registry: synthetic + real examples
+    geometry_options = {
+        "Synthetic: 2D Circle": ("synthetic", make_2d_circle),
+        "Synthetic: 3D Sphere": ("synthetic", make_3d_sphere),
+    }
+    if _data_dir.exists():
+        for f in sorted(_data_dir.glob("*.npy")):
+            _label = f.stem.replace("_", " ").title()
+            geometry_options[_label] = ("file", f)
 
-    return make_2d_bridge, make_2d_circle, make_3d_sphere
+    return geometry_options, make_2d_circle, make_3d_sphere
 
 
 @app.cell(hide_code=True)
@@ -96,10 +100,11 @@ def _(mo):
 
 
 @app.cell
-def _(mo):
+def _(geometry_options, mo):
+    _option_keys = list(geometry_options.keys())
     dim_picker = mo.ui.dropdown(
-        options={"2D Circle": "circle", "2D Bridge": "bridge", "3D Sphere": "sphere"},
-        value="circle",
+        options=_option_keys,
+        value=_option_keys[0],
         label="Geometry",
     )
     return (dim_picker,)
@@ -134,21 +139,16 @@ def _(
     PipelineParams,
     PipelineState,
     dim_picker,
-    make_2d_bridge,
-    make_2d_circle,
-    make_3d_sphere,
+    geometry_options,
+    np,
     process,
     sigma_slider,
     taubin_slider,
     threshold_slider,
 ):
-    # Generate density field based on selection
-    _generators = {
-        "circle": make_2d_circle,
-        "bridge": make_2d_bridge,
-        "sphere": make_3d_sphere,
-    }
-    density = _generators[dim_picker.value]()
+    # Load density field based on selection
+    _kind, _source = geometry_options[dim_picker.value]
+    density = _source() if _kind == "synthetic" else np.load(_source)
 
     # Build params from sliders
     params = PipelineParams(

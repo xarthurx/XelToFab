@@ -90,7 +90,6 @@ Both accept `--threshold` and `--sigma` to configure `PipelineParams`.
 | State models | `pydantic` |
 | Visualization | `matplotlib` |
 | CLI | `click` |
-| EngiBench datasets | `engibench`, `datasets` (HuggingFace) |
 
 ## Testing
 
@@ -105,11 +104,10 @@ tests/
 ├── test_io.py          File round-trip (4 tests)
 ├── test_pipeline.py    End-to-end 2D + 3D (2 tests)
 ├── test_viz.py         Plot generation (5 tests)
-├── test_cli.py         CLI invocation (3 tests)
-└── test_engibench.py   EngiBench loading (1 test, @network)
+└── test_cli.py         CLI invocation (3 tests)
 ```
 
-Run with `uv run pytest tests/ -v` (exclude network tests: `--ignore=tests/test_engibench.py`).
+Run with `uv run pytest tests/ -v`.
 
 ## Future Stages (Not Yet Implemented)
 

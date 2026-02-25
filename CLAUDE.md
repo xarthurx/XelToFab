@@ -22,7 +22,6 @@ Collaboration: M4X–IDEAL Lab with Prof. Mark Fuge.
 |------|---------|
 | Install dependencies | `uv sync` |
 | Run tests | `uv run pytest tests/ -v` |
-| Run tests (no network) | `uv run pytest tests/ -v --ignore=tests/test_engibench.py` |
 | Lint | `ruff check` |
 | Format | `ruff format` |
 | Type check | `ty check` |
