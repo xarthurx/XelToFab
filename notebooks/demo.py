@@ -16,18 +16,16 @@ app = marimo.App(width="medium")
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md(
-        r"""
-        # XelToCAD Pipeline Demo
+    mo.md(r"""
+    # XelToCAD Pipeline Demo
 
-        Interactive demo of the topology optimization post-processing pipeline.
+    Interactive demo of the topology optimization post-processing pipeline.
 
-        **Pipeline:** Density field → Preprocess (smooth + threshold + morphology)
-        → Extract (marching cubes/squares) → Smooth (Taubin) → Mesh / Contours
+    **Pipeline:** Density field → Preprocess (smooth + threshold + morphology)
+    → Extract (marching cubes/squares) → Smooth (Taubin) → Mesh / Contours
 
-        Use the controls below to adjust parameters and watch the pipeline react.
-        """
-    )
+    Use the controls below to adjust parameters and watch the pipeline react.
+    """)
     return
 
 
@@ -47,7 +45,7 @@ def _():
     import matplotlib.pyplot as plt
     import numpy as np
 
-    return matplotlib, np, plt
+    return np, plt
 
 
 @app.cell
@@ -59,7 +57,15 @@ def _():
     from xeltocad.state import PipelineParams, PipelineState
     from xeltocad.viz import plot_comparison, plot_density, plot_result
 
-    return Path, PipelineParams, PipelineState, load_density, plot_comparison, plot_density, plot_result, process
+    return (
+        Path,
+        PipelineParams,
+        PipelineState,
+        plot_comparison,
+        plot_density,
+        plot_result,
+        process,
+    )
 
 
 @app.cell
@@ -89,13 +95,14 @@ def _(Path, np):
         for f in sorted(_data_dir.glob("*.npy")):
             _label = f.stem.replace("_", " ").title()
             geometry_options[_label] = ("file", f)
-
-    return geometry_options, make_2d_circle, make_3d_sphere
+    return (geometry_options,)
 
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md(r"## Controls")
+    mo.md(r"""
+    ## Controls
+    """)
     return
 
 
@@ -130,7 +137,9 @@ def _(dim_picker, mo, sigma_slider, taubin_slider, threshold_slider):
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md(r"## Pipeline Execution")
+    mo.md(r"""
+    ## Pipeline Execution
+    """)
     return
 
 
@@ -160,54 +169,62 @@ def _(
     # Run pipeline
     state = PipelineState(density=density, params=params)
     result = process(state)
-    return density, params, result, state
+    return (result,)
 
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md(r"## Density Field")
+    mo.md(r"""
+    ## Density Field
+    """)
     return
 
 
 @app.cell
-def _(mo, plt, plot_density, result):
+def _(mo, plot_density, plt, result):
     _fig = plot_density(result)
-    _out = mo.as_html(_fig)
+    out = mo.as_html(_fig)
     plt.close(_fig)
-    return (_out,)
+    out
 
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md(r"## Extraction Result")
+    mo.md(r"""
+    ## Extraction Result
+    """)
     return
 
 
 @app.cell
-def _(mo, plt, plot_result, result):
+def _(mo, plot_result, plt, result):
     _fig = plot_result(result)
-    _out2 = mo.as_html(_fig)
+    out2 = mo.as_html(_fig)
     plt.close(_fig)
-    return (_out2,)
+    out2
 
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md(r"## Side-by-Side Comparison")
+    mo.md(r"""
+    ## Side-by-Side Comparison
+    """)
     return
 
 
 @app.cell
-def _(mo, plt, plot_comparison, result):
+def _(mo, plot_comparison, plt, result):
     _fig = plot_comparison(result)
-    _out3 = mo.as_html(_fig)
+    out3 = mo.as_html(_fig)
     plt.close(_fig)
-    return (_out3,)
+    out3
 
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md(r"## Pipeline Statistics")
+    mo.md(r"""
+    ## Pipeline Statistics
+    """)
     return
 
 
