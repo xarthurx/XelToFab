@@ -6,7 +6,7 @@
 
 Research notes: `~/winHome/repo/xKnowledgeSync/99_academic.work/MAX_Mark/proj_XelToFab/`
 Background material: `~/winHome/repo/xKnowledgeSync/99_academic.work/MAX_Mark/` (brainstorms, strategy, glossary)
-Key reference: [`{Review} The Topology Optimization Post-Processing Pipeline.md`](file:///home/xarthurx/winHome/repo/xKnowledgeSync/99_academic.work/MAX_Mark/%7BReview%7D%20The%20Topology%20Optimization%20Post-Processing%20Pipeline.md) — full literature review covering all 4 pipeline stages, toolchain, and feasibility analysis.
+Key reference: [`{Review} The Topology Optimization Post-Processing Pipeline.md`](file:///home/xarthurx/winHome/repo/xKnowledgeSync/99_academic.work/MAX_Mark/proj_XelToFab/%7BReview%7D%20The%20Topology%20Optimization%20Post-Processing%20Pipeline.md) — full literature review covering all 4 pipeline stages, toolchain, and feasibility analysis.
 Collaboration: M4X–IDEAL Lab with Prof. Mark Fuge.
 
 ## Pipeline Architecture
