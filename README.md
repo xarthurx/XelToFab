@@ -1,4 +1,4 @@
-<h1 align="center">xelToFab</h1>
+<h1 align="center">XelToFab</h1>
 
 <p align="center">
   <a href="https://www.python.org/downloads/"><img src="https://img.shields.io/badge/python-3.13%2B-blue.svg" alt="Python 3.13+"></a>
