@@ -1,8 +1,11 @@
-# XelToCAD
+# xelToFab
 
-Topology optimization post-processing pipeline: density fields to meshes to CAD.
+[![Python 3.13+](https://img.shields.io/badge/python-3.13%2B-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
-Converts continuous density arrays from topology optimization solvers into clean triangle meshes (3D) or contour representations (2D), with preprocessing, smoothing, visualization, and file export.
+A topology optimization post-processing pipeline that transforms continuous density fields from solvers into clean, fabrication-ready triangle meshes (3D) and contour representations (2D). The pipeline handles thresholding, smoothing, mesh extraction, quality improvement, visualization, and multi-format export.
 
 ## Quick Start
 
