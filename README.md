@@ -14,13 +14,13 @@ A topology optimization post-processing pipeline that transforms continuous dens
 uv sync
 
 # Process a 3D density field into an STL mesh
-uv run xtc process density.npy -o output.stl
+uv run xtfprocess density.npy -o output.stl
 
 # Process with custom parameters and save a comparison plot
-uv run xtc process density.npy -o output.stl --threshold 0.4 --sigma 1.5 --viz
+uv run xtfprocess density.npy -o output.stl --threshold 0.4 --sigma 1.5 --viz
 
 # Visualize a 2D density field
-uv run xtc viz density_2d.npy -o comparison.png
+uv run xtfviz density_2d.npy -o comparison.png
 ```
 
 ## Pipeline
@@ -39,9 +39,9 @@ Density Array → Preprocess → Extract → Smooth → Mesh/Contours
 
 ```python
 import numpy as np
-from xeltocad.state import PipelineState, PipelineParams
-from xeltocad.pipeline import process
-from xeltocad.io import save_mesh
+from xeltofab.state import PipelineState, PipelineParams
+from xeltofab.pipeline import process
+from xeltofab.io import save_mesh
 
 # Create a density field (e.g., a sphere)
 z, y, x = np.mgrid[-1:1:50j, -1:1:50j, -1:1:50j]
@@ -61,8 +61,8 @@ save_mesh(result, "sphere.stl")
 Pre-computed topology optimization results are included in `data/examples/` (sourced from [IDEALLab EngiBench](https://huggingface.co/IDEALLab)):
 
 ```python
-from xeltocad.io import load_density
-from xeltocad.pipeline import process
+from xeltofab.io import load_density
+from xeltofab.pipeline import process
 
 state = load_density("data/examples/beams_2d_50x100_sample0.npy")
 result = process(state)
@@ -79,7 +79,7 @@ result = process(state)
 | HDF5/XDMF | .h5, .hdf5, .xdmf | `uv sync --extra hdf5` |
 | All formats | — | `uv sync --extra all-formats` |
 
-List available formats: `uv run xtc formats`
+List available formats: `uv run xtfformats`
 
 ## Development
 
@@ -94,7 +94,7 @@ uv run marimo edit notebooks/demo.py  # Interactive demo
 ## Project Structure
 
 ```
-src/xeltocad/
+src/xeltofab/
 ├── state.py        Pipeline state + parameter models
 ├── preprocess.py   Density preprocessing
 ├── extract.py      Mesh/contour extraction
@@ -103,7 +103,7 @@ src/xeltocad/
 ├── io.py           File I/O (multi-format load, mesh export)
 ├── loaders/        Format-specific loaders (numpy, matlab, csv, vtk, hdf5)
 ├── viz.py          Matplotlib visualization
-└── cli.py          CLI (xtc)
+└── cli.py          CLI (xtf)
 ```
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for detailed architecture documentation.

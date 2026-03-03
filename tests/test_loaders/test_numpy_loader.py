@@ -5,7 +5,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from xeltocad.loaders.numpy_loader import load
+from xeltofab.loaders.numpy_loader import load
 
 
 def test_load_npy(tmp_path: Path):

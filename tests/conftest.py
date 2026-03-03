@@ -7,8 +7,8 @@ matplotlib.use("Agg")  # non-interactive backend — must be set before any pypl
 import numpy as np
 import pytest
 
-from xeltocad.pipeline import process
-from xeltocad.state import PipelineState
+from xeltofab.pipeline import process
+from xeltofab.state import PipelineState
 
 
 @pytest.fixture

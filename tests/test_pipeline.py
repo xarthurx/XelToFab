@@ -1,8 +1,8 @@
 # tests/test_pipeline.py
 import numpy as np
 
-from xeltocad.pipeline import process
-from xeltocad.state import PipelineState
+from xeltofab.pipeline import process
+from xeltofab.state import PipelineState
 
 
 def test_process_2d_end_to_end(circle_density: np.ndarray):

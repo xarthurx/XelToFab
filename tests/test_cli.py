@@ -4,7 +4,7 @@ from pathlib import Path
 import numpy as np
 from click.testing import CliRunner
 
-from xeltocad.cli import main
+from xeltofab.cli import main
 
 
 def test_cli_process_3d(tmp_path: Path, small_sphere_density: np.ndarray):

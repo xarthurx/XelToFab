@@ -6,8 +6,8 @@ from pathlib import Path
 
 import trimesh
 
-from xeltocad.loaders import resolve_loader
-from xeltocad.state import PipelineParams, PipelineState
+from xeltofab.loaders import resolve_loader
+from xeltofab.state import PipelineParams, PipelineState
 
 
 def load_density(

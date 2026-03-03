@@ -2,7 +2,7 @@
 # requires-python = ">=3.13"
 # dependencies = [
 #     "marimo",
-#     "xeltocad",
+#     "xeltofab",
 #     "numpy",
 #     "matplotlib",
 # ]
@@ -17,7 +17,7 @@ app = marimo.App(width="medium")
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    # XelToCAD Pipeline Demo
+    # XelToFab Pipeline Demo
 
     Interactive demo of the topology optimization post-processing pipeline.
 
@@ -52,10 +52,10 @@ def _():
 def _():
     from pathlib import Path
 
-    from xeltocad.io import load_density
-    from xeltocad.pipeline import process
-    from xeltocad.state import PipelineParams, PipelineState
-    from xeltocad.viz import plot_comparison, plot_density, plot_result
+    from xeltofab.io import load_density
+    from xeltofab.pipeline import process
+    from xeltofab.state import PipelineParams, PipelineState
+    from xeltofab.viz import plot_comparison, plot_density, plot_result
 
     return (
         Path,

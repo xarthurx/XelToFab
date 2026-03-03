@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import trimesh
 
-from xeltocad.state import PipelineState
+from xeltofab.state import PipelineState
 
 
 def smooth(state: PipelineState) -> PipelineState:

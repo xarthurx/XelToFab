@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from skimage.measure import find_contours, marching_cubes
 
-from xeltocad.state import PipelineState
+from xeltofab.state import PipelineState
 
 
 def extract(state: PipelineState) -> PipelineState:

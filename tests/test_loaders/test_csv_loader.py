@@ -5,7 +5,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from xeltocad.loaders.csv_loader import load
+from xeltofab.loaders.csv_loader import load
 
 
 def test_load_csv_2d_table(tmp_path: Path):

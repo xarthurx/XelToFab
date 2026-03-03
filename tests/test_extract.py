@@ -2,9 +2,9 @@
 import numpy as np
 import pytest
 
-from xeltocad.extract import extract
-from xeltocad.preprocess import preprocess
-from xeltocad.state import PipelineState
+from xeltofab.extract import extract
+from xeltofab.preprocess import preprocess
+from xeltofab.state import PipelineState
 
 
 def test_extract_2d_produces_contours(circle_density: np.ndarray):

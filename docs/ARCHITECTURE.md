@@ -2,7 +2,7 @@
 
 ## Overview
 
-XelToCAD is a topology optimization post-processing pipeline that converts density fields (numpy arrays) into clean triangle meshes and 2D contour representations. The pipeline is implemented as a sequence of pure functions that thread an immutable `PipelineState` object through each stage.
+XelToFab is a topology optimization post-processing pipeline that converts density fields (numpy arrays) into clean triangle meshes and 2D contour representations. The pipeline is implemented as a sequence of pure functions that thread an immutable `PipelineState` object through each stage.
 
 ## Pipeline Stages
 
@@ -34,7 +34,7 @@ density array (numpy, [0,1])
 ## Module Map
 
 ```
-src/xeltocad/
+src/xeltofab/
 ├── state.py        PipelineState + PipelineParams (Pydantic models)
 ├── preprocess.py   Density field preprocessing (smooth, threshold, morphology)
 ├── extract.py      Mesh/contour extraction (marching cubes/squares)
@@ -49,7 +49,7 @@ src/xeltocad/
 │   ├── vtk_loader.py   .vtk/.vtr/.vti (optional: pyvista)
 │   └── hdf5_loader.py  .h5/.hdf5/.xdmf (optional: h5py)
 ├── viz.py          Matplotlib visualization (density, result, comparison plots)
-├── cli.py          Click CLI (xtc process, xtc viz, xtc formats)
+├── cli.py          Click CLI (xtf process, xtf viz, xtf formats)
 └── __init__.py
 ```
 
@@ -77,11 +77,11 @@ def stage(state: PipelineState) -> PipelineState:
 
 ## CLI
 
-The `xtc` command (installed via `[project.scripts]`) exposes three subcommands:
+The `xtf` command (installed via `[project.scripts]`) exposes three subcommands:
 
-- **`xtc process <input> -o <output>`** — Run the full pipeline and export a mesh file
-- **`xtc viz <input> [-o <output>]`** — Run the pipeline and display/save a comparison plot
-- **`xtc formats`** — List supported input formats and their availability
+- **`xtf process <input> -o <output>`** — Run the full pipeline and export a mesh file
+- **`xtf viz <input> [-o <output>]`** — Run the pipeline and display/save a comparison plot
+- **`xtf formats`** — List supported input formats and their availability
 
 `process` and `viz` accept `--threshold`, `--sigma`, `--field-name` (for multi-variable files), and `--shape` (for flat CSV/TXT data, e.g. `50x100`).
 

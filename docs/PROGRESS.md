@@ -1,6 +1,6 @@
 # PROGRESS.md
 
-Session log of learnings, failures, solutions discovered, and context gathered during work on the pixelToCAD project.
+Session log of learnings, failures, solutions discovered, and context gathered during work on the XelToFab project.
 
 ---
 

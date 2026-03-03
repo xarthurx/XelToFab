@@ -1,8 +1,8 @@
 # tests/test_viz.py
 from matplotlib.figure import Figure
 
-from xeltocad.state import PipelineState
-from xeltocad.viz import plot_comparison, plot_density, plot_result
+from xeltofab.state import PipelineState
+from xeltofab.viz import plot_comparison, plot_density, plot_result
 
 
 def test_plot_density_2d(processed_2d: PipelineState):

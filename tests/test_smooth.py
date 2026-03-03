@@ -2,10 +2,10 @@
 import numpy as np
 import trimesh
 
-from xeltocad.extract import extract
-from xeltocad.preprocess import preprocess
-from xeltocad.smooth import smooth
-from xeltocad.state import PipelineState
+from xeltofab.extract import extract
+from xeltofab.preprocess import preprocess
+from xeltofab.smooth import smooth
+from xeltofab.state import PipelineState
 
 
 def test_smooth_3d_produces_smoothed_vertices(sphere_density: np.ndarray):

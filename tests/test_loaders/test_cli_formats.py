@@ -6,7 +6,7 @@ import numpy as np
 import scipy.io
 from click.testing import CliRunner
 
-from xeltocad.cli import main
+from xeltofab.cli import main
 
 
 def test_cli_formats_subcommand():

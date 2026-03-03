@@ -3,7 +3,7 @@ import numpy as np
 import pytest
 from pydantic import ValidationError
 
-from xeltocad.state import PipelineParams, PipelineState
+from xeltofab.state import PipelineParams, PipelineState
 
 
 def test_pipeline_params_defaults():

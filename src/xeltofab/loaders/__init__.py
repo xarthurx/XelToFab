@@ -13,17 +13,17 @@ LoaderFunc = Callable[[Path, str | None, tuple[int, ...] | None], np.ndarray]
 # Registry: extension -> (module_path, dependency_name, install_hint)
 # Loaders are imported lazily to avoid requiring optional dependencies at import time.
 _REGISTRY: dict[str, tuple[str, str | None, str | None]] = {
-    ".npy": ("xeltocad.loaders.numpy_loader", None, None),
-    ".npz": ("xeltocad.loaders.numpy_loader", None, None),
-    ".mat": ("xeltocad.loaders.matlab_loader", None, None),
-    ".csv": ("xeltocad.loaders.csv_loader", None, None),
-    ".txt": ("xeltocad.loaders.csv_loader", None, None),
-    ".vtk": ("xeltocad.loaders.vtk_loader", "pyvista", "uv add --optional vtk pyvista"),
-    ".vtr": ("xeltocad.loaders.vtk_loader", "pyvista", "uv add --optional vtk pyvista"),
-    ".vti": ("xeltocad.loaders.vtk_loader", "pyvista", "uv add --optional vtk pyvista"),
-    ".h5": ("xeltocad.loaders.hdf5_loader", "h5py", "uv add --optional hdf5 h5py"),
-    ".hdf5": ("xeltocad.loaders.hdf5_loader", "h5py", "uv add --optional hdf5 h5py"),
-    ".xdmf": ("xeltocad.loaders.hdf5_loader", "h5py", "uv add --optional hdf5 h5py"),
+    ".npy": ("xeltofab.loaders.numpy_loader", None, None),
+    ".npz": ("xeltofab.loaders.numpy_loader", None, None),
+    ".mat": ("xeltofab.loaders.matlab_loader", None, None),
+    ".csv": ("xeltofab.loaders.csv_loader", None, None),
+    ".txt": ("xeltofab.loaders.csv_loader", None, None),
+    ".vtk": ("xeltofab.loaders.vtk_loader", "pyvista", "uv add --optional vtk pyvista"),
+    ".vtr": ("xeltofab.loaders.vtk_loader", "pyvista", "uv add --optional vtk pyvista"),
+    ".vti": ("xeltofab.loaders.vtk_loader", "pyvista", "uv add --optional vtk pyvista"),
+    ".h5": ("xeltofab.loaders.hdf5_loader", "h5py", "uv add --optional hdf5 h5py"),
+    ".hdf5": ("xeltofab.loaders.hdf5_loader", "h5py", "uv add --optional hdf5 h5py"),
+    ".xdmf": ("xeltofab.loaders.hdf5_loader", "h5py", "uv add --optional hdf5 h5py"),
 }
 
 # Public view of supported extensions

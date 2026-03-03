@@ -5,7 +5,7 @@ from __future__ import annotations
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 
-from xeltocad.state import PipelineState
+from xeltofab.state import PipelineState
 
 
 def plot_density(state: PipelineState) -> Figure:

@@ -5,8 +5,8 @@ import numpy as np
 import pytest
 import trimesh
 
-from xeltocad.io import load_density, save_mesh
-from xeltocad.state import PipelineState
+from xeltofab.io import load_density, save_mesh
+from xeltofab.state import PipelineState
 
 
 def test_load_density_npy(tmp_path: Path):

@@ -6,7 +6,7 @@ import numpy as np
 from scipy.ndimage import gaussian_filter
 from skimage.morphology import closing, opening, remove_small_objects
 
-from xeltocad.state import PipelineState
+from xeltofab.state import PipelineState
 
 
 def preprocess(state: PipelineState) -> PipelineState:

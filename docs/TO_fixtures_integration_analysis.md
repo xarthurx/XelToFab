@@ -1,20 +1,20 @@
 # TO_fixtures Integration Analysis
 
 **Date**: 2026-03-02
-**Repos compared**: `xelToCAD` (this project) vs `TO_fixtures` (`../TO_fixtures`)
+**Repos compared**: `XelToFab` (this project) vs `TO_fixtures` (`../TO_fixtures`)
 
 ## Pipeline Positioning
 
 The two repos occupy adjacent stages of the same end-to-end topology optimization workflow:
 
-| Aspect | TO_fixtures | xelToCAD |
+| Aspect | TO_fixtures | XelToFab |
 |--------|-------------|----------|
 | **Role** | Upstream — SIMP TO solver | Downstream — post-processing pipeline |
 | **Input** | Design domain + loads + constraints | Optimized density field (continuous [0,1]) |
 | **Core Loop** | Iterative SIMP + ABAQUS FEA | Threshold → extract → smooth → (future: CAD) |
 | **Output** | Raw density field on hex mesh | Clean triangle mesh → (future: NURBS/STEP) |
 
-TO_fixtures *produces* the density field that xelToCAD *consumes*. They are **complementary, not competing**.
+TO_fixtures *produces* the density field that XelToFab *consumes*. They are **complementary, not competing**.
 
 ## TO_fixtures Overview
 
@@ -25,11 +25,11 @@ TO_fixtures *produces* the density field that xelToCAD *consumes*. They are **co
 - Requires ABAQUS license for both solving and visualization
 - **No post-processing pipeline**: `STL_Export.py` is an empty skeleton; visualization requires ABAQUS CAE
 
-## Where xelToCAD Fills Gaps
+## Where XelToFab Fills Gaps
 
 ### Direct Replacement Opportunities
 
-| TO_fixtures Gap | xelToCAD Capability | Status |
+| TO_fixtures Gap | XelToFab Capability | Status |
 |-----------------|---------------------|--------|
 | No isosurface extraction | Marching cubes/squares | Working |
 | No mesh smoothing | Taubin smoothing with volume preservation | Working |
@@ -43,9 +43,9 @@ TO_fixtures *produces* the density field that xelToCAD *consumes*. They are **co
 
 Both repos use Heaviside projection but for different purposes:
 - TO_fixtures: during optimization (β-continuation scheme)
-- xelToCAD: after optimization (to binarize the result)
+- XelToFab: after optimization (to binarize the result)
 
-xelToCAD adds morphological cleanup (opening/closing + connected component removal) that TO_fixtures completely lacks.
+XelToFab adds morphological cleanup (opening/closing + connected component removal) that TO_fixtures completely lacks.
 
 ## Integration Path
 
@@ -55,10 +55,10 @@ xelToCAD adds morphological cleanup (opening/closing + connected component remov
 np.save('density_final.npy', rho_norm_cont)
 ```
 
-Then consume with xelToCAD:
+Then consume with XelToFab:
 ```bash
-xtc process density_final.npy -o result.stl --threshold 0.5
-xtc viz density_final.npy -o comparison.png
+xtfprocess density_final.npy -o result.stl --threshold 0.5
+xtfviz density_final.npy -o comparison.png
 ```
 
 ## Positive Impacts
@@ -77,14 +77,14 @@ xtc viz density_final.npy -o comparison.png
 | Volume loss during smoothing | Low | Already validated (>90% preservation) |
 | NURBS fitting oscillation on complex geometries | High | B-spline point limit (< 100/direction), adaptive knots |
 | TO_fixtures uses Python 2.7 (ABAQUS API) | Low | I/O bridge only; no code sharing needed |
-| Structured hex → unstructured tri conversion is lossy for re-analysis | Medium | Out of scope; xelToCAD targets CAD export, not FEA remeshing |
+| Structured hex → unstructured tri conversion is lossy for re-analysis | Medium | Out of scope; XelToFab targets CAD export, not FEA remeshing |
 
 ## Strategic Directions (Priority Order)
 
-1. **Simple integration** — Export `.npy` from TO_fixtures → `xtc process`. Immediate value, minimal effort.
-2. **Mesh-to-CAD** (Tier 4) — Patch decomposition → NURBS fitting → B-Rep assembly → STEP export. This is xelToCAD's unique research contribution; no existing open-source tool does this well.
+1. **Simple integration** — Export `.npy` from TO_fixtures → `xtfprocess`. Immediate value, minimal effort.
+2. **Mesh-to-CAD** (Tier 4) — Patch decomposition → NURBS fitting → B-Rep assembly → STEP export. This is XelToFab's unique research contribution; no existing open-source tool does this well.
 3. **Differentiable pipeline** (Tier 5) — FlexiCubes + end-to-end gradients. Longer-term research, requires CUDA.
 
 ## Conclusion
 
-xelToCAD **substantially improves** TO_fixtures by filling its complete lack of post-processing. It should **not replace** TO_fixtures — they serve different pipeline stages. The right strategy is integration: TO_fixtures produces density fields, xelToCAD converts them to manufacturable geometry. The unique intellectual contribution is in Tier 4 (mesh-to-CAD), the unsolved research frontier.
+XelToFab **substantially improves** TO_fixtures by filling its complete lack of post-processing. It should **not replace** TO_fixtures — they serve different pipeline stages. The right strategy is integration: TO_fixtures produces density fields, XelToFab converts them to manufacturable geometry. The unique intellectual contribution is in Tier 4 (mesh-to-CAD), the unsolved research frontier.

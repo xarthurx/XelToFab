@@ -2,7 +2,7 @@
 # requires-python = ">=3.13"
 # dependencies = [
 #     "marimo",
-#     "xeltocad",
+#     "xeltofab",
 #     "numpy",
 #     "scipy",
 #     "matplotlib",
@@ -18,7 +18,7 @@ app = marimo.App(width="medium")
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    # XelToCAD — Supported Data Formats
+    # XelToFab — Supported Data Formats
 
     Interactive demo of all file formats supported by the `load_density` / `save_mesh`
     I/O layer. Each section creates a temporary file in the chosen format, loads it back
@@ -52,10 +52,10 @@ def _():
 
 @app.cell
 def _():
-    from xeltocad.io import load_density, save_mesh
-    from xeltocad.loaders import get_supported_formats
-    from xeltocad.state import PipelineParams
-    from xeltocad.viz import plot_density
+    from xeltofab.io import load_density, save_mesh
+    from xeltofab.loaders import get_supported_formats
+    from xeltofab.state import PipelineParams
+    from xeltofab.viz import plot_density
 
     return PipelineParams, get_supported_formats, load_density, plot_density, save_mesh
 
@@ -124,7 +124,7 @@ def _(np):
 
 @app.cell
 def _(mo, plot_density, plt, test_field):
-    from xeltocad.state import PipelineParams as _PP, PipelineState as _PS
+    from xeltofab.state import PipelineParams as _PP, PipelineState as _PS
 
     _state = _PS(density=test_field, params=_PP())
     _fig = plot_density(_state)
@@ -328,7 +328,7 @@ def _(mo):
 def _(Path, PipelineParams, load_density, mo, np, show_round_trip, tempfile, test_field):
     try:
         import pyvista as _pv
-        from xeltocad.state import PipelineState as _PS
+        from xeltofab.state import PipelineState as _PS
 
         _ny, _nx = test_field.shape
         with tempfile.TemporaryDirectory() as _td:
@@ -476,8 +476,8 @@ def _(mo):
     surface mesh via **trimesh**. Only 3-D results can be exported as meshes.
 
     ```python
-    from xeltocad.io import save_mesh
-    from xeltocad.pipeline import process
+    from xeltofab.io import save_mesh
+    from xeltofab.pipeline import process
 
     state_3d = load_density("sphere.npy")
     result = process(state_3d)
@@ -494,9 +494,9 @@ def _(mo):
 
 @app.cell
 def _(Path, mo, np, plt, save_mesh, tempfile):
-    from xeltocad.pipeline import process as _process
-    from xeltocad.state import PipelineParams as _PP, PipelineState as _PS
-    from xeltocad.viz import plot_result as _plot_result
+    from xeltofab.pipeline import process as _process
+    from xeltofab.state import PipelineParams as _PP, PipelineState as _PS
+    from xeltofab.viz import plot_result as _plot_result
 
     # Synthetic 3-D sphere
     _res = 60
@@ -551,7 +551,7 @@ def _(mo):
     The unified entry point is:
 
     ```python
-    from xeltocad.io import load_density, save_mesh
+    from xeltofab.io import load_density, save_mesh
     ```
     """)
     return

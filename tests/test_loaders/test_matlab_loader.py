@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 import scipy.io
 
-from xeltocad.loaders.matlab_loader import load
+from xeltofab.loaders.matlab_loader import load
 
 # Well-known MATLAB TO variable names the auto-detect should find
 _AUTO_DETECT_NAMES = ["xPhys", "densities", "x", "rho", "dc", "density"]

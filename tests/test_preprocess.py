@@ -1,8 +1,8 @@
 # tests/test_preprocess.py
 import numpy as np
 
-from xeltocad.preprocess import preprocess
-from xeltocad.state import PipelineState
+from xeltofab.preprocess import preprocess
+from xeltofab.state import PipelineState
 
 
 def test_preprocess_2d_produces_binary():

@@ -7,7 +7,7 @@ import pytest
 
 pyvista = pytest.importorskip("pyvista")
 
-from xeltocad.loaders.vtk_loader import load  # noqa: E402
+from xeltofab.loaders.vtk_loader import load  # noqa: E402
 
 
 def test_load_vtr_cell_data(tmp_path: Path):

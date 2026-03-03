@@ -35,8 +35,8 @@ Cantilever beam optimization results at three resolutions. Each sample has diffe
 ## Usage
 
 ```python
-from xeltocad.io import load_density
-from xeltocad.pipeline import process
+from xeltofab.io import load_density
+from xeltofab.pipeline import process
 
 state = load_density("data/examples/beams_2d_50x100_sample0.npy")
 result = process(state)

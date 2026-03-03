@@ -2,9 +2,9 @@
 
 ## Project Overview
 
-**xelToCAD** — Topology optimization post-processing pipeline: density fields → meshes → parametric NURBS/CAD. Python 3.13+, `uv` project management. Package: `xeltocad` (`src/xeltocad/`).
+**XelToFab** — Topology optimization post-processing pipeline: density fields → meshes → fabrication-ready geometry. Python 3.13+, `uv` project management. Package: `xeltofab` (`src/xeltofab/`).
 
-Research notes: `~/winHome/repo/xKnowledgeSync/99_academic.work/MAX_Mark/proj_XelToCAD/`
+Research notes: `~/winHome/repo/xKnowledgeSync/99_academic.work/MAX_Mark/proj_XelToFab/`
 Background material: `~/winHome/repo/xKnowledgeSync/99_academic.work/MAX_Mark/` (brainstorms, strategy, glossary)
 Key reference: [`{Review} The Topology Optimization Post-Processing Pipeline.md`](file:///home/xarthurx/winHome/repo/xKnowledgeSync/99_academic.work/MAX_Mark/%7BReview%7D%20The%20Topology%20Optimization%20Post-Processing%20Pipeline.md) — full literature review covering all 4 pipeline stages, toolchain, and feasibility analysis.
 Collaboration: M4X–IDEAL Lab with Prof. Mark Fuge.
@@ -25,7 +25,7 @@ Collaboration: M4X–IDEAL Lab with Prof. Mark Fuge.
 | Lint | `ruff check` |
 | Format | `ruff format` |
 | Type check | `ty check` |
-| CLI help | `uv run xtc --help` |
+| CLI help | `uv run xtf --help` |
 
 ## Core Dependencies
 

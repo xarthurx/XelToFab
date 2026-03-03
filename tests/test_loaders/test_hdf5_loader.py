@@ -7,7 +7,7 @@ import pytest
 
 h5py = pytest.importorskip("h5py")
 
-from xeltocad.loaders.hdf5_loader import load  # noqa: E402
+from xeltofab.loaders.hdf5_loader import load  # noqa: E402
 
 
 def test_load_h5_auto_detect(tmp_path: Path):

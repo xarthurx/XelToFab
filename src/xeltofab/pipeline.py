@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from xeltocad.extract import extract
-from xeltocad.preprocess import preprocess
-from xeltocad.smooth import smooth
-from xeltocad.state import PipelineState
+from xeltofab.extract import extract
+from xeltofab.preprocess import preprocess
+from xeltofab.smooth import smooth
+from xeltofab.state import PipelineState
 
 
 def process(state: PipelineState) -> PipelineState:

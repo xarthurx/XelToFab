@@ -1,4 +1,4 @@
-"""CLI entrypoint for xelToCAD."""
+"""CLI entrypoint for XelToFab."""
 
 from __future__ import annotations
 
@@ -6,11 +6,11 @@ from pathlib import Path
 
 import click
 
-from xeltocad.io import load_density, save_mesh
-from xeltocad.loaders import get_supported_formats
-from xeltocad.pipeline import process
-from xeltocad.state import PipelineParams
-from xeltocad.viz import plot_comparison
+from xeltofab.io import load_density, save_mesh
+from xeltofab.loaders import get_supported_formats
+from xeltofab.pipeline import process
+from xeltofab.state import PipelineParams
+from xeltofab.viz import plot_comparison
 
 
 def _parse_shape(value: str) -> tuple[int, ...]:
@@ -21,7 +21,7 @@ def _parse_shape(value: str) -> tuple[int, ...]:
 
 @click.group()
 def main() -> None:
-    """xelToCAD — Topology optimization post-processing pipeline."""
+    """XelToFab — Topology optimization post-processing pipeline."""
 
 
 @main.command()

@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from xeltocad.loaders import _REGISTRY, LOADER_REGISTRY, get_supported_formats, resolve_loader
+from xeltofab.loaders import _REGISTRY, LOADER_REGISTRY, get_supported_formats, resolve_loader
 
 
 def test_registry_has_numpy_extensions():
