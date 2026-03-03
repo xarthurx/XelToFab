@@ -14,13 +14,13 @@ A topology optimization post-processing pipeline that transforms continuous dens
 uv sync
 
 # Process a 3D density field into an STL mesh
-uv run xtfprocess density.npy -o output.stl
+uv run xtf process density.npy -o output.stl
 
 # Process with custom parameters and save a comparison plot
-uv run xtfprocess density.npy -o output.stl --threshold 0.4 --sigma 1.5 --viz
+uv run xtf process density.npy -o output.stl --threshold 0.4 --sigma 1.5 --viz
 
 # Visualize a 2D density field
-uv run xtfviz density_2d.npy -o comparison.png
+uv run xtf viz density_2d.npy -o comparison.png
 ```
 
 ## Pipeline
@@ -79,7 +79,7 @@ result = process(state)
 | HDF5/XDMF | .h5, .hdf5, .xdmf | `uv sync --extra hdf5` |
 | All formats | — | `uv sync --extra all-formats` |
 
-List available formats: `uv run xtfformats`
+List available formats: `uv run xtf formats`
 
 ## Development
 

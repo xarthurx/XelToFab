@@ -57,8 +57,8 @@ np.save('density_final.npy', rho_norm_cont)
 
 Then consume with XelToFab:
 ```bash
-xtfprocess density_final.npy -o result.stl --threshold 0.5
-xtfviz density_final.npy -o comparison.png
+xtf process density_final.npy -o result.stl --threshold 0.5
+xtf viz density_final.npy -o comparison.png
 ```
 
 ## Positive Impacts
@@ -81,7 +81,7 @@ xtfviz density_final.npy -o comparison.png
 
 ## Strategic Directions (Priority Order)
 
-1. **Simple integration** — Export `.npy` from TO_fixtures → `xtfprocess`. Immediate value, minimal effort.
+1. **Simple integration** — Export `.npy` from TO_fixtures → `xtf process`. Immediate value, minimal effort.
 2. **Mesh-to-CAD** (Tier 4) — Patch decomposition → NURBS fitting → B-Rep assembly → STEP export. This is XelToFab's unique research contribution; no existing open-source tool does this well.
 3. **Differentiable pipeline** (Tier 5) — FlexiCubes + end-to-end gradients. Longer-term research, requires CUDA.
 
