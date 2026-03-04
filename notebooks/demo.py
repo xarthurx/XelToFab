@@ -5,6 +5,7 @@
 #     "xeltofab",
 #     "numpy",
 #     "matplotlib",
+#     "plotly",
 # ]
 # ///
 
@@ -77,14 +78,21 @@ def _(Path, np):
         return np.load(_data_dir / name)
 
     def make_2d_circle(res=100):
-        """Synthetic 2D circle."""
-        y, x = np.mgrid[-1 : 1 : complex(res), -1 : 1 : complex(res * 2)]
-        return (x**2 + y**2 < 0.5**2).astype(float)
+        """Synthetic 2D circle with smooth boundary (mimics TO density field)."""
+        y, x = np.mgrid[-1 : 1 : complex(res), -1 : 1 : complex(res)]
+        r = np.sqrt(x**2 + y**2)
+        # Smooth falloff across boundary using a sigmoid-like transition
+        width = 0.08  # transition width
+        field = 0.5 * (1.0 - np.tanh((r - 0.5) / width))
+        return np.clip(field, 0.0, 1.0)
 
-    def make_3d_sphere(res=30):
-        """Synthetic 3D sphere."""
+    def make_3d_sphere(res=60):
+        """Synthetic 3D sphere with smooth boundary (mimics TO density field)."""
         z, y, x = np.mgrid[-1 : 1 : complex(res), -1 : 1 : complex(res), -1 : 1 : complex(res)]
-        return (x**2 + y**2 + z**2 < 0.5**2).astype(float)
+        r = np.sqrt(x**2 + y**2 + z**2)
+        width = 0.08  # transition width matching 2D circle
+        field = 0.5 * (1.0 - np.tanh((r - 0.5) / width))
+        return np.clip(field, 0.0, 1.0)
 
     # Build geometry registry: synthetic + real examples
     geometry_options = {
@@ -102,6 +110,10 @@ def _(Path, np):
 def _(mo):
     mo.md(r"""
     ## Controls
+
+    **Thr** — density threshold for binarisation &nbsp;|&nbsp;
+    **σ** — Gaussian smoothing radius &nbsp;|&nbsp;
+    **Tau** — Taubin smoothing iter. on the extracted mesh
     """)
     return
 
@@ -112,16 +124,16 @@ def _(geometry_options, mo):
     dim_picker = mo.ui.dropdown(
         options=_option_keys,
         value=_option_keys[0],
-        label="Geometry",
+        label="Geo",
     )
     return (dim_picker,)
 
 
 @app.cell
 def _(mo):
-    threshold_slider = mo.ui.slider(start=0.05, stop=0.95, step=0.05, value=0.5, label="Threshold")
-    sigma_slider = mo.ui.slider(start=0.0, stop=5.0, step=0.25, value=1.0, label="Gaussian sigma")
-    taubin_slider = mo.ui.slider(start=0, stop=50, step=5, value=20, label="Taubin iterations")
+    threshold_slider = mo.ui.slider(start=0.05, stop=0.95, step=0.05, value=0.5, label="Thr")
+    sigma_slider = mo.ui.slider(start=0.0, stop=5.0, step=0.25, value=1.0, label="σ")
+    taubin_slider = mo.ui.slider(start=0, stop=50, step=5, value=20, label="Tau")
     return sigma_slider, taubin_slider, threshold_slider
 
 
@@ -198,9 +210,31 @@ def _(mo):
 
 @app.cell
 def _(mo, plot_result, plt, result):
-    _fig = plot_result(result)
-    out2 = mo.as_html(_fig)
-    plt.close(_fig)
+    if result.ndim == 3 and result.vertices is not None and result.faces is not None:
+        import plotly.graph_objects as _go
+
+        _verts = result.smoothed_vertices if result.smoothed_vertices is not None else result.vertices
+        _faces = result.faces
+        _fig3d = _go.Figure(data=[_go.Mesh3d(
+            x=_verts[:, 0], y=_verts[:, 1], z=_verts[:, 2],
+            i=_faces[:, 0], j=_faces[:, 1], k=_faces[:, 2],
+            color="steelblue", opacity=0.9,
+            lighting=dict(ambient=0.4, diffuse=0.6, specular=0.3),
+        )])
+        _fig3d.update_layout(
+            title="Extracted Mesh (interactive)",
+            scene=dict(
+                aspectmode="data",
+                camera=dict(projection=dict(type="orthographic")),
+            ),
+            margin=dict(l=0, r=0, t=40, b=0),
+            height=500,
+        )
+        out2 = mo.ui.plotly(_fig3d)
+    else:
+        _fig = plot_result(result)
+        out2 = mo.as_html(_fig)
+        plt.close(_fig)
     out2
 
 
@@ -214,9 +248,56 @@ def _(mo):
 
 @app.cell
 def _(mo, plot_comparison, plt, result):
-    _fig = plot_comparison(result)
-    out3 = mo.as_html(_fig)
-    plt.close(_fig)
+    if result.ndim == 3 and result.vertices is not None and result.faces is not None:
+        import plotly.graph_objects as _go
+
+        _verts = result.smoothed_vertices if result.smoothed_vertices is not None else result.vertices
+        _faces = result.faces
+        _d = result.density
+        _mid_slice = _d[_d.shape[0] // 2, :, :]
+
+        _panel_h = 350  # consistent height for all three panels
+
+        # Density mid-slice (matplotlib)
+        _fig_den, _ax_den = plt.subplots(figsize=(4, 4))
+        _ax_den.imshow(_mid_slice, cmap="viridis", origin="lower", vmin=0, vmax=1, aspect="equal")
+        _ax_den.set_title("Density (mid-Z)")
+        _fig_den.tight_layout()
+        _density_html = mo.as_html(_fig_den)
+        plt.close(_fig_den)
+
+        # Binary mid-slice (matplotlib)
+        _bin_slice = result.binary[result.binary.shape[0] // 2, :, :]
+        _fig_bin, _ax_bin = plt.subplots(figsize=(4, 4))
+        _ax_bin.imshow(_bin_slice, cmap="gray", origin="lower", vmin=0, vmax=1, aspect="equal")
+        _ax_bin.set_title("Binary (mid-Z)")
+        _fig_bin.tight_layout()
+        _binary_html = mo.as_html(_fig_bin)
+        plt.close(_fig_bin)
+
+        # 3D mesh (plotly)
+        _fig3d = _go.Figure(data=[_go.Mesh3d(
+            x=_verts[:, 0], y=_verts[:, 1], z=_verts[:, 2],
+            i=_faces[:, 0], j=_faces[:, 1], k=_faces[:, 2],
+            color="steelblue", opacity=0.9,
+            lighting=dict(ambient=0.4, diffuse=0.6, specular=0.3),
+        )])
+        _fig3d.update_layout(
+            title="Extracted Mesh",
+            scene=dict(
+                aspectmode="data",
+                camera=dict(projection=dict(type="orthographic")),
+            ),
+            margin=dict(l=0, r=0, t=40, b=0),
+            height=_panel_h,
+        )
+        _mesh_html = mo.ui.plotly(_fig3d)
+
+        out3 = mo.hstack([_density_html, _binary_html, _mesh_html], widths=[1, 1, 1])
+    else:
+        _fig = plot_comparison(result)
+        out3 = mo.as_html(_fig)
+        plt.close(_fig)
     out3
 
 
