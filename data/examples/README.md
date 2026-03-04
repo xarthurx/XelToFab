@@ -22,7 +22,7 @@ Cantilever beam optimization results at three resolutions. Each sample has diffe
 
 | File | Shape | Source Dataset |
 |------|-------|----------------|
-| `heat_conduction_3d_51x51x51_sample{0,1,2}.npy` | (51, 51, 51) | `IDEALLab/heat_conduction_3d_v0` |
+| `heat_conduction_3d_51x51x51_sample{0,1}.npy` | (51, 51, 51) | `IDEALLab/heat_conduction_3d_v0` |
 
 ## 3D Thermoelastic
 

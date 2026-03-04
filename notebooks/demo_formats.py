@@ -6,6 +6,7 @@
 #     "numpy",
 #     "scipy",
 #     "matplotlib",
+#     "plotly",
 # ]
 # ///
 
@@ -25,6 +26,7 @@ def _(mo):
     through the loader registry, and visualises the round-tripped density field.
 
     **Input formats:** `.npy` · `.npz` · `.mat` · `.csv` · `.txt` · `.vtk` · `.vtr` · `.vti` · `.h5` · `.hdf5` · `.xdmf`
+
     **Output formats (3-D mesh):** `.stl` · `.obj` · `.ply`
     """)
     return
@@ -493,10 +495,11 @@ def _(mo):
 
 
 @app.cell
-def _(Path, mo, np, plt, save_mesh, tempfile):
+def _(Path, mo, np, save_mesh, tempfile):
+    import plotly.graph_objects as _go
+
     from xeltofab.pipeline import process as _process
     from xeltofab.state import PipelineParams as _PP, PipelineState as _PS
-    from xeltofab.viz import plot_result as _plot_result
 
     # Synthetic 3-D sphere
     _res = 60
@@ -506,10 +509,25 @@ def _(Path, mo, np, plt, save_mesh, tempfile):
     _state3d = _PS(density=_sphere, params=_PP(threshold=0.5, smooth_sigma=0.5, taubin_iterations=10))
     _result3d = _process(_state3d)
 
-    # 3-D mesh visualization
-    _fig = _plot_result(_result3d)
-    _mesh_plot = mo.as_html(_fig)
-    plt.close(_fig)
+    # 3-D mesh visualization (interactive plotly)
+    _verts = _result3d.smoothed_vertices if _result3d.smoothed_vertices is not None else _result3d.vertices
+    _faces = _result3d.faces
+    _fig3d = _go.Figure(data=[_go.Mesh3d(
+        x=_verts[:, 0], y=_verts[:, 1], z=_verts[:, 2],
+        i=_faces[:, 0], j=_faces[:, 1], k=_faces[:, 2],
+        color="steelblue", opacity=0.9,
+        lighting=dict(ambient=0.4, diffuse=0.6, specular=0.3),
+    )])
+    _fig3d.update_layout(
+        title="Exported Mesh (interactive)",
+        scene=dict(
+            aspectmode="data",
+            camera=dict(projection=dict(type="orthographic")),
+        ),
+        margin=dict(l=0, r=0, t=40, b=0),
+        height=500,
+    )
+    _mesh_plot = mo.ui.plotly(_fig3d)
 
     _lines = [
         f"**3-D sphere:** shape `{_sphere.shape}` · "
@@ -524,7 +542,7 @@ def _(Path, mo, np, plt, save_mesh, tempfile):
         for _ext in (".stl", ".obj", ".ply"):
             _p = Path(_td) / f"sphere{_ext}"
             save_mesh(_result3d, _p)
-            _lines.append(f"| `{_ext}` | {_p.stat().st_size:,} bytes |")
+            _lines.append(f"| `{_ext}` | {_p.stat().st_size / 1024:.1f} KB |")
 
     mo.vstack([_mesh_plot, mo.md("\n".join(_lines))])
 
