@@ -7,8 +7,10 @@ matplotlib.use("Agg")  # non-interactive backend — must be set before any pypl
 import numpy as np
 import pytest
 
+from xeltofab.extract import extract
 from xeltofab.pipeline import process
-from xeltofab.state import PipelineState
+from xeltofab.preprocess import preprocess
+from xeltofab.state import PipelineParams, PipelineState
 
 
 @pytest.fixture
@@ -51,6 +53,17 @@ def circle_sdf() -> np.ndarray:
     """2D signed distance field for a circle."""
     y, x = np.mgrid[-1:1:100j, -1:1:100j]
     return np.sqrt(x**2 + y**2) - 0.5
+
+
+@pytest.fixture
+def open_mesh_state(sphere_density: np.ndarray) -> PipelineState:
+    """Pipeline state with an open mesh (faces removed to create holes)."""
+    state = PipelineState(density=sphere_density)
+    state = preprocess(state)
+    state = extract(state)
+    # Remove faces to create holes in the mesh
+    open_faces = state.faces[:-20]
+    return state.model_copy(update={"faces": open_faces, "smoothed_vertices": state.vertices.copy()})
 
 
 @pytest.fixture
