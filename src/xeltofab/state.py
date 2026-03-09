@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Literal
+
 import numpy as np
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
@@ -14,6 +16,33 @@ class PipelineParams(BaseModel):
     morph_radius: int = Field(default=1, ge=0)
     taubin_iterations: int = Field(default=20, ge=0)
     taubin_lambda: float = Field(default=0.5, gt=0.0, le=1.0)  # shrinkage factor for Taubin smoothing
+
+    field_type: Literal["density", "sdf"] = "density"
+    direct_extraction: bool = False
+    extraction_level: float | None = None
+
+    @model_validator(mode="after")
+    def apply_field_type_defaults(self) -> PipelineParams:
+        """Apply smart defaults based on field_type.
+
+        Only override values that were not explicitly set by the user.
+        SDF defaults: direct_extraction=True, smooth_sigma=0.0 (Gaussian preprocessing only;
+        Taubin mesh smoothing still runs since marching cubes produces staircase artifacts).
+        """
+        if self.field_type == "sdf":
+            explicitly_set = self.model_fields_set
+            if "direct_extraction" not in explicitly_set:
+                self.direct_extraction = True
+            if "smooth_sigma" not in explicitly_set:
+                self.smooth_sigma = 0.0
+        return self
+
+    @property
+    def effective_extraction_level(self) -> float:
+        """Extraction level: explicit value, or 0.0 for SDF, threshold for density."""
+        if self.extraction_level is not None:
+            return self.extraction_level
+        return 0.0 if self.field_type == "sdf" else self.threshold
 
 
 class PipelineState(BaseModel):

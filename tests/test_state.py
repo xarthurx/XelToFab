@@ -45,3 +45,38 @@ def test_pipeline_params_validates_threshold():
         PipelineParams(threshold=1.5)
     with pytest.raises(ValidationError):
         PipelineParams(threshold=-0.1)
+
+
+def test_pipeline_params_field_type_defaults():
+    params = PipelineParams()
+    assert params.field_type == "density"
+    assert params.direct_extraction is False
+    assert params.extraction_level is None
+
+
+def test_pipeline_params_sdf_smart_defaults():
+    """SDF field type should auto-enable direct extraction and disable Gaussian preprocessing."""
+    params = PipelineParams(field_type="sdf")
+    assert params.direct_extraction is True
+    assert params.smooth_sigma == 0.0
+
+
+def test_pipeline_params_sdf_override_smooth():
+    """User can re-enable smoothing for noisy SDF."""
+    params = PipelineParams(field_type="sdf", smooth_sigma=2.0)
+    assert params.smooth_sigma == 2.0
+    assert params.direct_extraction is True
+
+
+def test_pipeline_params_density_direct():
+    """User can enable direct extraction for clean density fields."""
+    params = PipelineParams(field_type="density", direct_extraction=True)
+    assert params.direct_extraction is True
+    assert params.threshold == 0.5  # threshold still available for density
+
+
+def test_pipeline_params_effective_extraction_level():
+    """extraction_level derives from field_type when not set explicitly."""
+    assert PipelineParams(field_type="density").effective_extraction_level == 0.5
+    assert PipelineParams(field_type="sdf").effective_extraction_level == 0.0
+    assert PipelineParams(field_type="sdf", extraction_level=0.1).effective_extraction_level == 0.1
