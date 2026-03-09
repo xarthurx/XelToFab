@@ -52,3 +52,33 @@ def test_cli_process_2d_shows_error(tmp_path: Path, circle_density: np.ndarray):
     result = runner.invoke(main, ["process", str(input_path), "-o", str(output_path)])
     assert result.exit_code != 0
     assert "2D contour export" in result.output
+
+
+def test_cli_process_sdf(tmp_path: Path):
+    """CLI process with --field-type sdf."""
+    z, y, x = np.mgrid[-1:1:20j, -1:1:20j, -1:1:20j]
+    sdf = np.sqrt(x**2 + y**2 + z**2) - 0.5
+    input_path = tmp_path / "sphere_sdf.npy"
+    np.save(input_path, sdf)
+    output_path = tmp_path / "sphere.stl"
+
+    runner = CliRunner()
+    result = runner.invoke(
+        main, ["process", str(input_path), "-o", str(output_path), "--field-type", "sdf"]
+    )
+    assert result.exit_code == 0, result.output
+    assert output_path.exists()
+
+
+def test_cli_process_direct(tmp_path: Path, small_sphere_density: np.ndarray):
+    """CLI process with --direct flag for clean density."""
+    input_path = tmp_path / "sphere.npy"
+    np.save(input_path, small_sphere_density)
+    output_path = tmp_path / "sphere.stl"
+
+    runner = CliRunner()
+    result = runner.invoke(
+        main, ["process", str(input_path), "-o", str(output_path), "--direct"]
+    )
+    assert result.exit_code == 0, result.output
+    assert output_path.exists()

@@ -31,6 +31,8 @@ def main() -> None:
 @click.option("--sigma", type=float, default=1.0, help="Gaussian smoothing sigma")
 @click.option("-f", "--field-name", default=None, help="Field/variable name to extract from input file")
 @click.option("--shape", "shape_str", default=None, help="Grid shape for flat data, e.g. 100x200 or 10x20x30")
+@click.option("--field-type", type=click.Choice(["density", "sdf"]), default="density", help="Input field type")
+@click.option("--direct", is_flag=True, help="Direct extraction from continuous field (skip preprocessing)")
 @click.option("--viz", is_flag=True, help="Save a comparison visualization alongside the mesh")
 def process_cmd(
     input_path: Path,
@@ -39,10 +41,17 @@ def process_cmd(
     sigma: float,
     field_name: str | None,
     shape_str: str | None,
+    field_type: str,
+    direct: bool,
     viz: bool,
 ) -> None:
     """Process a density field into a mesh."""
-    params = PipelineParams(threshold=threshold, smooth_sigma=sigma)
+    params = PipelineParams(
+        threshold=threshold,
+        smooth_sigma=sigma,
+        field_type=field_type,
+        direct_extraction=direct,
+    )
     shape = _parse_shape(shape_str) if shape_str else None
 
     try:
@@ -74,6 +83,8 @@ def process_cmd(
 @click.option("--sigma", type=float, default=1.0, help="Gaussian smoothing sigma")
 @click.option("-f", "--field-name", default=None, help="Field/variable name to extract from input file")
 @click.option("--shape", "shape_str", default=None, help="Grid shape for flat data, e.g. 100x200 or 10x20x30")
+@click.option("--field-type", type=click.Choice(["density", "sdf"]), default="density", help="Input field type")
+@click.option("--direct", is_flag=True, help="Direct extraction from continuous field (skip preprocessing)")
 def viz(
     input_path: Path,
     output_path: Path | None,
@@ -81,9 +92,16 @@ def viz(
     sigma: float,
     field_name: str | None,
     shape_str: str | None,
+    field_type: str,
+    direct: bool,
 ) -> None:
     """Visualize a density field and its extraction result."""
-    params = PipelineParams(threshold=threshold, smooth_sigma=sigma)
+    params = PipelineParams(
+        threshold=threshold,
+        smooth_sigma=sigma,
+        field_type=field_type,
+        direct_extraction=direct,
+    )
     shape = _parse_shape(shape_str) if shape_str else None
 
     try:
