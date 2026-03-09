@@ -19,7 +19,9 @@ dependencies = [
 [project.optional-dependencies]
 vtk = ["pyvista>=0.43"]
 hdf5 = ["h5py>=3.10"]
+mesh-quality = ["pymeshlab>=2023.12"]
 all-formats = ["pyvista>=0.43", "h5py>=3.10"]
+all = ["pyvista>=0.43", "h5py>=3.10", "pymeshlab>=2023.12"]
 
 [project.scripts]
 xtf = "xeltofab.cli:main"

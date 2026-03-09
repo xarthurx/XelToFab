@@ -28,6 +28,18 @@ density array (numpy, [0,1])
 └──────┬───────┘
        │  smoothed mesh / contours
        ▼
+┌──────────────┐
+│   Repair      │  3D: fix non-manifold edges/vertices (via pymeshlab)
+│               │  2D: no-op
+└──────┬───────┘
+       │  repaired mesh
+       ▼
+┌──────────────┐
+│   Remesh      │  3D: uniform resampling (via pymeshlab)
+│               │  2D: no-op
+└──────┬───────┘
+       │  uniform triangle mesh
+       ▼
     Output: STL/OBJ/PLY (3D) or PNG visualization (2D)
 ```
 
@@ -45,7 +57,10 @@ src/xeltofab/
 ├── preprocess.py   Density field preprocessing (smooth, threshold, morphology)
 ├── extract.py      Mesh/contour extraction (marching cubes/squares)
 ├── smooth.py       Taubin mesh smoothing
-├── pipeline.py     Orchestrator: process() chains preprocess → extract → smooth
+├── repair.py       Watertight mesh repair (pymeshlab)
+├── remesh.py       Isotropic remeshing (pymeshlab)
+├── quality.py      Mesh quality metrics (pyvista + trimesh)
+├── pipeline.py     Orchestrator: process() chains preprocess → extract → smooth → repair → remesh
 ├── io.py           File I/O: multi-format load (via loaders/), save STL/OBJ
 ├── loaders/        Format-specific loaders (dispatched by extension)
 │   ├── __init__.py     Loader registry, resolve_loader(), get_supported_formats()
@@ -79,9 +94,9 @@ def stage(state: PipelineState) -> PipelineState:
 | `contours` | `list[ndarray]` | `extract()` (2D only) |
 | `vertices` | `ndarray` | `extract()` (3D only) |
 | `faces` | `ndarray` | `extract()` (3D only) |
-| `smoothed_vertices` | `ndarray` | `smooth()` (3D only) |
+| `smoothed_vertices` | `ndarray` | `smooth()` (3D only); cleared by `repair()`/`remesh()` |
 
-The `best_vertices` property returns `smoothed_vertices` if available, otherwise `vertices`. Use this instead of the manual fallback pattern.
+The `best_vertices` property returns `smoothed_vertices` if available, otherwise `vertices`. Use this instead of the manual fallback pattern. After repair/remesh, `smoothed_vertices` is `None` because `vertices` itself contains the latest geometry.
 
 ## Field Types and Extraction Modes
 
@@ -105,7 +120,7 @@ The `xtf` command (installed via `[project.scripts]`) exposes three subcommands:
 - **`xtf viz <input> [-o <output>]`** — Run the pipeline and display/save a comparison plot
 - **`xtf formats`** — List supported input formats and their availability
 
-`process` and `viz` accept `--threshold`, `--sigma`, `--field-name` (for multi-variable files), `--shape` (for flat CSV/TXT data, e.g. `50x100`), `--field-type` (`density` or `sdf`), and `--direct` (skip preprocessing).
+`process` and `viz` accept `--threshold`, `--sigma`, `--field-name` (for multi-variable files), `--shape` (for flat CSV/TXT data, e.g. `50x100`), `--field-type` (`density` or `sdf`), `--direct` (skip preprocessing), `--no-repair`, and `--no-remesh`.
 
 ## Dependencies
 
@@ -116,6 +131,9 @@ The `xtf` command (installed via `[project.scripts]`) exposes three subcommands:
 | Contour extraction | `scikit-image` (find_contours) |
 | Mesh extraction | `scikit-image` (marching_cubes) |
 | Mesh smoothing | `trimesh` (Taubin filter) |
+| Mesh repair | `pymeshlab` (optional — `uv sync --extra mesh-quality`) |
+| Isotropic remeshing | `pymeshlab` (optional — `uv sync --extra mesh-quality`) |
+| Quality metrics | `pyvista` + `trimesh` |
 | Mesh I/O | `trimesh` (STL, OBJ, PLY export) |
 | MATLAB loading | `scipy.io` (loadmat) |
 | VTK loading | `pyvista` (optional — `uv sync --extra vtk`) |
@@ -135,10 +153,13 @@ tests/
 ├── test_preprocess.py      Preprocessing behavior (6 tests)
 ├── test_extract.py         Extraction output shapes (7 tests)
 ├── test_smooth.py          Smoothing effects + volume preservation (4 tests)
+├── test_repair.py          Watertight mesh repair (3 tests)
+├── test_remesh.py          Isotropic remeshing (4 tests)
+├── test_quality.py         Mesh quality metrics (4 tests)
 ├── test_io.py              File round-trip (6 tests)
-├── test_pipeline.py        End-to-end 2D + 3D (5 tests)
+├── test_pipeline.py        End-to-end 2D + 3D (7 tests)
 ├── test_viz.py             Plot generation (8 tests)
-├── test_cli.py             CLI invocation (6 tests)
+├── test_cli.py             CLI invocation (8 tests)
 └── test_loaders/
     ├── test_dispatch.py        Registry + format resolution (6 tests)
     ├── test_numpy_loader.py    NumPy .npy/.npz (7 tests)
@@ -155,6 +176,6 @@ Run with `uv run pytest tests/ -v`.
 
 See [TODO.md](TODO.md) for the full backlog. The pipeline is designed to extend with additional stages:
 
-- **Decimation** — QEM edge collapse after smoothing
-- **Remeshing** — Isotropic remeshing for FEA-quality elements
+- **Decimation** — QEM edge collapse for mesh simplification
+- **Feature-preserving smoothing** — Bilateral mesh filtering, two-step normal smoothing
 - **Mesh-to-CAD** — Patch decomposition + NURBS fitting + B-Rep assembly

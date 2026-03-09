@@ -5,10 +5,10 @@
 > Baseline captured: `benchmarks/baseline/` (metrics + visualizations from current pipeline)
 
 - [ ] QEM decimation (quadric edge collapse) — `pymeshlab` or `pyfqmr`
-- [ ] Isotropic remeshing — `pymeshlab` `meshing_isotropic_explicit_remeshing()`
 - [ ] Feature-preserving smoothing — bilateral mesh filtering, two-step normal smoothing
-- [ ] Watertight repair — hole filling, non-manifold fixing via trimesh
-- [ ] Mesh quality metrics — aspect ratio, min angle, scaled Jacobian via `pyvista.mesh.quality()`
+- [x] Watertight repair — non-manifold fixing via pymeshlab (`repair.py`)
+- [x] Isotropic remeshing — `pymeshlab` `generate_resampled_uniform_mesh()` (`remesh.py`)
+- [x] Mesh quality metrics — aspect ratio, min angle, scaled Jacobian via `quality.py`
 
 ## Benchmark Enhancements
 
