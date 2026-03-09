@@ -40,6 +40,13 @@ scripts/
 benchmarks/
 └── baseline/              Output from benchmark_baseline.py (STL, PNG, metrics.json, summary.md)
 
+website/                       Documentation site (Fumadocs + Next.js 16)
+├── app/                       Next.js app router (layouts, pages)
+├── content/docs/              MDX documentation content
+├── components/                Custom React components (MeshViewer)
+├── lib/                       Fumadocs source config
+└── public/models/             Sample STL files for interactive viewer
+
 src/xeltofab/
 ├── state.py        PipelineState + PipelineParams (Pydantic models)
 ├── preprocess.py   Density field preprocessing (smooth, threshold, morphology)
