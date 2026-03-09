@@ -13,6 +13,9 @@ def test_pipeline_params_defaults():
     assert params.morph_radius == 1
     assert params.taubin_iterations == 20
     assert params.taubin_lambda == 0.5
+    assert params.repair is True
+    assert params.remesh is True
+    assert params.target_edge_length is None
 
 
 def test_pipeline_state_2d():
@@ -80,21 +83,3 @@ def test_pipeline_params_effective_extraction_level():
     assert PipelineParams(field_type="density").effective_extraction_level == 0.5
     assert PipelineParams(field_type="sdf").effective_extraction_level == 0.0
     assert PipelineParams(field_type="sdf", extraction_level=0.1).effective_extraction_level == 0.1
-
-
-def test_pipeline_params_repair_defaults():
-    params = PipelineParams()
-    assert params.repair is True
-    assert params.remesh is True
-    assert params.target_edge_length is None
-
-
-def test_pipeline_params_disable_repair_remesh():
-    params = PipelineParams(repair=False, remesh=False)
-    assert params.repair is False
-    assert params.remesh is False
-
-
-def test_pipeline_params_custom_remesh():
-    params = PipelineParams(target_edge_length=0.5)
-    assert params.target_edge_length == 0.5

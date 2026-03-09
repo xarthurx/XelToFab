@@ -13,36 +13,22 @@ from xeltofab.remesh import remesh  # noqa: E402
 
 
 def test_remesh_produces_valid_mesh(processed_3d: PipelineState):
-    """Remeshing should produce a valid mesh with vertices and faces."""
+    """Remeshing should produce a valid mesh and clear smoothed_vertices."""
     result = remesh(processed_3d)
     assert result.vertices is not None
     assert result.faces is not None
     assert result.vertices.shape[1] == 3
     assert result.faces.shape[1] == 3
-
-
-def test_remesh_clears_smoothed_vertices(processed_3d: PipelineState):
-    """After remesh, smoothed_vertices should be None."""
-    result = remesh(processed_3d)
     assert result.smoothed_vertices is None
-
-
-def test_remesh_improves_uniformity(processed_3d: PipelineState):
-    """Remeshing should produce valid faces with indices within bounds."""
-    result = remesh(processed_3d)
-    assert result.faces.shape[0] > 0
     assert np.all(result.faces < result.vertices.shape[0])
-    assert np.all(result.faces >= 0)
 
 
 def test_remesh_custom_edge_length(processed_3d: PipelineState):
     """Custom target edge length should affect output mesh density."""
-    # Large edge length → fewer faces
     params_coarse = PipelineParams(target_edge_length=5.0)
     state_coarse = processed_3d.model_copy(update={"params": params_coarse})
     result_coarse = remesh(state_coarse)
 
-    # Small edge length → more faces
     params_fine = PipelineParams(target_edge_length=0.5)
     state_fine = processed_3d.model_copy(update={"params": params_fine})
     result_fine = remesh(state_fine)

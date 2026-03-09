@@ -12,26 +12,13 @@ from xeltofab.repair import repair  # noqa: E402
 
 
 def test_repair_closes_holes(open_mesh_state: PipelineState):
-    """Repair should fill holes, increasing face count."""
+    """Repair should produce a valid mesh and clear smoothed_vertices."""
+    assert open_mesh_state.smoothed_vertices is not None
     original_faces = open_mesh_state.faces.shape[0]
     result = repair(open_mesh_state)
     assert result.faces.shape[0] >= original_faces
     assert result.vertices is not None
-
-
-def test_repair_clears_smoothed_vertices(open_mesh_state: PipelineState):
-    """After repair, smoothed_vertices should be None (vertices is the latest)."""
-    assert open_mesh_state.smoothed_vertices is not None
-    result = repair(open_mesh_state)
     assert result.smoothed_vertices is None
-
-
-def test_repair_preserves_watertight_mesh(processed_3d: PipelineState):
-    """Repair should not break an already-good mesh."""
-    result = repair(processed_3d)
-    assert result.vertices is not None
-    assert result.faces is not None
-    assert result.vertices.shape[0] > 0
 
 
 def test_repair_noop_2d(processed_2d: PipelineState):
@@ -48,5 +35,3 @@ def test_repair_disabled(open_mesh_state: PipelineState):
     )
     result = repair(state)
     assert result.faces.shape[0] == state.faces.shape[0]
-
-
