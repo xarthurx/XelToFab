@@ -1,0 +1,101 @@
+---
+title: Field Types
+description: Density fields vs SDF fields and how field_type affects pipeline behavior
+---
+
+## Overview
+
+XelToFab supports two types of input fields, configured via the `field_type` parameter:
+
+| Field type | Typical source | Value range | Extraction level |
+|------------|---------------|-------------|-----------------|
+| `density` (default) | Classical TO solvers (SIMP, BESO), occupancy networks | [0, 1] | 0.5 (at `threshold`) |
+| `sdf` | Neural SDF models (DeepSDF, NITO, NTopo) | unbounded (negative inside, positive outside) | 0.0 (zero level set) |
+
+## Density fields
+
+Density fields contain continuous values in [0, 1] where higher values indicate material presence. This is the standard output format from topology optimization solvers.
+
+```python
+from xeltofab.state import PipelineParams
+
+params = PipelineParams(field_type="density")  # this is the default
+```
+
+### Default behavior for density fields
+
+- **Preprocessing is enabled** -- The field is Gaussian-smoothed, thresholded to binary, and cleaned with morphological operations
+- **`smooth_sigma = 1.0`** -- Gaussian smoothing helps reduce noise in the density field before binarization
+- **`direct_extraction = False`** -- Extraction operates on the preprocessed binary field
+- **Extraction level = `threshold`** (default 0.5) -- The marching cubes/squares isovalue
+
+This pipeline works well for raw TO output where density values may be noisy or have intermediate values that need cleanup.
+
+## SDF fields
+
+Signed distance fields encode the distance to the surface boundary. By convention, negative values are inside the object and positive values are outside (or vice versa depending on the model). The surface is at the zero level set.
+
+```python
+from xeltofab.state import PipelineParams
+
+params = PipelineParams(field_type="sdf")
+```
+
+### Smart defaults for SDF fields
+
+When `field_type="sdf"` is set, the pipeline automatically adjusts defaults (unless you explicitly override them):
+
+- **`direct_extraction = True`** -- Preprocessing is skipped. SDF fields are typically clean continuous outputs that do not benefit from thresholding or morphological operations
+- **`smooth_sigma = 0.0`** -- Gaussian preprocessing is disabled. The field is already smooth
+- **Extraction level = 0.0** -- The zero level set, which is the surface boundary in an SDF
+- **Taubin smoothing still runs** -- Even with clean SDF input, marching cubes produces staircase artifacts on the mesh that benefit from Taubin smoothing
+
+### Overriding SDF defaults
+
+The smart defaults only apply to values you have not explicitly set. You can override any of them:
+
+```python
+# SDF field, but keep Gaussian smoothing at sigma=0.5
+params = PipelineParams(field_type="sdf", smooth_sigma=0.5)
+
+# SDF field with preprocessing enabled
+params = PipelineParams(field_type="sdf", direct_extraction=False)
+```
+
+## Extraction level
+
+The extraction level is the isovalue passed to marching cubes (3D) or `find_contours` (2D). It determines which isosurface in the field becomes the mesh boundary.
+
+The default depends on field type:
+
+| Field type | Default extraction level | Reasoning |
+|------------|------------------------|-----------|
+| `density` | Value of `threshold` (default 0.5) | The 50% density contour separates material from void |
+| `sdf` | 0.0 | The zero level set is the surface boundary |
+
+Override it explicitly for non-standard cases:
+
+```python
+# Extract at a lower density threshold
+params = PipelineParams(threshold=0.3)
+
+# Extract SDF at a non-zero offset (expand/shrink the surface)
+params = PipelineParams(field_type="sdf", extraction_level=0.1)
+```
+
+The effective level is always available via `params.effective_extraction_level`.
+
+## When to use each type
+
+### Use `density` (default) when:
+
+- Your input comes from a classical TO solver (SIMP, BESO, evolutionary methods)
+- Values represent material density or occupancy probability in [0, 1]
+- The field may have noise, intermediate values, or disconnected artifacts that need cleanup
+
+### Use `sdf` when:
+
+- Your input comes from a neural implicit model (DeepSDF, NITO, NTopo, neural radiance fields)
+- Values represent signed distance to the surface
+- The field is already smooth and continuous -- preprocessing would degrade quality
+- You want the zero level set as the surface

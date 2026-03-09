@@ -1,0 +1,89 @@
+---
+title: PipelineParams
+description: Configuration model for the XelToFab processing pipeline
+---
+
+## Import
+
+```python
+from xeltofab import PipelineParams
+# or
+from xeltofab.state import PipelineParams
+```
+
+## Overview
+
+`PipelineParams` is a [Pydantic BaseModel](https://docs.pydantic.dev/latest/) that holds all configurable parameters for the pipeline. It includes smart defaults that adapt based on the input field type.
+
+## Fields
+
+| Field | Type | Default | Constraints | Description |
+|-------|------|---------|-------------|-------------|
+| `threshold` | `float` | `0.5` | `>= 0.0`, `<= 1.0` | Density threshold for binarization |
+| `smooth_sigma` | `float` | `1.0` | `>= 0.0` | Gaussian smoothing sigma for preprocessing |
+| `morph_radius` | `int` | `1` | `>= 0` | Morphological cleanup radius |
+| `taubin_iterations` | `int` | `20` | `>= 0` | Number of Taubin smoothing iterations |
+| `taubin_lambda` | `float` | `0.5` | `> 0.0`, `<= 1.0` | Shrinkage factor for Taubin smoothing |
+| `field_type` | `Literal["density", "sdf"]` | `"density"` | — | Input field type |
+| `direct_extraction` | `bool` | `False` | — | Skip preprocessing and extract directly from the continuous field |
+| `extraction_level` | `float \| None` | `None` | — | Explicit iso-level for marching cubes/squares extraction |
+
+## Smart defaults for SDF fields
+
+When `field_type` is set to `"sdf"`, `PipelineParams` automatically adjusts defaults for values **not explicitly set** by the user:
+
+- `direct_extraction` becomes `True` (SDF fields are already continuous — no binarization needed)
+- `smooth_sigma` becomes `0.0` (Gaussian preprocessing is skipped, though Taubin mesh smoothing still runs to remove staircase artifacts from marching cubes)
+
+If you explicitly pass `direct_extraction=False` or `smooth_sigma=2.0` with an SDF field, your values take precedence over the smart defaults.
+
+```python
+# Smart defaults apply automatically
+sdf_params = PipelineParams(field_type="sdf")
+assert sdf_params.direct_extraction is True
+assert sdf_params.smooth_sigma == 0.0
+
+# Explicit values override smart defaults
+sdf_params = PipelineParams(field_type="sdf", smooth_sigma=0.5)
+assert sdf_params.smooth_sigma == 0.5
+```
+
+## effective_extraction_level
+
+The `effective_extraction_level` property returns the iso-level used for mesh extraction:
+
+- If `extraction_level` is explicitly set, that value is returned.
+- Otherwise, `0.0` for SDF fields (zero level-set) or `threshold` for density fields.
+
+```python
+params = PipelineParams(threshold=0.4)
+assert params.effective_extraction_level == 0.4
+
+params = PipelineParams(field_type="sdf")
+assert params.effective_extraction_level == 0.0
+
+params = PipelineParams(extraction_level=0.3)
+assert params.effective_extraction_level == 0.3
+```
+
+## Usage
+
+```python
+from xeltofab import PipelineParams, load_density
+
+# Default parameters
+params = PipelineParams()
+
+# Custom parameters for a density field
+params = PipelineParams(
+    threshold=0.4,
+    smooth_sigma=1.5,
+    taubin_iterations=30,
+)
+
+# SDF field with smart defaults
+params = PipelineParams(field_type="sdf")
+
+# Pass to load_density
+state = load_density("field.npy", params=params)
+```

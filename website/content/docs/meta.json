@@ -1,0 +1,12 @@
+{
+  "pages": [
+    "index",
+    "---Getting Started---",
+    "getting-started",
+    "---Guides---",
+    "guides",
+    "---Reference---",
+    "api",
+    "cli"
+  ]
+}

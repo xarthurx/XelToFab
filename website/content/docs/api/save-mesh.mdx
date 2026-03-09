@@ -1,0 +1,67 @@
+---
+title: save_mesh
+description: Export an extracted 3D mesh to file
+---
+
+## Import
+
+```python
+from xeltofab import save_mesh
+# or
+from xeltofab.io import save_mesh
+```
+
+## Signature
+
+```python
+def save_mesh(state: PipelineState, path: str | Path) -> None
+```
+
+## Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `state` | `PipelineState` | A processed state containing mesh data |
+| `path` | `str \| Path` | Output file path. The format is determined by the file extension. |
+
+## Supported output formats
+
+Any format supported by [trimesh](https://trimesh.org/), including:
+
+| Format | Extension |
+|--------|-----------|
+| STL | `.stl` |
+| OBJ | `.obj` |
+| PLY | `.ply` |
+
+## Behavior
+
+`save_mesh` uses the `best_vertices` property on the state, which returns smoothed vertices if Taubin smoothing has been applied, or raw vertices otherwise. This ensures exported meshes always use the highest-quality geometry available.
+
+## 2D limitation
+
+`save_mesh` only supports 3D meshes. For 2D density fields, the pipeline produces contours rather than triangle meshes. Attempting to save a 2D result raises a `ValueError`:
+
+```
+ValueError: 2D contour export to .stl not supported — use viz for 2D output
+```
+
+For 2D results, use the [visualization functions](/docs/api/visualization) to render contours or save them as images.
+
+## Example
+
+```python
+from xeltofab import load_density, process, save_mesh
+
+state = process(load_density("field_3d.npy"))
+
+# Export as STL
+save_mesh(state, "output.stl")
+
+# Export as OBJ
+save_mesh(state, "output.obj")
+```
+
+## Errors
+
+- `ValueError` — no mesh data (extraction has not been run), or the state contains 2D contours instead of a 3D mesh

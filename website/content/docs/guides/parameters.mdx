@@ -1,0 +1,104 @@
+---
+title: Parameters
+description: Full PipelineParams reference with defaults, ranges, and tuning tips
+---
+
+## PipelineParams reference
+
+All pipeline behavior is configured through `PipelineParams`, a Pydantic model defined in `xeltofab.state`.
+
+```python
+from xeltofab.state import PipelineParams
+
+params = PipelineParams(
+    threshold=0.5,
+    smooth_sigma=1.0,
+    morph_radius=1,
+    taubin_iterations=20,
+    taubin_lambda=0.5,
+    field_type="density",
+    direct_extraction=False,
+    extraction_level=None,
+)
+```
+
+### Full parameter table
+
+| Parameter | Type | Default | Range | Description |
+|-----------|------|---------|-------|-------------|
+| `threshold` | `float` | `0.5` | [0.0, 1.0] | Density threshold for binarization in preprocessing |
+| `smooth_sigma` | `float` | `1.0` | >= 0.0 | Gaussian smoothing sigma applied before thresholding. Set to 0.0 to disable |
+| `morph_radius` | `int` | `1` | >= 0 | Radius of the morphological structuring element (disk for 2D, ball for 3D). Set to 0 to disable morphological cleanup |
+| `taubin_iterations` | `int` | `20` | >= 0 | Number of Taubin smoothing iterations on the extracted mesh. Set to 0 to disable |
+| `taubin_lambda` | `float` | `0.5` | (0.0, 1.0] | Shrinkage factor for Taubin smoothing. Higher values produce more smoothing per iteration |
+| `field_type` | `"density" \| "sdf"` | `"density"` | -- | Type of input field. Affects default values for other parameters |
+| `direct_extraction` | `bool` | `False` | -- | Skip preprocessing and extract directly from the continuous input field |
+| `extraction_level` | `float \| None` | `None` | -- | Explicit isovalue for marching cubes/squares. When `None`, defaults to `threshold` for density or `0.0` for SDF |
+
+### Computed property
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `effective_extraction_level` | `float` | The actual extraction level used: `extraction_level` if set explicitly, otherwise `0.0` for SDF or `threshold` for density |
+
+## Smart defaults by field type
+
+When `field_type="sdf"` is set, certain parameters are automatically adjusted unless you explicitly provide a value:
+
+| Parameter | Density default | SDF auto-default | Reasoning |
+|-----------|----------------|------------------|-----------|
+| `direct_extraction` | `False` | `True` | SDF fields are clean; preprocessing would degrade them |
+| `smooth_sigma` | `1.0` | `0.0` | SDF fields are already smooth; Gaussian pre-smoothing is unnecessary |
+| `extraction_level` | `threshold` (0.5) | `0.0` | SDF surface is at the zero level set |
+
+These overrides only apply when the parameter was **not explicitly passed**. If you set `smooth_sigma=0.5` with `field_type="sdf"`, your value is preserved.
+
+## Parameter tuning tips
+
+### Threshold
+
+- **Lower threshold (0.3-0.4)**: Includes more material, produces thicker features. Use when the TO solver was aggressive with material removal
+- **Higher threshold (0.6-0.7)**: Excludes more material, produces thinner features. Use when the solver left too much intermediate density
+- The threshold only applies when `direct_extraction=False`
+
+### Gaussian sigma
+
+- **`smooth_sigma=0.0`**: No Gaussian smoothing. Use for clean or already-smoothed fields
+- **`smooth_sigma=0.5-1.0`**: Light smoothing. Good for most TO results
+- **`smooth_sigma=2.0+`**: Heavy smoothing. Blurs fine features but removes more noise. Be cautious of thin features being smoothed away
+
+### Morphological radius
+
+- **`morph_radius=0`**: Disabled. Use when the field is clean or when you need to preserve fine detail
+- **`morph_radius=1`**: Default. Removes single-voxel noise and fills single-voxel holes
+- **`morph_radius=2-3`**: More aggressive cleanup. Can merge nearby features or break thin connections
+
+### Taubin smoothing
+
+- **`taubin_iterations=0`**: Disabled. Raw marching cubes output with staircase artifacts
+- **`taubin_iterations=10-20`**: Moderate smoothing. Good balance between quality and feature preservation
+- **`taubin_iterations=50+`**: Heavy smoothing. Produces very smooth surfaces but may lose sharp features
+- **`taubin_lambda`**: Controls smoothing strength per iteration. The default of 0.5 works well for most cases. Lower values (0.1-0.3) produce gentler smoothing
+
+### Direct extraction
+
+Enable `direct_extraction=True` when:
+
+- The input field is a clean SDF (automatically enabled for `field_type="sdf"`)
+- The TO solver has fully converged and density values are near 0 or 1
+- You want to control the exact isovalue via `extraction_level`
+
+## CLI mapping
+
+CLI flags map to `PipelineParams` fields:
+
+| CLI flag | Parameter |
+|----------|-----------|
+| `--threshold` | `threshold` |
+| `--sigma` | `smooth_sigma` |
+| `--field-type` | `field_type` |
+| `--direct` | `direct_extraction` |
+
+The CLI preserves smart defaults: if you pass `--field-type sdf` without `--sigma` or `--direct`, the SDF defaults are applied automatically.
+
+Parameters not exposed via CLI (`morph_radius`, `taubin_iterations`, `taubin_lambda`, `extraction_level`) can be configured through the Python API.

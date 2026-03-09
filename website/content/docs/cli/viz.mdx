@@ -1,0 +1,61 @@
+---
+title: xtf viz
+description: Visualize a density field and its extraction result
+---
+
+## Usage
+
+```bash
+xtf viz [OPTIONS] INPUT_PATH
+```
+
+Load a density field, run it through the pipeline, and display (or save) a side-by-side comparison visualization showing the input field alongside the extraction result.
+
+## Arguments
+
+| Argument | Description |
+|----------|-------------|
+| `INPUT_PATH` | Path to the input density field file (must exist) |
+
+## Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `-o`, `--output` | `PATH` | `None` | Output image path. If provided, the figure is saved to this file. If omitted, an interactive matplotlib window is opened. |
+| `--threshold` | `FLOAT` | `0.5` | Density threshold \[0-1\] for binarization |
+| `--sigma` | `FLOAT` | `1.0` | Gaussian smoothing sigma for preprocessing |
+| `-f`, `--field-name` | `TEXT` | `None` | Field/variable name to extract from input file (for `.npz`, `.mat`, `.h5`, etc.) |
+| `--shape` | `TEXT` | `None` | Grid shape for flat data, e.g. `100x200` or `10x20x30` |
+| `--field-type` | `density\|sdf` | `density` | Input field type. Setting `sdf` enables smart defaults. |
+| `--direct` | flag | `False` | Direct extraction from continuous field (skip preprocessing) |
+
+### Behavior
+
+- **With `-o`:** The comparison figure is saved to the specified path at 150 DPI and the matplotlib figure is closed. No window is opened.
+- **Without `-o`:** An interactive matplotlib window is opened with `plt.show()`.
+
+## Examples
+
+### Interactive display
+
+```bash
+xtf viz density_field.npy
+```
+
+### Save to file
+
+```bash
+xtf viz density_field.npy -o comparison.png
+```
+
+### MATLAB file with custom parameters
+
+```bash
+xtf viz topology_result.mat -f xPhys --threshold 0.4 -o result.png
+```
+
+### SDF field visualization
+
+```bash
+xtf viz sdf_field.npy --field-type sdf -o sdf_result.png
+```

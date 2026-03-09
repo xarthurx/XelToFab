@@ -1,0 +1,168 @@
+---
+title: Input Formats
+description: All supported file formats for loading density and SDF fields
+---
+
+## Supported formats
+
+| Format | Extensions | Required dependency | Install command |
+|--------|-----------|-------------------|-----------------|
+| NumPy | `.npy`, `.npz` | numpy (built-in) | -- |
+| MATLAB | `.mat` | scipy (built-in) | -- |
+| CSV/Text | `.csv`, `.txt` | numpy (built-in) | -- |
+| VTK | `.vtk`, `.vtr`, `.vti` | pyvista (optional) | `uv sync --extra vtk` |
+| HDF5 | `.h5`, `.hdf5`, `.xdmf` | h5py (optional) | `uv sync --extra hdf5` |
+
+Install all optional formats at once with:
+
+```bash
+uv sync --extra all-formats
+```
+
+Check which formats are available on your system:
+
+```bash
+uv run xtf formats
+```
+
+## Format details
+
+### NumPy (`.npy`, `.npz`)
+
+The simplest format. `.npy` files contain a single array. `.npz` files can contain multiple arrays.
+
+```python
+from xeltofab.io import load_density
+
+# .npy -- loads the single array directly
+state = load_density("field.npy")
+
+# .npz -- uses "density" key if present, otherwise the first key
+state = load_density("field.npz")
+
+# .npz -- specify which array to load
+state = load_density("field.npz", field_name="xPhys")
+```
+
+CLI:
+
+```bash
+uv run xtf process field.npy -o output.stl
+uv run xtf process field.npz -o output.stl --field-name xPhys
+```
+
+### MATLAB (`.mat`)
+
+Loads `.mat` files via `scipy.io.loadmat`. The loader auto-detects common topology optimization variable names in priority order:
+
+1. `xPhys`
+2. `densities`
+3. `x`
+4. `rho`
+5. `dc`
+6. `density`
+
+If none of these are found and the file contains a single variable, that variable is used. If multiple variables exist, you must specify which one to load.
+
+```python
+# Auto-detect variable name
+state = load_density("result.mat")
+
+# Specify explicitly
+state = load_density("result.mat", field_name="xPhys")
+```
+
+CLI:
+
+```bash
+uv run xtf process result.mat -o output.stl
+uv run xtf process result.mat -o output.stl --field-name rho
+```
+
+**Note on MATLAB v7.3+ files**: Files saved in MATLAB's v7.3 format use HDF5 internally and cannot be read by `scipy.io.loadmat`. If you encounter this, either resave in MATLAB with `save('file.mat', '-v7')` or save as `.h5` and load with the HDF5 loader.
+
+### CSV / Text (`.csv`, `.txt`)
+
+Loads comma-delimited or whitespace-delimited data via `numpy.loadtxt`. The loader tries comma-delimited first, then whitespace-delimited, then with header skipping.
+
+For 2D grids stored as a table (rows and columns), the shape is inferred automatically:
+
+```python
+state = load_density("field.csv")
+```
+
+For flat data (one value per line or a single row) that represents a 2D or 3D grid, provide the `shape` parameter:
+
+```python
+state = load_density("field.csv", shape=(50, 100))       # 2D
+state = load_density("field.csv", shape=(10, 20, 30))    # 3D
+```
+
+CLI:
+
+```bash
+uv run xtf process field.csv -o output.stl --shape 50x100
+uv run xtf process field.txt -o output.stl --shape 10x20x30
+```
+
+The flat data is reshaped to the specified dimensions. The total number of values must match the product of the shape dimensions.
+
+### VTK (`.vtk`, `.vtr`, `.vti`)
+
+Loads VTK structured grid files via PyVista. Requires the optional `vtk` extra.
+
+The loader auto-detects density fields by looking for cell data or point data arrays with names matching common TO patterns (`density`, `rho`, `xphys`, `x`), checking cell data first (since TO densities are per-element). If no match is found and only one data array exists, it is used automatically.
+
+```python
+state = load_density("result.vtk")
+state = load_density("result.vti", field_name="density")
+```
+
+CLI:
+
+```bash
+uv run xtf process result.vtk -o output.stl
+uv run xtf process result.vti -o output.stl --field-name density
+```
+
+Grid dimensions are extracted from the VTK structured grid metadata. Cell data arrays are reshaped to cell counts (node count - 1 per axis), and point data arrays use node counts directly. VTK's internal Fortran-like ordering is transposed to C order automatically.
+
+### HDF5 (`.h5`, `.hdf5`)
+
+Loads HDF5 files via h5py. Requires the optional `hdf5` extra.
+
+Auto-detection searches all datasets recursively, checking leaf names against the same known TO variable names as the MATLAB loader (`xPhys`, `densities`, `x`, `rho`, `dc`, `density`).
+
+```python
+state = load_density("result.h5")
+state = load_density("result.h5", field_name="simulations/density")
+```
+
+CLI:
+
+```bash
+uv run xtf process result.h5 -o output.stl
+uv run xtf process result.h5 -o output.stl --field-name simulations/density
+```
+
+### XDMF (`.xdmf`)
+
+XDMF files are XML metadata files that reference HDF5 datasets. The loader parses the XDMF XML, finds `Attribute` elements with `DataItem` children in HDF format, and reads the referenced data from the companion `.h5` file.
+
+```python
+state = load_density("result.xdmf")
+state = load_density("result.xdmf", field_name="density")
+```
+
+The companion HDF5 file must be in the same directory as the XDMF file.
+
+## Common options
+
+All loaders accept these parameters via `load_density()`:
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `path` | `str \| Path` | Path to the input file |
+| `field_name` | `str \| None` | Variable/dataset name to extract (optional, auto-detected if omitted) |
+| `shape` | `tuple[int, ...] \| None` | Reshape flat data to this grid shape (primarily for CSV/TXT) |
+| `params` | `PipelineParams \| None` | Pipeline configuration (uses defaults if omitted) |

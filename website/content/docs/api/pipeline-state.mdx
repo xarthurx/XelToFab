@@ -1,0 +1,88 @@
+---
+title: PipelineState
+description: Immutable state object threaded through all pipeline stages
+---
+
+## Import
+
+```python
+from xeltofab import PipelineState
+# or
+from xeltofab.state import PipelineState
+```
+
+## Overview
+
+`PipelineState` is a [Pydantic BaseModel](https://docs.pydantic.dev/latest/) that carries all data through the pipeline. Each stage function receives a state and returns a **new** state via `model_copy(update={...})`, preserving immutability.
+
+## Fields
+
+| Field | Type | Default | Set by |
+|-------|------|---------|--------|
+| `density` | `np.ndarray` | *(required)* | Constructor / `load_density` |
+| `ndim` | `int` | `0` | Auto-computed from `density` |
+| `params` | `PipelineParams` | `PipelineParams()` | Constructor / `load_density` |
+| `binary` | `np.ndarray \| None` | `None` | Preprocessing stage |
+| `vertices` | `np.ndarray \| None` | `None` | Extraction stage (3D) |
+| `faces` | `np.ndarray \| None` | `None` | Extraction stage (3D) |
+| `contours` | `list[np.ndarray] \| None` | `None` | Extraction stage (2D) |
+| `smoothed_vertices` | `np.ndarray \| None` | `None` | Smoothing stage (3D) |
+| `volume_fraction` | `float \| None` | `None` | Extraction stage |
+
+## Validation
+
+The `density` field is validated on construction:
+
+- Must be a 2D or 3D numpy array. Arrays with other dimensions raise a `ValueError`.
+
+```python
+import numpy as np
+from xeltofab import PipelineState
+
+# Valid: 2D array
+state = PipelineState(density=np.zeros((100, 200)))
+assert state.ndim == 2
+
+# Valid: 3D array
+state = PipelineState(density=np.zeros((10, 20, 30)))
+assert state.ndim == 3
+
+# Invalid: 1D array raises ValueError
+# PipelineState(density=np.zeros(100))  # ValueError: density must be 2D or 3D
+```
+
+## ndim auto-computation
+
+The `ndim` field is automatically set from `density.ndim` via a model validator. You never need to set it manually.
+
+## best_vertices property
+
+The `best_vertices` property returns the highest-quality vertex data available:
+
+- Returns `smoothed_vertices` if Taubin smoothing has been applied.
+- Falls back to raw `vertices` otherwise.
+- Returns `None` if no extraction has been performed.
+
+This property is used by `save_mesh` and the visualization functions to always use the best available geometry.
+
+```python
+from xeltofab import load_density, process
+
+state = process(load_density("field.npy"))
+
+# After processing, best_vertices returns the smoothed mesh
+vertices = state.best_vertices  # smoothed_vertices if available, else vertices
+```
+
+## Immutability pattern
+
+Stage functions do not mutate state in-place. Instead, they return new state objects using Pydantic's `model_copy`:
+
+```python
+# Inside a stage function (internal pattern)
+def some_stage(state: PipelineState) -> PipelineState:
+    new_data = compute_something(state.density)
+    return state.model_copy(update={"binary": new_data})
+```
+
+Note that `model_copy` performs a **shallow copy** — numpy arrays are shared between copies. Stage functions must always create new arrays rather than mutating existing ones in-place.

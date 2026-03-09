@@ -1,0 +1,38 @@
+---
+title: xtf formats
+description: List supported input formats and their availability
+---
+
+## Usage
+
+```bash
+xtf formats
+```
+
+Displays a table of all supported input file formats, their file extensions, whether the required dependency is installed, and how to install any missing dependencies.
+
+This command takes no arguments or options.
+
+## Example output
+
+```
+Format     Extensions           Status       Install
+-----------------------------------------------------------------
+numpy      .npy, .npz           available    (built-in)
+matlab     .mat                 available    (built-in, via scipy)
+csv        .csv, .txt           available    (built-in)
+vtk        .vtk, .vtr, .vti    available    uv add --optional vtk pyvista
+hdf5       .h5, .hdf5, .xdmf   missing      uv add --optional hdf5 h5py
+```
+
+## Format details
+
+| Format | Extensions | Dependency | Notes |
+|--------|-----------|------------|-------|
+| NumPy | `.npy`, `.npz` | None (built-in) | For `.npz` archives, use `-f` / `--field-name` to select the array |
+| MATLAB | `.mat` | None (built-in, via scipy) | Use `-f` / `--field-name` to select a variable |
+| CSV | `.csv`, `.txt` | None (built-in) | Flat data; use `--shape` to reshape (e.g., `--shape 100x200`) |
+| VTK | `.vtk`, `.vtr`, `.vti` | `pyvista` | Install with `uv add --optional vtk pyvista` |
+| HDF5 | `.h5`, `.hdf5`, `.xdmf` | `h5py` | Install with `uv add --optional hdf5 h5py` |
+
+Formats with a "missing" status can still be installed after the fact. Once the dependency is available, the format becomes usable without reinstalling XelToFab.
