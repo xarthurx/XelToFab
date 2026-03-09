@@ -21,7 +21,7 @@ def test_process_3d_end_to_end(sphere_density: np.ndarray):
     assert result.vertices is not None
     assert result.faces is not None
     assert result.volume_fraction is not None
-    # After repair+remesh, smoothed_vertices is cleared
+    # After repair, smoothed_vertices is cleared (repair updates vertices directly)
     assert result.smoothed_vertices is None
     # All face indices within bounds
     assert np.all(result.faces < result.vertices.shape[0])

@@ -25,7 +25,9 @@ class PipelineParams(BaseModel):
     repair: bool = True
 
     # Isotropic remeshing (3D only, requires pymeshlab)
-    remesh: bool = True
+    # Disabled by default: pymeshlab 2025.7 lacks meshing_isotropic_explicit_remeshing;
+    # the available generate_resampled_uniform_mesh produces degenerate triangles.
+    remesh: bool = False
     target_edge_length: float | None = None
 
     @model_validator(mode="after")

@@ -14,7 +14,8 @@ from xeltofab.remesh import remesh  # noqa: E402
 
 def test_remesh_produces_valid_mesh(processed_3d: PipelineState):
     """Remeshing should produce a valid mesh and clear smoothed_vertices."""
-    result = remesh(processed_3d)
+    state = processed_3d.model_copy(update={"params": PipelineParams(remesh=True)})
+    result = remesh(state)
     assert result.vertices is not None
     assert result.faces is not None
     assert result.vertices.shape[1] == 3
@@ -25,11 +26,11 @@ def test_remesh_produces_valid_mesh(processed_3d: PipelineState):
 
 def test_remesh_custom_edge_length(processed_3d: PipelineState):
     """Custom target edge length should affect output mesh density."""
-    params_coarse = PipelineParams(target_edge_length=5.0)
+    params_coarse = PipelineParams(remesh=True, target_edge_length=5.0)
     state_coarse = processed_3d.model_copy(update={"params": params_coarse})
     result_coarse = remesh(state_coarse)
 
-    params_fine = PipelineParams(target_edge_length=0.5)
+    params_fine = PipelineParams(remesh=True, target_edge_length=0.5)
     state_fine = processed_3d.model_copy(update={"params": params_fine})
     result_fine = remesh(state_fine)
 

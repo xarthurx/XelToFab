@@ -14,7 +14,7 @@ def test_pipeline_params_defaults():
     assert params.taubin_iterations == 20
     assert params.taubin_lambda == 0.5
     assert params.repair is True
-    assert params.remesh is True
+    assert params.remesh is False
     assert params.target_edge_length is None
 
 

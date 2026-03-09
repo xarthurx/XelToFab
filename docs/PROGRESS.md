@@ -127,6 +127,18 @@ Session log of learnings, failures, solutions discovered, and context gathered d
 
 ---
 
+### 2026-03-09 — pymeshlab Remeshing Degrades Mesh Quality
+
+**Problem:** Plan specified `meshing_isotropic_explicit_remeshing` and `meshing_close_holes` for Tier 2 quality improvement. Neither filter is available in pymeshlab 2025.7. The alternative `generate_resampled_uniform_mesh` (Poisson-based surface reconstruction) produced degenerate triangles: synthetic sphere min angle dropped from 30.4° to 0.3°, aspect ratio mean jumped from 1.20 to 4.50.
+
+**Root cause:** pymeshlab 2025.7 ships a reduced filter set. GPU-dependent plugins fail to load in WSL2 (missing `libOpenGL.so.0`), and some filters (including the critical remeshing and hole-closing ones) are simply absent from the build.
+
+**Resolution:** Disabled remeshing by default (`remesh=False` in `PipelineParams`). Repair is enabled (harmless no-op on clean meshes). The remesh module remains available for opt-in experimentation.
+
+**Prevention:** When depending on specific library filters, verify availability at implementation time (not just planning time) by introspecting the actual installed API. Plan should have included a `pytest.importorskip` + filter availability check as a prerequisite step.
+
+---
+
 ### 2026-03-09 — Benchmark Baseline and best_vertices Refactoring
 
 **What:** Created `scripts/benchmark_baseline.py` to capture mesh quality metrics (aspect ratio, min angle, scaled Jacobian) and visualizations across 8 models (EngiBench 3D, Corner-Based TO, EngiBench 2D, synthetic). Added Corner-Based TO dataset (2 files from Bielecki et al.). Baseline results in `benchmarks/baseline/`.

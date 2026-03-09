@@ -7,7 +7,7 @@
 - [ ] QEM decimation (quadric edge collapse) — `pymeshlab` or `pyfqmr`
 - [ ] Feature-preserving smoothing — bilateral mesh filtering, two-step normal smoothing
 - [x] Watertight repair — non-manifold fixing via pymeshlab (`repair.py`)
-- [x] Isotropic remeshing — `pymeshlab` `generate_resampled_uniform_mesh()` (`remesh.py`)
+- [x] Isotropic remeshing — `remesh.py` exists but disabled by default (pymeshlab 2025.7 lacks quality remeshing filters)
 - [x] Mesh quality metrics — aspect ratio, min angle, scaled Jacobian via `quality.py`
 
 ## Benchmark Enhancements
