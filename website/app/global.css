@@ -1,3 +1,42 @@
 @import 'tailwindcss';
 @import 'fumadocs-ui/css/neutral.css';
 @import 'fumadocs-ui/css/preset.css';
+
+@theme {
+  --font-sans: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-mono), ui-monospace, monospace;
+
+  /* Brand palette — cool slate blue */
+  --color-brand-50: oklch(0.97 0.01 245);
+  --color-brand-100: oklch(0.93 0.02 245);
+  --color-brand-200: oklch(0.87 0.05 245);
+  --color-brand-300: oklch(0.78 0.08 240);
+  --color-brand-400: oklch(0.68 0.11 235);
+  --color-brand-500: oklch(0.56 0.12 230);
+  --color-brand-600: oklch(0.46 0.11 230);
+  --color-brand-700: oklch(0.38 0.09 230);
+  --color-brand-800: oklch(0.30 0.06 230);
+  --color-brand-900: oklch(0.22 0.04 230);
+}
+
+/* Override Fumadocs primary with brand color */
+:root {
+  --fd-primary: oklch(0.46 0.11 230);
+  --fd-primary-foreground: oklch(0.97 0.01 245);
+}
+
+.dark {
+  --fd-primary: oklch(0.68 0.11 235);
+  --fd-primary-foreground: oklch(0.16 0.02 230);
+}
+
+/* Heading typography — use mono for engineering feel */
+h1, h2, h3 {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  letter-spacing: -0.02em;
+}
+
+/* Code blocks inherit mono */
+pre, code {
+  font-family: var(--font-mono), ui-monospace, monospace;
+}

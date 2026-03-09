@@ -48,7 +48,7 @@ function Mesh({ url }: { url: string }) {
   return (
     <Center>
       <mesh geometry={geometry}>
-        <meshStandardMaterial color="steelblue" />
+        <meshStandardMaterial color="#4a6fa5" />
       </mesh>
       <mesh geometry={geometry}>
         <meshBasicMaterial color="black" wireframe transparent opacity={0.1} />
