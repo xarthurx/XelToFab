@@ -10,6 +10,11 @@
 - [ ] Watertight repair — hole filling, non-manifold fixing via trimesh
 - [ ] Mesh quality metrics — aspect ratio, min angle, scaled Jacobian via `pyvista.mesh.quality()`
 
+## Benchmark Enhancements
+
+- [ ] Quality heatmaps — color triangles by aspect ratio / min angle / Jacobian (pyvista)
+- [ ] Metric histograms — distribution plots of mesh quality metrics per model
+
 ## Visualization Upgrades
 
 - [ ] Polyscope integration — interactive 3D mesh/volume inspection (`polyscope` Python package)
