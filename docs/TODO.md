@@ -26,4 +26,5 @@
 
 - [ ] FlexiCubes / Kaolin for differentiable mesh extraction (requires CUDA)
 - [ ] Neural SDF representations (NITO / NTopo style)
+  - [x] SDF field-type support for extraction (`field_type='sdf'`, `direct_extraction`)
 - [ ] Point2CAD concepts for learned B-Rep reconstruction

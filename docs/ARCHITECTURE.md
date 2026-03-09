@@ -75,6 +75,20 @@ def stage(state: PipelineState) -> PipelineState:
 | `faces` | `ndarray` | `extract()` (3D only) |
 | `smoothed_vertices` | `ndarray` | `smooth()` (3D only) |
 
+## Field Types and Extraction Modes
+
+The pipeline supports two field types and two extraction modes:
+
+| Field type | Default level | Use case |
+|------------|--------------|----------|
+| `density` | 0.5 | Classical TO solvers, occupancy networks |
+| `sdf` | 0.0 | Neural SDF models (NITO, NTopo, DeepSDF) |
+
+| Extraction mode | Preprocessing | Use case |
+|----------------|---------------|----------|
+| Preprocessed (default for density) | Gaussian smooth, threshold, morphology | Noisy TO density fields |
+| Direct (`direct_extraction=True`, default for SDF) | Skipped | Clean neural field outputs, converged solvers |
+
 ## CLI
 
 The `xtf` command (installed via `[project.scripts]`) exposes three subcommands:
@@ -83,7 +97,7 @@ The `xtf` command (installed via `[project.scripts]`) exposes three subcommands:
 - **`xtf viz <input> [-o <output>]`** — Run the pipeline and display/save a comparison plot
 - **`xtf formats`** — List supported input formats and their availability
 
-`process` and `viz` accept `--threshold`, `--sigma`, `--field-name` (for multi-variable files), and `--shape` (for flat CSV/TXT data, e.g. `50x100`).
+`process` and `viz` accept `--threshold`, `--sigma`, `--field-name` (for multi-variable files), `--shape` (for flat CSV/TXT data, e.g. `50x100`), `--field-type` (`density` or `sdf`), and `--direct` (skip preprocessing).
 
 ## Dependencies
 
@@ -109,14 +123,14 @@ Tests mirror the module structure in `tests/`:
 ```
 tests/
 ├── conftest.py             Shared fixtures + Agg backend
-├── test_state.py           Model validation (6 tests)
+├── test_state.py           Model validation (11 tests)
 ├── test_preprocess.py      Preprocessing behavior (6 tests)
-├── test_extract.py         Extraction output shapes (3 tests)
+├── test_extract.py         Extraction output shapes (7 tests)
 ├── test_smooth.py          Smoothing effects + volume preservation (4 tests)
 ├── test_io.py              File round-trip (6 tests)
-├── test_pipeline.py        End-to-end 2D + 3D (2 tests)
-├── test_viz.py             Plot generation (6 tests)
-├── test_cli.py             CLI invocation (4 tests)
+├── test_pipeline.py        End-to-end 2D + 3D (5 tests)
+├── test_viz.py             Plot generation (8 tests)
+├── test_cli.py             CLI invocation (6 tests)
 └── test_loaders/
     ├── test_dispatch.py        Registry + format resolution (6 tests)
     ├── test_numpy_loader.py    NumPy .npy/.npz (7 tests)
