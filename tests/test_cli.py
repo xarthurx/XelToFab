@@ -63,9 +63,7 @@ def test_cli_process_sdf(tmp_path: Path):
     output_path = tmp_path / "sphere.stl"
 
     runner = CliRunner()
-    result = runner.invoke(
-        main, ["process", str(input_path), "-o", str(output_path), "--field-type", "sdf"]
-    )
+    result = runner.invoke(main, ["process", str(input_path), "-o", str(output_path), "--field-type", "sdf"])
     assert result.exit_code == 0, result.output
     assert output_path.exists()
 
@@ -77,8 +75,6 @@ def test_cli_process_direct(tmp_path: Path, small_sphere_density: np.ndarray):
     output_path = tmp_path / "sphere.stl"
 
     runner = CliRunner()
-    result = runner.invoke(
-        main, ["process", str(input_path), "-o", str(output_path), "--direct"]
-    )
+    result = runner.invoke(main, ["process", str(input_path), "-o", str(output_path), "--direct"])
     assert result.exit_code == 0, result.output
     assert output_path.exists()
