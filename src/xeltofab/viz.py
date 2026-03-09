@@ -36,7 +36,8 @@ def plot_result(state: PipelineState) -> Figure:
     """Plot extraction result. 2D: contours on binary. 3D: trisurf wireframe."""
     if state.ndim == 2:
         fig, ax = plt.subplots()
-        ax.imshow(state.binary, cmap="gray", origin="lower")
+        background = state.binary if state.binary is not None else state.density
+        ax.imshow(background, cmap="gray", origin="lower")
         if state.contours is not None:
             for contour in state.contours:
                 ax.plot(contour[:, 1], contour[:, 0], "r-", linewidth=1.5)
@@ -67,9 +68,11 @@ def plot_comparison(state: PipelineState) -> Figure:
     """Side-by-side: density field vs extraction result."""
     if state.ndim == 2:
         fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
-        ax1.imshow(state.density, cmap="viridis", origin="lower", vmin=0, vmax=1)
-        ax1.set_title("Density Field")
-        ax2.imshow(state.binary, cmap="gray", origin="lower")
+        vmin, vmax = (0, 1) if state.params.field_type == "density" else (None, None)
+        ax1.imshow(state.density, cmap="viridis", origin="lower", vmin=vmin, vmax=vmax)
+        ax1.set_title("Input Field")
+        background = state.binary if state.binary is not None else state.density
+        ax2.imshow(background, cmap="gray", origin="lower")
         if state.contours is not None:
             for contour in state.contours:
                 ax2.plot(contour[:, 1], contour[:, 0], "r-", linewidth=1.5)
