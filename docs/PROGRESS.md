@@ -100,3 +100,27 @@ Session log of learnings, failures, solutions discovered, and context gathered d
 - Added 4 regression tests covering all 6 issues.
 
 **Prevention:** For file format loaders: (1) always test with realistic multi-element files (geometry + density), not just minimal single-field files; (2) normalize case at the point of comparison, not just at dispatch; (3) catch all exception types loaders can raise in CLI wrappers; (4) use `rpartition` for path-like splits that may contain the delimiter in the prefix; (5) never match XML tag names literally — always handle namespaces.
+
+---
+
+### 2026-03-09 — Trimesh Vertex Merging Breaks Face Indices in smooth()
+
+**Problem:** `smooth()` created a `trimesh.Trimesh` with default `process=True`, which calls `merge_vertices()` and can reduce vertex count. The smoothed vertices were saved but faces were not updated, leaving stale indices. When `save_mesh()` then created a new Trimesh from smoothed_vertices + original faces, face indices were out of bounds → `IndexError`.
+
+**Root cause:** `trimesh.Trimesh()` with default `process=True` merges duplicate/close vertices and reindexes faces. The `smooth()` function only saved `mesh.vertices` but not `mesh.faces`, so `state.faces` still had pre-merge indices.
+
+**Resolution:** Pass `process=False` to `trimesh.Trimesh()` in `smooth()`. Taubin smoothing only needs topology, not a processed mesh. Fix: `c2e43c6`
+
+**Prevention:** When constructing trimesh meshes for intermediate operations (smoothing, analysis), always use `process=False` unless you explicitly need vertex merging. If `process=True` is used, save both updated vertices AND updated faces.
+
+---
+
+### 2026-03-09 — CLI Defeats PipelineParams Smart Defaults via Explicit Params
+
+**Problem:** CLI commands always passed `smooth_sigma=sigma` and `direct_extraction=direct` to `PipelineParams()`, even when using Click defaults. Pydantic's `model_fields_set` saw these as "explicitly set" and the `apply_field_type_defaults` validator skipped them. Result: `--field-type sdf` ran with `smooth_sigma=1.0` and `direct_extraction=False` instead of the intended SDF defaults.
+
+**Root cause:** Click always provides default values for all options. Passing them directly to PipelineParams made defaults indistinguishable from user-specified values.
+
+**Resolution:** Used `ctx.get_parameter_source()` to detect whether `--sigma` and `--direct` were explicitly provided on the command line. Only pass explicitly-set values to PipelineParams, allowing the model_validator's smart defaults to apply. Extracted `_build_params()` helper shared by both `process_cmd` and `viz`. Fix: `c2e43c6`
+
+**Prevention:** When CLI options map to model fields that have smart defaults based on `model_fields_set`, use Click's `ctx.get_parameter_source(param_name) == ParameterSource.COMMANDLINE` to distinguish user input from Click defaults. Never blindly forward all Click defaults to Pydantic models that use `model_fields_set` for conditional logic.
