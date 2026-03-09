@@ -57,7 +57,11 @@ Collaboration: M4X–IDEAL Lab with Prof. Mark Fuge.
 | `ARCHITECTURE.md` | `docs/` | Module map, data flow, dependency table |
 | `TODO.md` | `docs/` | Feature backlog (tiered) |
 | `PROGRESS.md` | `docs/` | Incident log & project memory |
-| `docs/plans/` | `docs/plans/` | Design and implementation plans |
+
+## Confidential Plans
+
+Design docs and implementation plans are stored externally (not synced with this repo):
+`~/repo/repo_plans/xelToFab/`
 
 ## docs/TODO.md — Feature Backlog
 
