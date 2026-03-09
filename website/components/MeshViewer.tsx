@@ -2,21 +2,47 @@
 
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Center } from '@react-three/drei';
-import { Suspense, useEffect, useState } from 'react';
-import * as THREE from 'three';
+import { memo, Suspense, useEffect, useState } from 'react';
+import type { BufferGeometry } from 'three';
 import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js';
 
 function Mesh({ url }: { url: string }) {
-  const [geometry, setGeometry] = useState<THREE.BufferGeometry | null>(null);
+  const [geometry, setGeometry] = useState<BufferGeometry | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
     const loader = new STLLoader();
-    loader.load(url, (geo) => {
-      geo.computeVertexNormals();
-      setGeometry(geo);
-    });
+    loader.load(
+      url,
+      (geo) => {
+        if (cancelled) {
+          geo.dispose();
+          return;
+        }
+        geo.computeVertexNormals();
+        setGeometry((prev) => {
+          prev?.dispose();
+          return geo;
+        });
+        setError(null);
+      },
+      undefined,
+      () => {
+        if (!cancelled) setError(`Failed to load ${url}`);
+      },
+    );
+
+    return () => {
+      cancelled = true;
+      setGeometry((prev) => {
+        prev?.dispose();
+        return null;
+      });
+    };
   }, [url]);
 
+  if (error) return null;
   if (!geometry) return null;
 
   return (
@@ -31,7 +57,7 @@ function Mesh({ url }: { url: string }) {
   );
 }
 
-export function MeshViewer({
+export const MeshViewer = memo(function MeshViewer({
   src,
   height = 400,
 }: {
@@ -53,4 +79,4 @@ export function MeshViewer({
       </Canvas>
     </div>
   );
-}
+});
