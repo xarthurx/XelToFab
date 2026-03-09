@@ -19,6 +19,21 @@ def _parse_shape(value: str) -> tuple[int, ...]:
     return tuple(int(p) for p in parts)
 
 
+def _build_params(ctx: click.Context, threshold: float, sigma: float, field_type: str, direct: bool) -> PipelineParams:
+    """Build PipelineParams, only passing values explicitly set by the user.
+
+    This preserves PipelineParams smart defaults (e.g., SDF auto-enables
+    direct extraction and disables Gaussian smoothing).
+    """
+    kwargs: dict = {"threshold": threshold, "field_type": field_type}
+    source = click.core.ParameterSource.COMMANDLINE
+    if ctx.get_parameter_source("sigma") == source:
+        kwargs["smooth_sigma"] = sigma
+    if ctx.get_parameter_source("direct") == source:
+        kwargs["direct_extraction"] = direct
+    return PipelineParams(**kwargs)
+
+
 @click.group()
 def main() -> None:
     """XelToFab — Topology optimization post-processing pipeline."""
@@ -34,7 +49,9 @@ def main() -> None:
 @click.option("--field-type", type=click.Choice(["density", "sdf"]), default="density", help="Input field type")
 @click.option("--direct", is_flag=True, help="Direct extraction from continuous field (skip preprocessing)")
 @click.option("--viz", is_flag=True, help="Save a comparison visualization alongside the mesh")
+@click.pass_context
 def process_cmd(
+    ctx: click.Context,
     input_path: Path,
     output_path: Path,
     threshold: float,
@@ -46,12 +63,7 @@ def process_cmd(
     viz: bool,
 ) -> None:
     """Process a density field into a mesh."""
-    params = PipelineParams(
-        threshold=threshold,
-        smooth_sigma=sigma,
-        field_type=field_type,
-        direct_extraction=direct,
-    )
+    params = _build_params(ctx, threshold, sigma, field_type, direct)
     shape = _parse_shape(shape_str) if shape_str else None
 
     try:
@@ -85,7 +97,9 @@ def process_cmd(
 @click.option("--shape", "shape_str", default=None, help="Grid shape for flat data, e.g. 100x200 or 10x20x30")
 @click.option("--field-type", type=click.Choice(["density", "sdf"]), default="density", help="Input field type")
 @click.option("--direct", is_flag=True, help="Direct extraction from continuous field (skip preprocessing)")
+@click.pass_context
 def viz(
+    ctx: click.Context,
     input_path: Path,
     output_path: Path | None,
     threshold: float,
@@ -96,12 +110,7 @@ def viz(
     direct: bool,
 ) -> None:
     """Visualize a density field and its extraction result."""
-    params = PipelineParams(
-        threshold=threshold,
-        smooth_sigma=sigma,
-        field_type=field_type,
-        direct_extraction=direct,
-    )
+    params = _build_params(ctx, threshold, sigma, field_type, direct)
     shape = _parse_shape(shape_str) if shape_str else None
 
     try:

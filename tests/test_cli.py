@@ -54,12 +54,10 @@ def test_cli_process_2d_shows_error(tmp_path: Path, circle_density: np.ndarray):
     assert "2D contour export" in result.output
 
 
-def test_cli_process_sdf(tmp_path: Path):
+def test_cli_process_sdf(tmp_path: Path, small_sphere_sdf: np.ndarray):
     """CLI process with --field-type sdf."""
-    z, y, x = np.mgrid[-1:1:20j, -1:1:20j, -1:1:20j]
-    sdf = np.sqrt(x**2 + y**2 + z**2) - 0.5
     input_path = tmp_path / "sphere_sdf.npy"
-    np.save(input_path, sdf)
+    np.save(input_path, small_sphere_sdf)
     output_path = tmp_path / "sphere.stl"
 
     runner = CliRunner()

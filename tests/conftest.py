@@ -33,6 +33,13 @@ def small_sphere_density() -> np.ndarray:
 
 
 @pytest.fixture
+def small_sphere_sdf() -> np.ndarray:
+    """Small 3D SDF sphere for fast CLI tests."""
+    z, y, x = np.mgrid[-1:1:20j, -1:1:20j, -1:1:20j]
+    return np.sqrt(x**2 + y**2 + z**2) - 0.5
+
+
+@pytest.fixture
 def sphere_sdf() -> np.ndarray:
     """3D signed distance field for a sphere (negative inside, positive outside)."""
     z, y, x = np.mgrid[-1:1:30j, -1:1:30j, -1:1:30j]

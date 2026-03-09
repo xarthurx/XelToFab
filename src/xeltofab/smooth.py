@@ -12,7 +12,7 @@ def smooth(state: PipelineState) -> PipelineState:
     if state.ndim == 2 or state.vertices is None or state.faces is None:
         return state
 
-    mesh = trimesh.Trimesh(vertices=state.vertices, faces=state.faces)
+    mesh = trimesh.Trimesh(vertices=state.vertices, faces=state.faces, process=False)
     trimesh.smoothing.filter_taubin(
         mesh,
         iterations=state.params.taubin_iterations,
