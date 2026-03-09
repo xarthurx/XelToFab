@@ -1,0 +1,4 @@
+{
+  "title": "Guides",
+  "pages": ["pipeline-overview", "field-types", "input-formats", "parameters", "quality-metrics"]
+}

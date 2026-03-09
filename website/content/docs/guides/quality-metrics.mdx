@@ -1,0 +1,101 @@
+---
+title: Quality Metrics
+description: Mesh quality targets for FEA, metric computation, and benchmarking
+---
+
+## FEA quality targets
+
+For finite element analysis (FEA) to produce accurate results, mesh elements must meet minimum quality standards. XelToFab tracks three key metrics:
+
+| Metric | Target | Description |
+|--------|--------|-------------|
+| Aspect ratio | < 5 | Ratio of longest to shortest edge. Lower is better (1.0 = equilateral) |
+| Minimum angle | > 20 degrees | Smallest interior angle in each triangle. Higher is better (60 = equilateral) |
+| Scaled Jacobian | > 0.5 | Measures element distortion. Higher is better (1.0 = ideal) |
+
+Elements that violate these thresholds can cause numerical instability, poor conditioning, or inaccurate stress/strain results in FEA solvers.
+
+## How metrics are computed
+
+Quality metrics are computed using [PyVista](https://docs.pyvista.org/), which wraps VTK's mesh quality filters. The benchmark script converts the pipeline output to a PyVista `PolyData` mesh and calls `cell_quality()` with three measures:
+
+```python
+import numpy as np
+import pyvista as pv
+
+# Build PyVista mesh from pipeline state
+faces_pv = np.column_stack([np.full(len(state.faces), 3), state.faces]).ravel()
+pv_mesh = pv.PolyData(state.best_vertices.astype(np.float64), faces_pv)
+
+# Compute quality metrics
+qual = pv_mesh.cell_quality(["aspect_ratio", "min_angle", "scaled_jacobian"])
+
+# Access per-cell values
+aspect_ratios = qual.cell_data["aspect_ratio"]
+min_angles = qual.cell_data["min_angle"]
+jacobians = qual.cell_data["scaled_jacobian"]
+```
+
+Each metric produces a per-cell (per-triangle) array. The benchmark reports the minimum, mean, maximum, and standard deviation.
+
+Additional properties checked by the benchmark:
+
+- **Watertight** -- Whether the mesh forms a closed manifold (checked via `trimesh.Trimesh.is_watertight`)
+- **Volume** -- Computed by trimesh for watertight meshes only
+- **Surface area** -- Total mesh surface area
+
+## Current baseline results
+
+These results were captured with the default pipeline parameters using the benchmark script. They represent the baseline quality before any Tier 2 improvements (decimation, remeshing).
+
+### 3D models
+
+| Model | Vertices | Faces | Watertight | AR (mean) | Angle (min) | Jacobian (min) | Time (s) |
+|-------|----------|-------|------------|-----------|-------------|----------------|----------|
+| heat_cond_51_s0 | 7,087 | 13,910 | no | 1.27 | 3.2 deg | 0.064 | 0.011 |
+| heat_cond_51_s1 | 17,287 | 33,528 | no | 1.26 | 3.2 deg | 0.064 | 0.015 |
+| thermoelastic_16_s0 | 979 | 1,806 | no | 1.39 | 0.8 deg | 0.016 | 0.002 |
+| corner_3d_vf50_s0 | 2,123 | 3,902 | no | 1.38 | 2.8 deg | 0.056 | 0.003 |
+| corner_3d_vf30_s0 | 1,961 | 3,568 | no | 1.42 | 0.5 deg | 0.010 | 0.003 |
+| synthetic_sphere | 192 | 380 | yes | 1.20 | 30.4 deg | 0.584 | 0.002 |
+| synthetic_sphere_sdf | 984 | 1,964 | yes | 1.31 | 24.2 deg | 0.473 | 0.001 |
+
+### 2D models
+
+| Model | Contours | Total Points | Volume Fraction | Time (s) |
+|-------|----------|--------------|-----------------|----------|
+| beam_2d_100x200_s0 | 5 | 356 | 0.2375 | 0.001 |
+
+### Observations
+
+- **Mean aspect ratios are good** (all below 1.5), well within the < 5 target
+- **Minimum angles are below the 20-degree target** for most real-world TO models. The synthetic sphere meets the target, but TO geometry with thin features and sharp corners produces degenerate triangles
+- **Minimum scaled Jacobians are below the 0.5 target** for all TO models. Again, synthetic geometry is much closer to the target
+- **No TO model produces a watertight mesh** with the current pipeline. Watertight output will require dedicated repair/remeshing stages
+- These limitations are expected for marching cubes output without decimation or remeshing and represent the improvement targets for future pipeline stages
+
+## Running the benchmark
+
+The benchmark script processes all registered models (EngiBench datasets, Corner-Based TO, and synthetic shapes) and generates meshes, comparison plots, 3D renders, and a metrics summary.
+
+```bash
+uv run python scripts/benchmark_baseline.py
+```
+
+Output goes to `benchmarks/baseline/` by default. Specify a different directory to compare before/after:
+
+```bash
+uv run python scripts/benchmark_baseline.py --output-dir benchmarks/after-remeshing
+```
+
+The script generates:
+
+| File | Description |
+|------|-------------|
+| `<model>.stl` | Exported mesh for each 3D model |
+| `<model>_comparison.png` | Side-by-side density field vs extraction result |
+| `<model>_mesh.png` | 3D mesh render (requires PyVista) |
+| `metrics.json` | Full metrics for all models (JSON) |
+| `summary.md` | Human-readable summary table |
+
+PyVista is required for quality metrics (`aspect_ratio`, `min_angle`, `scaled_jacobian`) and 3D renders. The benchmark still runs without it but skips those outputs.

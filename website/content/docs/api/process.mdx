@@ -1,0 +1,61 @@
+---
+title: process
+description: Run the full XelToFab processing pipeline
+---
+
+## Import
+
+```python
+from xeltofab import process
+# or
+from xeltofab.pipeline import process
+```
+
+## Signature
+
+```python
+def process(state: PipelineState) -> PipelineState
+```
+
+## Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `state` | `PipelineState` | A state object containing the density field and pipeline parameters |
+
+## Return value
+
+Returns a new `PipelineState` with all pipeline stages applied. The returned state will have populated mesh data (`vertices`, `faces` for 3D; `contours` for 2D) and `volume_fraction`.
+
+## What it does
+
+`process` chains the three core pipeline stages in order:
+
+1. **Preprocess** — Gaussian smoothing, Heaviside thresholding, and morphological cleanup. Produces the `binary` field on the state.
+2. **Extract** — Marching cubes (3D) or marching squares (2D) to extract geometry from the field. Produces `vertices`/`faces` or `contours`.
+3. **Smooth** — Taubin filtering on the extracted mesh to remove staircase artifacts. Produces `smoothed_vertices`.
+
+### When preprocessing is skipped
+
+If `params.direct_extraction` is `True`, the preprocessing step is skipped entirely. Extraction operates directly on the continuous input field rather than a binarized version. This is the default behavior for SDF fields (where `field_type="sdf"`).
+
+## Example
+
+```python
+from xeltofab import load_density, process, save_mesh
+
+# Load and process
+state = load_density("density_field.npy")
+result = process(state)
+
+# Access results
+print(f"Dimensions: {result.ndim}D")
+print(f"Volume fraction: {result.volume_fraction:.3f}")
+
+if result.ndim == 3:
+    print(f"Vertices: {result.best_vertices.shape[0]}")
+    print(f"Faces: {result.faces.shape[0]}")
+    save_mesh(result, "output.stl")
+else:
+    print(f"Contours: {len(result.contours)} segments")
+```

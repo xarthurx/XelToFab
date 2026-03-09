@@ -208,3 +208,8 @@ __marimo__/
 
 # Worktrees
 .worktrees/
+
+# Docs website
+website/.next/
+website/node_modules/
+website/.source/

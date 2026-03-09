@@ -1,0 +1,87 @@
+---
+title: xtf process
+description: Process a density field into a mesh from the command line
+---
+
+## Usage
+
+```bash
+xtf process [OPTIONS] INPUT_PATH
+```
+
+Process a density field into a mesh. The input field is loaded, run through the pipeline (preprocessing, extraction, smoothing), and the resulting mesh is saved to the output path.
+
+## Arguments
+
+| Argument | Description |
+|----------|-------------|
+| `INPUT_PATH` | Path to the input density field file (must exist) |
+
+## Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `-o`, `--output` | `PATH` | *(required)* | Output mesh file path (format determined by extension: `.stl`, `.obj`, `.ply`) |
+| `--threshold` | `FLOAT` | `0.5` | Density threshold \[0-1\] for binarization |
+| `--sigma` | `FLOAT` | `1.0` | Gaussian smoothing sigma for preprocessing |
+| `-f`, `--field-name` | `TEXT` | `None` | Field/variable name to extract from input file (for `.npz`, `.mat`, `.h5`, etc.) |
+| `--shape` | `TEXT` | `None` | Grid shape for flat data, e.g. `100x200` or `10x20x30` |
+| `--field-type` | `density\|sdf` | `density` | Input field type. Setting `sdf` enables smart defaults (direct extraction, no Gaussian smoothing). |
+| `--direct` | flag | `False` | Direct extraction from continuous field (skip preprocessing) |
+| `--viz` | flag | `False` | Save a comparison visualization (PNG) alongside the mesh |
+
+### Smart defaults with `--field-type sdf`
+
+When `--field-type sdf` is used, the following defaults change automatically unless explicitly overridden:
+
+- `--direct` is enabled (preprocessing is skipped)
+- `--sigma` is set to `0.0` (no Gaussian smoothing)
+
+You can still override these by explicitly passing `--sigma 1.0` or omitting `--direct`.
+
+## Examples
+
+### Basic 3D processing
+
+```bash
+xtf process density_field.npy -o output.stl
+```
+
+### Custom threshold and smoothing
+
+```bash
+xtf process field.npy -o mesh.obj --threshold 0.4 --sigma 1.5
+```
+
+### MATLAB file with named variable
+
+```bash
+xtf process topology_result.mat -o mesh.stl -f xPhys
+```
+
+### CSV with shape specification
+
+```bash
+xtf process flat_data.csv -o mesh.stl --shape 10x20x30
+```
+
+### SDF field (smart defaults)
+
+```bash
+xtf process sdf_field.npy -o mesh.stl --field-type sdf
+```
+
+### Direct extraction from continuous field
+
+```bash
+xtf process field.npy -o mesh.stl --direct
+```
+
+### With visualization output
+
+```bash
+xtf process field.npy -o mesh.stl --viz
+# Saves mesh.stl and mesh.png
+```
+
+When `--viz` is used, a comparison PNG image is saved alongside the mesh at the same path with a `.png` extension.

@@ -26,6 +26,8 @@ Collaboration: M4X–IDEAL Lab with Prof. Mark Fuge.
 | Format | `ruff format` |
 | Type check | `ty check` |
 | CLI help | `uv run xtf --help` |
+| Dev docs site | `cd website && bun run dev` |
+| Build docs site | `cd website && bun run build` |
 
 ## Core Dependencies
 

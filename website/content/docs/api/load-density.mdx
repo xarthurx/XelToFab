@@ -1,0 +1,97 @@
+---
+title: load_density
+description: Load a density field from file into a PipelineState
+---
+
+## Import
+
+```python
+from xeltofab import load_density
+# or
+from xeltofab.io import load_density
+```
+
+## Signature
+
+```python
+def load_density(
+    path: str | Path,
+    field_name: str | None = None,
+    shape: tuple[int, ...] | None = None,
+    params: PipelineParams | None = None,
+) -> PipelineState
+```
+
+## Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `path` | `str \| Path` | *(required)* | Path to the input file |
+| `field_name` | `str \| None` | `None` | Name of the field/variable to extract from multi-field files (e.g., a key in `.npz`, `.mat`, or `.h5` files) |
+| `shape` | `tuple[int, ...] \| None` | `None` | Grid shape for flat data formats (e.g., CSV). Reshapes the loaded 1D array into this shape. |
+| `params` | `PipelineParams \| None` | `None` | Pipeline parameters. If `None`, default `PipelineParams()` is used. |
+
+## Return value
+
+Returns a `PipelineState` with the loaded `density` array and the given `params`.
+
+## Supported formats
+
+| Format | Extensions | Dependency | Notes |
+|--------|-----------|------------|-------|
+| NumPy | `.npy`, `.npz` | *(built-in)* | For `.npz`, use `field_name` to select an array |
+| MATLAB | `.mat` | *(built-in, via scipy)* | Use `field_name` to select a variable |
+| CSV | `.csv`, `.txt` | *(built-in)* | Flat data; use `shape` to reshape |
+| VTK | `.vtk`, `.vtr`, `.vti` | `pyvista` | Install: `uv add --optional vtk pyvista` |
+| HDF5 | `.h5`, `.hdf5`, `.xdmf` | `h5py` | Install: `uv add --optional hdf5 h5py` |
+
+Run `xtf formats` to check which formats are available in your environment.
+
+## Examples
+
+### NumPy array
+
+```python
+from xeltofab import load_density
+
+state = load_density("density_field.npy")
+```
+
+### NumPy archive with named array
+
+```python
+state = load_density("fields.npz", field_name="density")
+```
+
+### MATLAB file
+
+```python
+state = load_density("topology_result.mat", field_name="xPhys")
+```
+
+### CSV with reshape
+
+```python
+state = load_density("flat_field.csv", shape=(100, 200))
+```
+
+### HDF5 file
+
+```python
+state = load_density("simulation.h5", field_name="density")
+```
+
+### With custom parameters
+
+```python
+from xeltofab import PipelineParams, load_density
+
+params = PipelineParams(threshold=0.4, smooth_sigma=1.5)
+state = load_density("field.npy", params=params)
+```
+
+## Errors
+
+- `ValueError` — unsupported file format or invalid data
+- `KeyError` — specified `field_name` not found in the file
+- `ImportError` — required optional dependency not installed (e.g., `pyvista` for VTK files)

@@ -1,0 +1,63 @@
+---
+title: Installation
+description: Install XelToFab and its dependencies using uv
+---
+
+## Requirements
+
+- **Python 3.13+**
+- **[uv](https://docs.astral.sh/uv/)** for project management and dependency resolution
+
+## Install from source
+
+Clone the repository and install dependencies:
+
+```bash
+git clone https://github.com/xarthurx/xelToFab.git
+cd xelToFab
+uv sync
+```
+
+This installs all core dependencies: `numpy`, `scipy`, `scikit-image`, `trimesh`, `pydantic`, `matplotlib`, and `click`.
+
+## Optional format support
+
+Some input formats require additional libraries. Install them with extras:
+
+| Extra | Command | Adds support for |
+|-------|---------|------------------|
+| `vtk` | `uv sync --extra vtk` | `.vtk`, `.vtr`, `.vti` files (via PyVista) |
+| `hdf5` | `uv sync --extra hdf5` | `.h5`, `.hdf5`, `.xdmf` files (via h5py) |
+| `all-formats` | `uv sync --extra all-formats` | All optional formats |
+
+## Verify installation
+
+Check that the CLI is available and see which formats are ready:
+
+```bash
+uv run xtf --help
+```
+
+List all supported input formats and their availability status:
+
+```bash
+uv run xtf formats
+```
+
+This prints a table showing each format, its file extensions, whether the required library is installed, and the install command if it is missing:
+
+```
+Format     Extensions           Status       Install
+-----------------------------------------------------------------
+numpy      .npy, .npz           available    (built-in)
+matlab     .mat                 available    (built-in, via scipy)
+csv        .csv, .txt           available    (built-in)
+vtk        .vtk, .vtr, .vti    missing      uv add --optional vtk pyvista
+hdf5       .h5, .hdf5, .xdmf   missing      uv add --optional hdf5 h5py
+```
+
+## Running tests
+
+```bash
+uv run pytest tests/ -v
+```

@@ -1,0 +1,140 @@
+---
+title: Quick Start
+description: Process your first density field with XelToFab
+---
+
+## Python API
+
+### Basic workflow
+
+Load a density field, run the pipeline, and save the result:
+
+```python
+from xeltofab.io import load_density, save_mesh
+from xeltofab.pipeline import process
+
+# Load a 3D density field
+state = load_density("density_field.npy")
+
+# Run the full pipeline: preprocess -> extract -> smooth
+result = process(state)
+
+# Save the triangle mesh
+save_mesh(result, "output.stl")
+```
+
+The `save_mesh` function supports STL, OBJ, and PLY output formats (determined by file extension). It uses the `best_vertices` property, which returns Taubin-smoothed vertices when available.
+
+### Custom parameters
+
+Configure the pipeline with `PipelineParams`:
+
+```python
+from xeltofab.io import load_density, save_mesh
+from xeltofab.pipeline import process
+from xeltofab.state import PipelineParams
+
+params = PipelineParams(
+    threshold=0.4,
+    smooth_sigma=1.5,
+    morph_radius=2,
+    taubin_iterations=30,
+)
+state = load_density("density_field.npy", params=params)
+result = process(state)
+save_mesh(result, "output.stl")
+```
+
+See the [Parameters guide](/docs/guides/parameters) for the full reference.
+
+### 2D fields
+
+For 2D density fields, the pipeline extracts contours instead of a triangle mesh. Use `plot_result` or `plot_comparison` to visualize:
+
+```python
+from xeltofab.io import load_density
+from xeltofab.pipeline import process
+from xeltofab.viz import plot_comparison
+
+state = load_density("beam_2d.npy")
+result = process(state)
+
+fig = plot_comparison(result)
+fig.savefig("comparison.png", dpi=150)
+```
+
+The pipeline automatically detects 2D vs 3D based on the array dimensions. 2D fields produce contour arrays (stored in `result.contours`), while 3D fields produce triangle meshes (stored in `result.vertices` and `result.faces`).
+
+### SDF fields
+
+For signed distance fields (from neural models like DeepSDF, NITO, or NTopo), set `field_type="sdf"`:
+
+```python
+from xeltofab.io import load_density, save_mesh
+from xeltofab.pipeline import process
+from xeltofab.state import PipelineParams
+
+params = PipelineParams(field_type="sdf")
+state = load_density("sdf_field.npy", params=params)
+result = process(state)
+save_mesh(result, "output.stl")
+```
+
+SDF mode automatically enables direct extraction (skipping preprocessing) and sets the extraction level to 0.0 (the zero level set). See [Field Types](/docs/guides/field-types) for details.
+
+## CLI usage
+
+### Process a density field
+
+```bash
+uv run xtf process density_field.npy -o output.stl
+```
+
+Add `--viz` to save a side-by-side comparison plot alongside the mesh:
+
+```bash
+uv run xtf process density_field.npy -o output.stl --viz
+```
+
+This saves the mesh to `output.stl` and a comparison image to `output.png`.
+
+### Visualize without saving a mesh
+
+```bash
+# Display interactively
+uv run xtf viz density_field.npy
+
+# Save to file
+uv run xtf viz density_field.npy -o comparison.png
+```
+
+### Common options
+
+Both `process` and `viz` accept these flags:
+
+```bash
+uv run xtf process input.npy -o output.stl \
+    --threshold 0.4 \
+    --sigma 1.5 \
+    --field-type sdf \
+    --direct \
+    --field-name xPhys \
+    --shape 50x100x50
+```
+
+| Flag | Description |
+|------|-------------|
+| `--threshold` | Density threshold for binarization (default: 0.5) |
+| `--sigma` | Gaussian smoothing sigma (default: 1.0) |
+| `--field-type` | Input field type: `density` or `sdf` (default: `density`) |
+| `--direct` | Skip preprocessing, extract directly from the continuous field |
+| `-f`, `--field-name` | Variable name to extract from multi-field files (.mat, .npz, .vtk, .h5) |
+| `--shape` | Reshape flat data to grid, e.g. `100x200` or `10x20x30` (for CSV/TXT) |
+
+### Loading from MATLAB
+
+```bash
+uv run xtf process result.mat -o mesh.stl --field-name xPhys
+```
+
+If `--field-name` is omitted, the loader auto-detects common topology optimization variable names (`xPhys`, `densities`, `x`, `rho`, `dc`, `density`).

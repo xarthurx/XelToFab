@@ -1,0 +1,145 @@
+---
+title: Pipeline Overview
+description: How the XelToFab pipeline processes density fields into meshes
+---
+
+## The 3-stage pipeline
+
+XelToFab processes topology optimization output through three stages:
+
+```
+density array (numpy)
+       |
+       v
++--------------+
+|  Preprocess   |  Gaussian smooth -> threshold -> morphology -> remove small components
++--------------+
+       |  binary array (0/1)
+       v
++--------------+
+|   Extract     |  2D: marching squares -> contours
+|               |  3D: marching cubes -> triangle mesh
++--------------+
+       |  vertices + faces (3D) or contour arrays (2D)
+       v
++--------------+
+|   Smooth      |  3D: Taubin smoothing (via trimesh)
+|               |  2D: no-op (contours pass through)
++--------------+
+       |
+       v
+  Output: STL/OBJ/PLY (3D) or visualization (2D)
+```
+
+The orchestrator in `pipeline.py` chains these stages:
+
+```python
+from xeltofab.pipeline import process
+
+result = process(state)  # preprocess -> extract -> smooth
+```
+
+## PipelineState threading pattern
+
+All stage functions follow the same signature:
+
+```python
+def stage(state: PipelineState) -> PipelineState:
+```
+
+`PipelineState` is a Pydantic model that carries both the data and configuration through the pipeline. Stage functions never mutate the input state. Instead, they return a new state using `model_copy(update={...})`:
+
+```python
+# Inside a stage function:
+return state.model_copy(update={"vertices": new_verts, "faces": new_faces})
+```
+
+This creates a shallow copy with the specified fields replaced. Because copies share numpy arrays with the original, stage functions must always create new arrays rather than modifying existing ones in-place.
+
+### State fields
+
+| Field | Type | Set by |
+|-------|------|--------|
+| `density` | `ndarray` | User input (loaded from file) |
+| `ndim` | `int` | Auto-computed from `density.ndim` (2 or 3) |
+| `params` | `PipelineParams` | User input (or defaults) |
+| `binary` | `ndarray \| None` | `preprocess()` |
+| `volume_fraction` | `float \| None` | `preprocess()` |
+| `contours` | `list[ndarray] \| None` | `extract()` (2D only) |
+| `vertices` | `ndarray \| None` | `extract()` (3D only) |
+| `faces` | `ndarray \| None` | `extract()` (3D only) |
+| `smoothed_vertices` | `ndarray \| None` | `smooth()` (3D only) |
+
+### The `best_vertices` property
+
+`PipelineState` provides a `best_vertices` property that returns `smoothed_vertices` if Taubin smoothing has been applied, otherwise falls back to the raw `vertices` from extraction:
+
+```python
+vertices = state.best_vertices  # smoothed if available, raw otherwise
+```
+
+This is used by `save_mesh()` and the visualization functions, so you always get the best available mesh quality without checking manually.
+
+## Direct extraction mode
+
+When `direct_extraction=True`, the preprocessing stage is skipped entirely. Extraction operates on the continuous input field instead of a binarized version:
+
+```python
+from xeltofab.state import PipelineParams
+
+# Skip preprocessing, extract at level 0.3
+params = PipelineParams(direct_extraction=True, extraction_level=0.3)
+```
+
+This is the default behavior for SDF fields (`field_type="sdf"`), where the input is already a clean continuous field and binarization would degrade quality. For density fields, direct extraction can be useful when the solver output is already well-converged and does not need cleanup.
+
+In direct mode, the pipeline runs only two stages: **extract** and **smooth**.
+
+## 2D vs 3D paths
+
+The pipeline automatically detects whether the input is 2D or 3D based on `density.ndim`:
+
+| Dimension | Preprocessing | Extraction | Smoothing | Output |
+|-----------|---------------|------------|-----------|--------|
+| 2D | Same (Gaussian, threshold, morphology with `disk` kernel) | `find_contours` (marching squares) | No-op (contours pass through) | Contour arrays in `state.contours` |
+| 3D | Same (Gaussian, threshold, morphology with `ball` kernel) | `marching_cubes` | Taubin smoothing via trimesh | Triangle mesh in `state.vertices` / `state.faces` |
+
+For 2D fields, `save_mesh()` is not supported (raises an error). Use the visualization functions (`plot_result`, `plot_comparison`) to render contour output.
+
+## Stage details
+
+### Preprocess (`preprocess.py`)
+
+1. **Gaussian smoothing** -- `scipy.ndimage.gaussian_filter` with configurable `smooth_sigma`
+2. **Thresholding** -- Binarize at the configured `threshold` value
+3. **Morphological cleanup** -- Opening then closing with a disk (2D) or ball (3D) structuring element of radius `morph_radius`
+4. **Small component removal** -- `skimage.morphology.remove_small_objects` removes components smaller than 0.5% of the total field size (minimum 8 pixels/voxels)
+
+Sets `state.binary` and `state.volume_fraction`.
+
+### Extract (`extract.py`)
+
+- **3D**: `skimage.measure.marching_cubes` at the effective extraction level
+- **2D**: `skimage.measure.find_contours` at the effective extraction level
+
+In preprocessed mode, extraction operates on the binary field. In direct mode, it operates on the original continuous density/SDF field.
+
+The extraction level defaults to `threshold` for density fields and `0.0` for SDF fields, but can be overridden with `extraction_level`.
+
+### Smooth (`smooth.py`)
+
+Applies Taubin smoothing to the 3D triangle mesh using `trimesh.smoothing.filter_taubin`. This removes staircase artifacts from marching cubes while preserving volume better than Laplacian smoothing.
+
+Configurable via `taubin_iterations` (default: 20) and `taubin_lambda` (default: 0.5).
+
+For 2D contours, this stage is a no-op.
+
+## Interactive examples
+
+Here is a mesh extracted from a 3D heat conduction topology optimization result:
+
+<MeshViewer src="/models/heat_cond_51_s0.stl" height={500} />
+
+And a synthetic sphere for comparison:
+
+<MeshViewer src="/models/synthetic_sphere.stl" />
