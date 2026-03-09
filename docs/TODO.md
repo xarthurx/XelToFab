@@ -2,6 +2,8 @@
 
 ## Quality-Enhanced Post-Processing (Tier 2)
 
+> Baseline captured: `benchmarks/baseline/` (metrics + visualizations from current pipeline)
+
 - [ ] QEM decimation (quadric edge collapse) — `pymeshlab` or `pyfqmr`
 - [ ] Isotropic remeshing — `pymeshlab` `meshing_isotropic_explicit_remeshing()`
 - [ ] Feature-preserving smoothing — bilateral mesh filtering, two-step normal smoothing
