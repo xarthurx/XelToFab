@@ -43,13 +43,8 @@ def repair(state: PipelineState) -> PipelineState:
     ms.meshing_remove_duplicate_vertices()
     ms.meshing_remove_unreferenced_vertices()
 
-    # Recompute normals for consistency
-    ms.compute_normal_per_face()
-    ms.compute_normal_per_vertex()
-
     out = ms.current_mesh()
-    if not out.is_compact():
-        out.compact()
+    out.compact()
 
     return state.model_copy(update={
         "vertices": out.vertex_matrix(),

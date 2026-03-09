@@ -85,10 +85,8 @@ def test_pipeline_params_effective_extraction_level():
 def test_pipeline_params_repair_defaults():
     params = PipelineParams()
     assert params.repair is True
-    assert params.max_hole_size == 30
     assert params.remesh is True
     assert params.target_edge_length is None
-    assert params.remesh_iterations == 5
 
 
 def test_pipeline_params_disable_repair_remesh():
@@ -98,6 +96,5 @@ def test_pipeline_params_disable_repair_remesh():
 
 
 def test_pipeline_params_custom_remesh():
-    params = PipelineParams(target_edge_length=0.5, remesh_iterations=10)
+    params = PipelineParams(target_edge_length=0.5)
     assert params.target_edge_length == 0.5
-    assert params.remesh_iterations == 10

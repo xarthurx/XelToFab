@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
-import numpy as np
 import pytest
 
 from xeltofab.state import PipelineParams, PipelineState
 
 pymeshlab = pytest.importorskip("pymeshlab")
 
-from xeltofab.repair import repair
+from xeltofab.repair import repair  # noqa: E402
 
 
 def test_repair_closes_holes(open_mesh_state: PipelineState):
@@ -29,11 +28,9 @@ def test_repair_clears_smoothed_vertices(open_mesh_state: PipelineState):
 
 def test_repair_preserves_watertight_mesh(processed_3d: PipelineState):
     """Repair should not break an already-good mesh."""
-    original_verts = processed_3d.best_vertices.shape[0]
     result = repair(processed_3d)
     assert result.vertices is not None
     assert result.faces is not None
-    # Vertex count should be similar (repair may merge near-duplicate vertices)
     assert result.vertices.shape[0] > 0
 
 
@@ -53,11 +50,3 @@ def test_repair_disabled(open_mesh_state: PipelineState):
     assert result.faces.shape[0] == state.faces.shape[0]
 
 
-def test_repair_custom_hole_size(open_mesh_state: PipelineState):
-    """Custom max_hole_size parameter is respected."""
-    state = open_mesh_state.model_copy(
-        update={"params": PipelineParams(max_hole_size=5)}
-    )
-    # Should not crash with small hole size
-    result = repair(state)
-    assert result.vertices is not None

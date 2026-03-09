@@ -10,7 +10,7 @@ import pytest
 from xeltofab.extract import extract
 from xeltofab.pipeline import process
 from xeltofab.preprocess import preprocess
-from xeltofab.state import PipelineParams, PipelineState
+from xeltofab.state import PipelineState
 
 
 @pytest.fixture

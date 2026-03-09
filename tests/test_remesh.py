@@ -9,7 +9,7 @@ from xeltofab.state import PipelineParams, PipelineState
 
 pymeshlab = pytest.importorskip("pymeshlab")
 
-from xeltofab.remesh import remesh
+from xeltofab.remesh import remesh  # noqa: E402
 
 
 def test_remesh_produces_valid_mesh(processed_3d: PipelineState):
@@ -38,12 +38,12 @@ def test_remesh_improves_uniformity(processed_3d: PipelineState):
 def test_remesh_custom_edge_length(processed_3d: PipelineState):
     """Custom target edge length should affect output mesh density."""
     # Large edge length → fewer faces
-    params_coarse = PipelineParams(target_edge_length=5.0, remesh_iterations=3)
+    params_coarse = PipelineParams(target_edge_length=5.0)
     state_coarse = processed_3d.model_copy(update={"params": params_coarse})
     result_coarse = remesh(state_coarse)
 
     # Small edge length → more faces
-    params_fine = PipelineParams(target_edge_length=0.5, remesh_iterations=3)
+    params_fine = PipelineParams(target_edge_length=0.5)
     state_fine = processed_3d.model_copy(update={"params": params_fine})
     result_fine = remesh(state_fine)
 

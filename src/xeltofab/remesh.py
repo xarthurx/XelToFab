@@ -53,8 +53,7 @@ def remesh(state: PipelineState) -> PipelineState:
     ms.set_current_mesh(ms.mesh_number() - 1)
 
     out = ms.current_mesh()
-    if not out.is_compact():
-        out.compact()
+    out.compact()
 
     return state.model_copy(update={
         "vertices": out.vertex_matrix(),
