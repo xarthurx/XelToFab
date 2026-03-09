@@ -53,7 +53,7 @@ def plot_result(state: PipelineState) -> Figure:
                 ax.plot(contour[:, 1], contour[:, 0], "r-", linewidth=1.5)
         ax.set_title("Extracted Contours")
     else:
-        vertices = state.smoothed_vertices if state.smoothed_vertices is not None else state.vertices
+        vertices = state.best_vertices
         if vertices is None or state.faces is None:
             fig, ax = plt.subplots()
             ax.text(0.5, 0.5, "No mesh data", ha="center", va="center")
@@ -91,7 +91,7 @@ def plot_comparison(state: PipelineState) -> Figure:
         d = state.density
         ax1.imshow(d[d.shape[0] // 2, :, :], cmap="viridis", origin="lower", vmin=vmin, vmax=vmax)
         ax1.set_title("Input Field (mid-Z slice)")
-        vertices = state.smoothed_vertices if state.smoothed_vertices is not None else state.vertices
+        vertices = state.best_vertices
         if vertices is not None and state.faces is not None:
             ax2.remove()
             ax2 = fig.add_subplot(122, projection="3d")

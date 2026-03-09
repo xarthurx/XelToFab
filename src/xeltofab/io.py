@@ -35,7 +35,7 @@ def save_mesh(state: PipelineState, path: str | Path) -> None:
     path = Path(path)
 
     if state.ndim == 3:
-        vertices = state.smoothed_vertices if state.smoothed_vertices is not None else state.vertices
+        vertices = state.best_vertices
         if vertices is None or state.faces is None:
             raise ValueError("No mesh to save — run extract() first")
         mesh = trimesh.Trimesh(vertices=vertices, faces=state.faces)

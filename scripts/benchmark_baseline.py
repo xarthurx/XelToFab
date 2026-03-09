@@ -12,12 +12,13 @@ from __future__ import annotations
 
 import argparse
 import json
-import sys
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
+from typing import Literal
 
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
@@ -28,7 +29,6 @@ from xeltofab.pipeline import process
 from xeltofab.state import PipelineParams, PipelineState
 from xeltofab.viz import plot_comparison
 
-
 # ---------------------------------------------------------------------------
 # Model registry
 # ---------------------------------------------------------------------------
@@ -36,9 +36,9 @@ from xeltofab.viz import plot_comparison
 @dataclass
 class BenchmarkModel:
     name: str
-    field_type: str = "density"
+    field_type: Literal["density", "sdf"] = "density"
     path: str | None = None  # None = synthetic (generated inline)
-    generator: str | None = None  # function name for synthetic models
+    generator: Literal["sphere", "sdf_sphere"] | None = None
 
 
 MODELS: list[BenchmarkModel] = [
@@ -72,7 +72,21 @@ def _generate_synthetic(generator: str) -> np.ndarray:
 # Metric computation
 # ---------------------------------------------------------------------------
 
-def compute_metrics(state: PipelineState, elapsed: float) -> dict:
+def _to_pyvista(state: PipelineState):
+    """Build a pyvista PolyData from pipeline state, or None if unavailable."""
+    vertices = state.best_vertices
+    if vertices is None or state.faces is None:
+        return None
+    try:
+        import pyvista as pv
+
+        faces_pv = np.column_stack([np.full(len(state.faces), 3), state.faces]).ravel()
+        return pv.PolyData(vertices.astype(np.float64), faces_pv)
+    except ImportError:
+        return None
+
+
+def compute_metrics(state: PipelineState, elapsed: float, pv_mesh=None) -> dict:
     """Compute mesh quality metrics from a processed pipeline state."""
     metrics: dict = {
         "ndim": state.ndim,
@@ -91,7 +105,7 @@ def compute_metrics(state: PipelineState, elapsed: float) -> dict:
         return metrics
 
     # 3D metrics
-    vertices = state.smoothed_vertices if state.smoothed_vertices is not None else state.vertices
+    vertices = state.best_vertices
     if vertices is None or state.faces is None:
         return metrics
 
@@ -108,12 +122,7 @@ def compute_metrics(state: PipelineState, elapsed: float) -> dict:
     metrics["is_watertight"] = bool(mesh.is_watertight)
 
     # PyVista quality metrics
-    try:
-        import pyvista as pv
-
-        faces_pv = np.column_stack([np.full(len(state.faces), 3), state.faces]).ravel()
-        pv_mesh = pv.PolyData(vertices.astype(np.float64), faces_pv)
-
+    if pv_mesh is not None:
         quality_measures = ["aspect_ratio", "min_angle", "scaled_jacobian"]
         qual = pv_mesh.cell_quality(quality_measures)
         for metric_name in quality_measures:
@@ -124,8 +133,6 @@ def compute_metrics(state: PipelineState, elapsed: float) -> dict:
                 "max": round(float(np.max(values)), 4),
                 "std": round(float(np.std(values)), 4),
             }
-    except ImportError:
-        print("  WARNING: pyvista not available, skipping quality metrics")
 
     return metrics
 
@@ -141,25 +148,19 @@ def save_comparison_plot(state: PipelineState, output_path: Path) -> None:
     plt.close(fig)
 
 
-def save_mesh_render(state: PipelineState, output_path: Path) -> None:
+def save_mesh_render(pv_mesh, output_path: Path) -> None:
     """Save a pyvista 3D mesh render (off-screen)."""
-    vertices = state.smoothed_vertices if state.smoothed_vertices is not None else state.vertices
-    if vertices is None or state.faces is None:
+    if pv_mesh is None:
         return
 
     try:
         import pyvista as pv
-
-        faces_pv = np.column_stack([np.full(len(state.faces), 3), state.faces]).ravel()
-        pv_mesh = pv.PolyData(vertices.astype(np.float64), faces_pv)
 
         pl = pv.Plotter(off_screen=True, window_size=[1024, 768])
         pl.add_mesh(pv_mesh, color="steelblue", show_edges=True, edge_color="black", line_width=0.3)
         pl.camera_position = "iso"
         pl.screenshot(str(output_path))
         pl.close()
-    except ImportError:
-        print("  WARNING: pyvista not available, skipping 3D render")
     except Exception as e:
         print(f"  WARNING: 3D render failed: {e}")
 
@@ -177,8 +178,8 @@ def write_summary(all_metrics: dict, output_dir: Path) -> None:
         "",
         "## 3D Models",
         "",
-        "| Model | Verts | Faces | Watertight | Volume | Aspect Ratio (mean) | Min Angle (min) | Jacobian (min) | Time (s) |",
-        "|-------|-------|-------|------------|--------|---------------------|-----------------|----------------|----------|",
+        "| Model | Verts | Faces | Watertight | Volume | AR (mean) | Angle (min) | Jac (min) | Time |",
+        "|-------|-------|-------|------------|--------|-----------|-------------|-----------|------|",
     ]
 
     for name, m in all_metrics.items():
@@ -235,12 +236,11 @@ def main() -> None:
         print(f"{'='*60}")
 
         # Load
+        params = PipelineParams(field_type=model.field_type)
         if model.path:
-            params = PipelineParams(field_type=model.field_type)
             state = load_density(model.path, params=params)
         else:
             density = _generate_synthetic(model.generator)
-            params = PipelineParams(field_type=model.field_type)
             state = PipelineState(density=density, params=params)
 
         print(f"  Input shape: {state.density.shape}, field_type: {model.field_type}")
@@ -251,13 +251,17 @@ def main() -> None:
         elapsed = time.perf_counter() - t0
         print(f"  Processed in {elapsed:.3f}s")
 
+        # Build pyvista mesh once (reused for metrics + render)
+        pv_mesh = _to_pyvista(result) if result.ndim == 3 else None
+
         # Metrics
-        metrics = compute_metrics(result, elapsed)
+        metrics = compute_metrics(result, elapsed, pv_mesh=pv_mesh)
         all_metrics[model.name] = metrics
         if "num_vertices" in metrics:
             print(f"  Mesh: {metrics['num_vertices']} verts, {metrics['num_faces']} faces")
         if "aspect_ratio" in metrics:
-            print(f"  Aspect ratio: mean={metrics['aspect_ratio']['mean']:.2f}, max={metrics['aspect_ratio']['max']:.2f}")
+            ar = metrics["aspect_ratio"]
+            print(f"  Aspect ratio: mean={ar['mean']:.2f}, max={ar['max']:.2f}")
         if "min_angle" in metrics:
             print(f"  Min angle: min={metrics['min_angle']['min']:.1f} deg")
 
@@ -273,9 +277,9 @@ def main() -> None:
         print(f"  Saved comparison: {comp_path}")
 
         # Save 3D render (3D only)
-        if result.ndim == 3:
+        if pv_mesh is not None:
             render_path = output_dir / f"{model.name}_mesh.png"
-            save_mesh_render(result, render_path)
+            save_mesh_render(pv_mesh, render_path)
             print(f"  Saved 3D render: {render_path}")
 
     # Write metrics JSON

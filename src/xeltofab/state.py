@@ -73,6 +73,11 @@ class PipelineState(BaseModel):
             raise ValueError(f"density must be 2D or 3D, got {v.ndim}D")
         return v
 
+    @property
+    def best_vertices(self) -> np.ndarray | None:
+        """Return smoothed vertices if available, otherwise raw vertices."""
+        return self.smoothed_vertices if self.smoothed_vertices is not None else self.vertices
+
     @model_validator(mode="after")
     def set_ndim(self) -> PipelineState:
         self.ndim = self.density.ndim
