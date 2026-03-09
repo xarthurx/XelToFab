@@ -133,3 +133,13 @@ Applies Taubin smoothing to the 3D triangle mesh using `trimesh.smoothing.filter
 Configurable via `taubin_iterations` (default: 20) and `taubin_lambda` (default: 0.5).
 
 For 2D contours, this stage is a no-op.
+
+## Interactive examples
+
+Here is a mesh extracted from a 3D heat conduction topology optimization result:
+
+<MeshViewer src="/models/heat_cond_51_s0.stl" height={500} />
+
+And a synthetic sphere for comparison:
+
+<MeshViewer src="/models/synthetic_sphere.stl" />
