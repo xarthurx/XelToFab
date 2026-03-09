@@ -53,8 +53,9 @@ def compute_quality(state: PipelineState) -> dict:
         ).ravel()
         pv_mesh = pv.PolyData(vertices.astype(np.float64), faces_pv)
 
-        for metric_name in ("aspect_ratio", "min_angle", "scaled_jacobian"):
-            qual = pv_mesh.cell_quality(metric_name)
+        quality_measures = ["aspect_ratio", "min_angle", "scaled_jacobian"]
+        qual = pv_mesh.cell_quality(quality_measures)
+        for metric_name in quality_measures:
             values = qual.cell_data[metric_name]
             metrics[metric_name] = {
                 "min": round(float(np.min(values)), 4),

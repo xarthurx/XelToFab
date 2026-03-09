@@ -1,11 +1,8 @@
 # tests/test_pipeline.py
 import numpy as np
-import pytest
 
 from xeltofab.pipeline import process
 from xeltofab.state import PipelineParams, PipelineState
-
-pymeshlab = pytest.importorskip("pymeshlab")
 
 
 def test_process_2d_end_to_end(circle_density: np.ndarray):

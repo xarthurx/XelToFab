@@ -2,7 +2,6 @@
 from pathlib import Path
 
 import numpy as np
-import pytest
 from click.testing import CliRunner
 
 from xeltofab.cli import main
@@ -77,9 +76,6 @@ def test_cli_process_direct(tmp_path: Path, small_sphere_density: np.ndarray):
     result = runner.invoke(main, ["process", str(input_path), "-o", str(output_path), "--direct"])
     assert result.exit_code == 0, result.output
     assert output_path.exists()
-
-
-pymeshlab = pytest.importorskip("pymeshlab")
 
 
 def test_cli_process_no_repair(tmp_path: Path, small_sphere_density: np.ndarray):

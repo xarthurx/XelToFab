@@ -22,10 +22,10 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
-import trimesh
 
 from xeltofab.io import load_density, save_mesh
 from xeltofab.pipeline import process
+from xeltofab.quality import compute_quality
 from xeltofab.state import PipelineParams, PipelineState
 from xeltofab.viz import plot_comparison
 
@@ -88,52 +88,11 @@ def _to_pyvista(state: PipelineState):
 
 def compute_metrics(state: PipelineState, elapsed: float, pv_mesh=None) -> dict:
     """Compute mesh quality metrics from a processed pipeline state."""
-    metrics: dict = {
-        "ndim": state.ndim,
-        "input_shape": list(state.density.shape),
-        "field_type": state.params.field_type,
-        "direct_extraction": state.params.direct_extraction,
-        "processing_time_s": round(elapsed, 4),
-    }
-
-    if state.ndim == 2:
-        metrics["num_contours"] = len(state.contours) if state.contours else 0
-        total_points = sum(len(c) for c in state.contours) if state.contours else 0
-        metrics["total_contour_points"] = total_points
-        if state.volume_fraction is not None:
-            metrics["volume_fraction"] = round(float(state.volume_fraction), 6)
-        return metrics
-
-    # 3D metrics
-    vertices = state.best_vertices
-    if vertices is None or state.faces is None:
-        return metrics
-
-    metrics["num_vertices"] = int(vertices.shape[0])
-    metrics["num_faces"] = int(state.faces.shape[0])
-    if state.volume_fraction is not None:
-        metrics["volume_fraction"] = round(float(state.volume_fraction), 6)
-
-    # Trimesh metrics (volume, surface area)
-    mesh = trimesh.Trimesh(vertices=vertices, faces=state.faces, process=False)
-    if mesh.is_watertight:
-        metrics["volume"] = round(float(mesh.volume), 6)
-    metrics["surface_area"] = round(float(mesh.area), 6)
-    metrics["is_watertight"] = bool(mesh.is_watertight)
-
-    # PyVista quality metrics
-    if pv_mesh is not None:
-        quality_measures = ["aspect_ratio", "min_angle", "scaled_jacobian"]
-        qual = pv_mesh.cell_quality(quality_measures)
-        for metric_name in quality_measures:
-            values = qual.cell_data[metric_name]
-            metrics[metric_name] = {
-                "min": round(float(np.min(values)), 4),
-                "mean": round(float(np.mean(values)), 4),
-                "max": round(float(np.max(values)), 4),
-                "std": round(float(np.std(values)), 4),
-            }
-
+    metrics = compute_quality(state)
+    metrics["input_shape"] = list(state.density.shape)
+    metrics["field_type"] = state.params.field_type
+    metrics["direct_extraction"] = state.params.direct_extraction
+    metrics["processing_time_s"] = round(elapsed, 4)
     return metrics
 
 

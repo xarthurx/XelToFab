@@ -15,7 +15,7 @@ def process(state: PipelineState) -> PipelineState:
 
     When direct_extraction is enabled, preprocessing is skipped and extraction
     operates on the continuous input field directly.
-    Repair and remesh are enabled by default; disable via PipelineParams.
+    Repair is enabled by default; remesh is disabled by default.
     """
     if not state.params.direct_extraction:
         state = preprocess(state)
