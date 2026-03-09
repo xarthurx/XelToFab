@@ -34,6 +34,12 @@ density array (numpy, [0,1])
 ## Module Map
 
 ```
+scripts/
+└── benchmark_baseline.py  Quality baseline capture (metrics, renders, summary)
+
+benchmarks/
+└── baseline/              Output from benchmark_baseline.py (STL, PNG, metrics.json, summary.md)
+
 src/xeltofab/
 ├── state.py        PipelineState + PipelineParams (Pydantic models)
 ├── preprocess.py   Density field preprocessing (smooth, threshold, morphology)
@@ -74,6 +80,8 @@ def stage(state: PipelineState) -> PipelineState:
 | `vertices` | `ndarray` | `extract()` (3D only) |
 | `faces` | `ndarray` | `extract()` (3D only) |
 | `smoothed_vertices` | `ndarray` | `smooth()` (3D only) |
+
+The `best_vertices` property returns `smoothed_vertices` if available, otherwise `vertices`. Use this instead of the manual fallback pattern.
 
 ## Field Types and Extraction Modes
 

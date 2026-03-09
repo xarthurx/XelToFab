@@ -124,3 +124,15 @@ Session log of learnings, failures, solutions discovered, and context gathered d
 **Resolution:** Used `ctx.get_parameter_source()` to detect whether `--sigma` and `--direct` were explicitly provided on the command line. Only pass explicitly-set values to PipelineParams, allowing the model_validator's smart defaults to apply. Extracted `_build_params()` helper shared by both `process_cmd` and `viz`. Fix: `c2e43c6`
 
 **Prevention:** When CLI options map to model fields that have smart defaults based on `model_fields_set`, use Click's `ctx.get_parameter_source(param_name) == ParameterSource.COMMANDLINE` to distinguish user input from Click defaults. Never blindly forward all Click defaults to Pydantic models that use `model_fields_set` for conditional logic.
+
+---
+
+### 2026-03-09 — Benchmark Baseline and best_vertices Refactoring
+
+**What:** Created `scripts/benchmark_baseline.py` to capture mesh quality metrics (aspect ratio, min angle, scaled Jacobian) and visualizations across 8 models (EngiBench 3D, Corner-Based TO, EngiBench 2D, synthetic). Added Corner-Based TO dataset (2 files from Bielecki et al.). Baseline results in `benchmarks/baseline/`.
+
+**Key baseline findings:** Real TO models have poor minimum angles (0.5°–3.2°) and none are watertight — clear targets for Tier 2 quality improvements.
+
+**Refactoring:** Added `best_vertices` property to `PipelineState` to eliminate the duplicated `smoothed_vertices if ... else vertices` pattern across 5 locations (io.py, viz.py, benchmark). Extracted `_to_pyvista()` helper to avoid double PolyData construction. Used modern `cell_quality()` API instead of deprecated `compute_cell_quality()`.
+
+**Fix:** `3be9dc4`
