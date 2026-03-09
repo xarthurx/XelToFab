@@ -21,6 +21,15 @@ class PipelineParams(BaseModel):
     direct_extraction: bool = False
     extraction_level: float | None = None
 
+    # Mesh repair (3D only, requires pymeshlab)
+    repair: bool = True
+    max_hole_size: int = Field(default=30, ge=1)
+
+    # Isotropic remeshing (3D only, requires pymeshlab)
+    remesh: bool = True
+    target_edge_length: float | None = None
+    remesh_iterations: int = Field(default=5, ge=1)
+
     @model_validator(mode="after")
     def apply_field_type_defaults(self) -> PipelineParams:
         """Apply smart defaults based on field_type.

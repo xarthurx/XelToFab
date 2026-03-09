@@ -80,3 +80,24 @@ def test_pipeline_params_effective_extraction_level():
     assert PipelineParams(field_type="density").effective_extraction_level == 0.5
     assert PipelineParams(field_type="sdf").effective_extraction_level == 0.0
     assert PipelineParams(field_type="sdf", extraction_level=0.1).effective_extraction_level == 0.1
+
+
+def test_pipeline_params_repair_defaults():
+    params = PipelineParams()
+    assert params.repair is True
+    assert params.max_hole_size == 30
+    assert params.remesh is True
+    assert params.target_edge_length is None
+    assert params.remesh_iterations == 5
+
+
+def test_pipeline_params_disable_repair_remesh():
+    params = PipelineParams(repair=False, remesh=False)
+    assert params.repair is False
+    assert params.remesh is False
+
+
+def test_pipeline_params_custom_remesh():
+    params = PipelineParams(target_edge_length=0.5, remesh_iterations=10)
+    assert params.target_edge_length == 0.5
+    assert params.remesh_iterations == 10
