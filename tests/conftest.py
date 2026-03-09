@@ -33,6 +33,20 @@ def small_sphere_density() -> np.ndarray:
 
 
 @pytest.fixture
+def sphere_sdf() -> np.ndarray:
+    """3D signed distance field for a sphere (negative inside, positive outside)."""
+    z, y, x = np.mgrid[-1:1:30j, -1:1:30j, -1:1:30j]
+    return np.sqrt(x**2 + y**2 + z**2) - 0.5
+
+
+@pytest.fixture
+def circle_sdf() -> np.ndarray:
+    """2D signed distance field for a circle."""
+    y, x = np.mgrid[-1:1:100j, -1:1:100j]
+    return np.sqrt(x**2 + y**2) - 0.5
+
+
+@pytest.fixture
 def processed_2d(circle_density: np.ndarray) -> PipelineState:
     """Fully processed 2D pipeline state."""
     return process(PipelineState(density=circle_density))
