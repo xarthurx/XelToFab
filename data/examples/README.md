@@ -32,6 +32,17 @@ Cantilever beam optimization results at three resolutions. Each sample has diffe
 |------|-------|----------------|
 | `thermoelastic_3d_16x16x16_sample{0,1}.npy` | (16, 16, 16) | `IDEALLab/thermoelastic_3d_v0` |
 
+## 3D Corner-Based (Structural)
+
+3D SIMP topology optimization results for structural compliance problems.
+Source: [Corner-Based TO Dataset](https://github.com/dustin-bielecki/Corner-Based-Topology-Optimization-Dataset)
+(Bielecki et al., "Multi-stage deep neural network accelerated topology optimization", Structural and Multidisciplinary Optimization).
+
+| File | Shape | Volume Fraction | Source |
+|------|-------|-----------------|--------|
+| `corner_3d_20x20x20_vf50_sample0.npy` | (20, 20, 20) | 50% | `3D/outputs_50_1.mat` sample 0 |
+| `corner_3d_20x20x20_vf30_sample0.npy` | (20, 20, 20) | 30% | `3D/outputs_30_1.mat` sample 0 |
+
 ## Usage
 
 ```python
