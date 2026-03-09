@@ -19,7 +19,15 @@ def _parse_shape(value: str) -> tuple[int, ...]:
     return tuple(int(p) for p in parts)
 
 
-def _build_params(ctx: click.Context, threshold: float, sigma: float, field_type: str, direct: bool) -> PipelineParams:
+def _build_params(
+    ctx: click.Context,
+    threshold: float,
+    sigma: float,
+    field_type: str,
+    direct: bool,
+    no_repair: bool,
+    no_remesh: bool,
+) -> PipelineParams:
     """Build PipelineParams, only passing values explicitly set by the user.
 
     This preserves PipelineParams smart defaults (e.g., SDF auto-enables
@@ -31,6 +39,10 @@ def _build_params(ctx: click.Context, threshold: float, sigma: float, field_type
         kwargs["smooth_sigma"] = sigma
     if ctx.get_parameter_source("direct") == source:
         kwargs["direct_extraction"] = direct
+    if no_repair:
+        kwargs["repair"] = False
+    if no_remesh:
+        kwargs["remesh"] = False
     return PipelineParams(**kwargs)
 
 
@@ -48,6 +60,8 @@ def main() -> None:
 @click.option("--shape", "shape_str", default=None, help="Grid shape for flat data, e.g. 100x200 or 10x20x30")
 @click.option("--field-type", type=click.Choice(["density", "sdf"]), default="density", help="Input field type")
 @click.option("--direct", is_flag=True, help="Direct extraction from continuous field (skip preprocessing)")
+@click.option("--no-repair", is_flag=True, help="Disable watertight mesh repair")
+@click.option("--no-remesh", is_flag=True, help="Disable isotropic remeshing")
 @click.option("--viz", is_flag=True, help="Save a comparison visualization alongside the mesh")
 @click.pass_context
 def process_cmd(
@@ -60,10 +74,12 @@ def process_cmd(
     shape_str: str | None,
     field_type: str,
     direct: bool,
+    no_repair: bool,
+    no_remesh: bool,
     viz: bool,
 ) -> None:
     """Process a density field into a mesh."""
-    params = _build_params(ctx, threshold, sigma, field_type, direct)
+    params = _build_params(ctx, threshold, sigma, field_type, direct, no_repair, no_remesh)
     shape = _parse_shape(shape_str) if shape_str else None
 
     try:
@@ -97,6 +113,8 @@ def process_cmd(
 @click.option("--shape", "shape_str", default=None, help="Grid shape for flat data, e.g. 100x200 or 10x20x30")
 @click.option("--field-type", type=click.Choice(["density", "sdf"]), default="density", help="Input field type")
 @click.option("--direct", is_flag=True, help="Direct extraction from continuous field (skip preprocessing)")
+@click.option("--no-repair", is_flag=True, help="Disable watertight mesh repair")
+@click.option("--no-remesh", is_flag=True, help="Disable isotropic remeshing")
 @click.pass_context
 def viz(
     ctx: click.Context,
@@ -108,9 +126,11 @@ def viz(
     shape_str: str | None,
     field_type: str,
     direct: bool,
+    no_repair: bool,
+    no_remesh: bool,
 ) -> None:
     """Visualize a density field and its extraction result."""
-    params = _build_params(ctx, threshold, sigma, field_type, direct)
+    params = _build_params(ctx, threshold, sigma, field_type, direct, no_repair, no_remesh)
     shape = _parse_shape(shape_str) if shape_str else None
 
     try:
