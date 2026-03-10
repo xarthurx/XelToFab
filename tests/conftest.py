@@ -14,21 +14,21 @@ from xeltofab.state import PipelineState
 
 
 @pytest.fixture
-def circle_density() -> np.ndarray:
-    """2D density field with a filled circle."""
+def circle_field() -> np.ndarray:
+    """2D field with a filled circle (density-like)."""
     y, x = np.mgrid[-1:1:100j, -1:1:100j]
     return (x**2 + y**2 < 0.5**2).astype(float)
 
 
 @pytest.fixture
-def sphere_density() -> np.ndarray:
-    """3D density field with a filled sphere."""
+def sphere_field() -> np.ndarray:
+    """3D field with a filled sphere (density-like)."""
     z, y, x = np.mgrid[-1:1:30j, -1:1:30j, -1:1:30j]
     return (x**2 + y**2 + z**2 < 0.5**2).astype(float)
 
 
 @pytest.fixture
-def small_sphere_density() -> np.ndarray:
+def small_sphere_field() -> np.ndarray:
     """Small 3D sphere for fast CLI tests."""
     z, y, x = np.mgrid[-1:1:20j, -1:1:20j, -1:1:20j]
     return (x**2 + y**2 + z**2 < 0.5**2).astype(float)
@@ -56,9 +56,9 @@ def circle_sdf() -> np.ndarray:
 
 
 @pytest.fixture
-def open_mesh_state(sphere_density: np.ndarray) -> PipelineState:
+def open_mesh_state(sphere_field: np.ndarray) -> PipelineState:
     """Pipeline state with an open mesh (faces removed to create holes)."""
-    state = PipelineState(density=sphere_density)
+    state = PipelineState(field=sphere_field)
     state = preprocess(state)
     state = extract(state)
     # Remove faces to create holes in the mesh
@@ -67,12 +67,12 @@ def open_mesh_state(sphere_density: np.ndarray) -> PipelineState:
 
 
 @pytest.fixture
-def processed_2d(circle_density: np.ndarray) -> PipelineState:
+def processed_2d(circle_field: np.ndarray) -> PipelineState:
     """Fully processed 2D pipeline state."""
-    return process(PipelineState(density=circle_density))
+    return process(PipelineState(field=circle_field))
 
 
 @pytest.fixture
-def processed_3d(sphere_density: np.ndarray) -> PipelineState:
+def processed_3d(sphere_field: np.ndarray) -> PipelineState:
     """Fully processed 3D pipeline state."""
-    return process(PipelineState(density=sphere_density))
+    return process(PipelineState(field=sphere_field))
