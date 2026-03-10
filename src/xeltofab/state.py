@@ -14,8 +14,12 @@ class PipelineParams(BaseModel):
     threshold: float = Field(default=0.5, ge=0.0, le=1.0)
     smooth_sigma: float = Field(default=1.0, ge=0.0)
     morph_radius: int = Field(default=1, ge=0)
+    smoothing_method: Literal["taubin", "bilateral"] = "taubin"
     taubin_iterations: int = Field(default=20, ge=0)
     taubin_lambda: float = Field(default=0.5, gt=0.0, le=1.0)  # shrinkage factor for Taubin smoothing
+    bilateral_iterations: int = Field(default=10, ge=1)
+    bilateral_sigma_s: float | None = Field(default=None, gt=0.0)  # auto from avg edge length
+    bilateral_sigma_n: float = Field(default=0.35, gt=0.0)  # normal similarity threshold (radians)
 
     field_type: Literal["density", "sdf"] = "density"
     direct_extraction: bool = False

@@ -187,3 +187,15 @@ constrained in FEA anyway. Documented in quality log.
 
 **Prevention:** Report median/percentile quality metrics alongside worst-case. When interpreting
 mesh quality, distinguish boundary vs interior faces.
+
+---
+
+### 2026-03-10 — Bilateral Mesh Filter: Fleishman Normal-Displacement Fails on Coarse Meshes
+
+**Problem:** Initial bilateral filter implementation (Fleishman et al. 2003) displaced vertices only along normals based on neighbor heights above the tangent plane. This failed: (1) on convex surfaces all heights are negative → systematic inward drift → 20% volume loss; (2) tangential noise is not corrected at all; (3) on coarse meshes with few neighbors per vertex, the filter offered no advantage over Taubin.
+
+**Root cause:** Fleishman's method assumes dense tessellation and primarily addresses normal-direction noise. Marching cubes meshes have isotropic staircase noise (both normal and tangential), and our test meshes have relatively few vertices per local neighborhood.
+
+**Resolution:** Switched to normal-similarity bilateral filtering — standard Laplacian-style displacement weighted by spatial distance × normal similarity. Added per-iteration volume correction (uniform scaling to match original volume) to counter inherent shrinkage. This correctly reduces displacement at feature edges (where neighbor normals diverge) while smoothing flat regions normally.
+
+**Prevention:** When implementing a mesh processing algorithm from a specific paper, verify that its assumptions (mesh density, noise model, neighborhood size) match the actual input data. Test on representative meshes, not just synthetic primitives.
