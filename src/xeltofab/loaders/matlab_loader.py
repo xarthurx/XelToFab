@@ -12,7 +12,7 @@ _KNOWN_NAMES = ("xPhys", "densities", "x", "rho", "dc", "density")
 
 
 def load(path: Path, field_name: str | None, shape: tuple[int, ...] | None) -> np.ndarray:
-    """Load density array from a MATLAB .mat file.
+    """Load scalar field from a MATLAB .mat file.
 
     Auto-detects common TO variable names if field_name is not specified.
     """

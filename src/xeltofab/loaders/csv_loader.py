@@ -1,4 +1,4 @@
-"""CSV/TXT loader for density fields."""
+"""CSV/TXT loader for scalar fields."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ import numpy as np
 
 
 def load(path: Path, field_name: str | None, shape: tuple[int, ...] | None) -> np.ndarray:
-    """Load density array from CSV or whitespace-delimited text file.
+    """Load scalar field from CSV or whitespace-delimited text file.
 
     If shape is provided, data is loaded as flat values and reshaped.
     Otherwise, 2D table structure is inferred from rows/columns.

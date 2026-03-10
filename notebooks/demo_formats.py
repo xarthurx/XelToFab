@@ -128,7 +128,7 @@ def _(np):
 def _(mo, plot_density, plt, test_field):
     from xeltofab.state import PipelineParams as _PP, PipelineState as _PS
 
-    _state = _PS(density=test_field, params=_PP())
+    _state = _PS(field=test_field, params=_PP())
     _fig = plot_density(_state)
     _out = mo.as_html(_fig)
     plt.close(_fig)
@@ -142,7 +142,7 @@ def _(mo, plot_density, plt, test_field):
 def _(mo, plot_density, plt):
     def show_round_trip(state, label: str):
         """Plot a round-tripped density field and print stats."""
-        d = state.density
+        d = state.field
         _fig = plot_density(state)
         _html = mo.as_html(_fig)
         plt.close(_fig)
@@ -343,8 +343,8 @@ def _(Path, PipelineParams, load_density, mo, np, show_round_trip, tempfile, tes
             _state_vti = load_density(_p)
 
         # VTK loader outputs (x, y) axis order — transpose back to numpy (rows, cols)
-        _density_fixed = _state_vti.density.T
-        _state_fixed = _PS(density=_density_fixed, params=PipelineParams())
+        _field_fixed = _state_vti.field.T
+        _state_fixed = _PS(field=_field_fixed, params=PipelineParams())
 
         vtk_out = show_round_trip(
             _state_fixed,
@@ -506,7 +506,7 @@ def _(Path, mo, np, save_mesh, tempfile):
     _z, _y, _x = np.mgrid[-1:1:complex(_res), -1:1:complex(_res), -1:1:complex(_res)]
     _sphere = (_x**2 + _y**2 + _z**2 < 0.5**2).astype(float)
 
-    _state3d = _PS(density=_sphere, params=_PP(threshold=0.5, smooth_sigma=0.5, taubin_iterations=10))
+    _state3d = _PS(field=_sphere, params=_PP(threshold=0.5, smooth_sigma=0.5, taubin_iterations=10))
     _result3d = _process(_state3d)
 
     # 3-D mesh visualization (interactive plotly)

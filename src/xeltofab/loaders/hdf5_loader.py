@@ -1,4 +1,4 @@
-"""HDF5 and XDMF loader for density fields."""
+"""HDF5 and XDMF loader for scalar fields."""
 
 from __future__ import annotations
 
@@ -104,7 +104,7 @@ def _load_xdmf(path: Path, field_name: str | None) -> np.ndarray:
 
 
 def load(path: Path, field_name: str | None, shape: tuple[int, ...] | None) -> np.ndarray:
-    """Load density array from HDF5 or XDMF file."""
+    """Load scalar field from HDF5 or XDMF file."""
     if path.suffix.lower() == ".xdmf":
         return _load_xdmf(path, field_name)
     return _load_h5(path, field_name)

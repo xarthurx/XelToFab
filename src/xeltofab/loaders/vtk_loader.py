@@ -12,7 +12,7 @@ _KNOWN_PATTERNS = ("density", "rho", "xphys", "x")
 
 
 def _find_density_field(mesh: pyvista.DataSet, field_name: str | None) -> tuple[np.ndarray, str, bool]:
-    """Find and return (array, name, is_cell_data) for the density field."""
+    """Find and return (array, name, is_cell_data) for the scalar field."""
     # Build lookup: name -> (array, is_cell_data)
     all_fields: dict[str, tuple[np.ndarray, bool]] = {}
     for name in mesh.cell_data:
@@ -40,7 +40,7 @@ def _find_density_field(mesh: pyvista.DataSet, field_name: str | None) -> tuple[
         return arr, name, is_cell
 
     raise ValueError(
-        f"Could not auto-detect density field. Available: {list(all_fields.keys())}\nSpecify with --field-name"
+        f"Could not auto-detect scalar field. Available: {list(all_fields.keys())}\nSpecify with --field-name"
     )
 
 
@@ -60,7 +60,7 @@ def _grid_dimensions(mesh: pyvista.DataSet, *, cell: bool) -> tuple[int, ...]:
 
 
 def load(path: Path, field_name: str | None, shape: tuple[int, ...] | None) -> np.ndarray:
-    """Load density array from a VTK structured grid file."""
+    """Load scalar field from a VTK structured grid file."""
     mesh = pyvista.read(str(path))
     values, _, is_cell_data = _find_density_field(mesh, field_name)
 
