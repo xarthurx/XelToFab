@@ -495,27 +495,36 @@ def gen_hero_overview() -> None:
     # Right: final smoothed mesh via pyvista
     mesh_img = _pv_screenshot(result.best_vertices, result.faces)
 
-    fig, (ax_field, ax_mesh) = plt.subplots(1, 2, figsize=(10, 3.5))
+    # Use gridspec: left panel, center arrow gap, right panel
+    fig = plt.figure(figsize=(10, 3.5))
     fig.patch.set_facecolor(BG_COLOR)
+    gs = fig.add_gridspec(1, 3, width_ratios=[1, 0.18, 1], wspace=0.02)
+    ax_field = fig.add_subplot(gs[0, 0])
+    ax_arrow = fig.add_subplot(gs[0, 1])
+    ax_mesh = fig.add_subplot(gs[0, 2])
 
-    # Left panel: density field slice
-    im = ax_field.imshow(field[mid], cmap="YlOrRd", origin="lower", vmin=0, vmax=1)
-    ax_field.set_title("Density Field", fontsize=11, fontweight="bold")
+    # Left panel: density field slice — no colorbar for a clean hero image
+    ax_field.imshow(field[mid], cmap="YlOrRd", origin="lower", vmin=0, vmax=1)
+    ax_field.set_title("Density Field", fontsize=11, fontweight="bold", color="#2B2B2B")
     ax_field.axis("off")
-    fig.colorbar(im, ax=ax_field, fraction=0.046, pad=0.04)
+
+    # Center: horizontal arrow with label — minimal, no box
+    ax_arrow.set_xlim(0, 1)
+    ax_arrow.set_ylim(0, 1)
+    ax_arrow.axis("off")
+    ax_arrow.text(0.5, 0.58, "XelToFab", ha="center", va="bottom",
+                  fontsize=9, fontweight="bold", color="#1B3A5C",
+                  fontstyle="italic")
+    ax_arrow.annotate(
+        "", xy=(0.95, 0.48), xytext=(0.05, 0.48),
+        arrowprops=dict(arrowstyle="-|>", color="#1B3A5C", lw=1.6,
+                        mutation_scale=13),
+    )
 
     # Right panel: final mesh
     ax_mesh.imshow(mesh_img)
-    ax_mesh.set_title("Triangle Mesh", fontsize=11, fontweight="bold")
+    ax_mesh.set_title("Triangle Mesh", fontsize=11, fontweight="bold", color="#2B2B2B")
     ax_mesh.axis("off")
-
-    # Arrow with "XelToFab" label between panels
-    fig.tight_layout(pad=1.5)
-    # Place arrow annotation in figure coordinates (between the two axes)
-    fig.text(0.5, 0.5, "XelToFab\n→", ha="center", va="center",
-             fontsize=12, fontweight="bold", color=STAGE_COLORS["Smooth"],
-             bbox=dict(boxstyle="round,pad=0.3", facecolor="#E8F0FA",
-                       edgecolor=STAGE_COLORS["Smooth"], linewidth=1.5))
 
     fig.savefig(OUTPUT_DIR_GS / "hero-overview.png", dpi=DPI, bbox_inches="tight",
                 facecolor=BG_COLOR)
