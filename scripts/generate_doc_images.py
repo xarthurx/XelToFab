@@ -239,7 +239,75 @@ def gen_field_types() -> None:
 
 def gen_parameter_sensitivity() -> None:
     """Image 4: 3x3 parameter sensitivity grid."""
-    pass  # implemented in Task 5
+    import numpy as np
+    from xeltofab.io import load_field
+    from xeltofab.preprocess import preprocess
+    from xeltofab.extract import extract
+    from xeltofab.smooth import smooth
+    from xeltofab.state import PipelineParams
+
+    # Load data
+    state_2d = load_field("data/examples/beams_2d_100x200_sample0.npy")
+    state_3d = load_field("data/examples/heat_conduction_3d_51x51x51_sample0.npy")
+
+    fig, axes = plt.subplots(3, 3, figsize=(10, 7.5))
+    fig.patch.set_facecolor(BG_COLOR)
+
+    # Row 1: threshold variation (2D contours on density field)
+    thresholds = [0.3, 0.5, 0.7]
+    for col, thresh in enumerate(thresholds):
+        params = PipelineParams(threshold=thresh)
+        st = state_2d.model_copy(update={"params": params})
+        st = preprocess(st)
+        st = extract(st)
+        ax = axes[0, col]
+        ax.imshow(state_2d.field, cmap="gray_r", origin="lower", alpha=0.4)
+        if st.contours:
+            for c in st.contours:
+                ax.plot(c[:, 1], c[:, 0], "b-", linewidth=1.2)
+        ax.set_title(f"threshold={thresh}", fontsize=9)
+        ax.axis("off")
+    axes[0, 0].set_ylabel("Threshold", fontsize=10, fontweight="bold")
+
+    # Row 2: sigma variation (2D — show contours after preprocess + extract)
+    sigmas = [0.0, 1.0, 2.0]
+    for col, sigma in enumerate(sigmas):
+        params = PipelineParams(smooth_sigma=sigma)
+        st = state_2d.model_copy(update={"params": params})
+        st = preprocess(st)
+        st = extract(st)
+        ax = axes[1, col]
+        ax.imshow(state_2d.field, cmap="gray_r", origin="lower", alpha=0.4)
+        if st.contours:
+            for c in st.contours:
+                ax.plot(c[:, 1], c[:, 0], "b-", linewidth=1.2)
+        ax.set_title(f"smooth_sigma={sigma}", fontsize=9)
+        ax.axis("off")
+    axes[1, 0].set_ylabel("Sigma", fontsize=10, fontweight="bold")
+
+    # Row 3: taubin_iterations variation (3D mesh screenshots)
+    iterations = [0, 10, 50]
+    state_3d_pre = preprocess(state_3d)
+    state_3d_ext = extract(state_3d_pre)
+    for col, iters in enumerate(iterations):
+        if iters == 0:
+            verts = state_3d_ext.vertices
+        else:
+            params = PipelineParams(taubin_iterations=iters)
+            st = state_3d_ext.model_copy(update={"params": params})
+            st = smooth(st)
+            verts = st.best_vertices
+        img = _pv_screenshot(verts, state_3d_ext.faces)
+        ax = axes[2, col]
+        ax.imshow(img)
+        ax.set_title(f"taubin_iterations={iters}", fontsize=9)
+        ax.axis("off")
+    axes[2, 0].set_ylabel("Taubin", fontsize=10, fontweight="bold")
+
+    fig.tight_layout(pad=1.5)
+    fig.savefig(OUTPUT_DIR / "parameter-sensitivity.png", dpi=DPI, bbox_inches="tight",
+                facecolor=BG_COLOR)
+    plt.close(fig)
 
 
 def gen_quality_metrics() -> None:
