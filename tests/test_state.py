@@ -20,8 +20,8 @@ def test_pipeline_params_defaults():
 
 
 def test_pipeline_state_2d():
-    density = np.random.rand(50, 100)
-    state = PipelineState(density=density)
+    field = np.random.rand(50, 100)
+    state = PipelineState(field=field)
     assert state.ndim == 2
     assert state.params.threshold == 0.5
     assert state.binary is None
@@ -29,19 +29,19 @@ def test_pipeline_state_2d():
 
 
 def test_pipeline_state_3d():
-    density = np.random.rand(10, 20, 30)
-    state = PipelineState(density=density)
+    field = np.random.rand(10, 20, 30)
+    state = PipelineState(field=field)
     assert state.ndim == 3
 
 
 def test_pipeline_state_rejects_1d():
     with pytest.raises(ValidationError):
-        PipelineState(density=np.array([1.0, 2.0, 3.0]))
+        PipelineState(field=np.array([1.0, 2.0, 3.0]))
 
 
 def test_pipeline_state_rejects_4d():
     with pytest.raises(ValidationError):
-        PipelineState(density=np.random.rand(2, 3, 4, 5))
+        PipelineState(field=np.random.rand(2, 3, 4, 5))
 
 
 def test_pipeline_params_validates_threshold():

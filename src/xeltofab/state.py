@@ -63,8 +63,8 @@ class PipelineState(BaseModel):
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    density: np.ndarray
-    ndim: int = 0  # computed from density
+    field: np.ndarray
+    ndim: int = 0  # computed from field
     params: PipelineParams = Field(default_factory=PipelineParams)
 
     binary: np.ndarray | None = None
@@ -74,11 +74,11 @@ class PipelineState(BaseModel):
     smoothed_vertices: np.ndarray | None = None
     volume_fraction: float | None = None
 
-    @field_validator("density")
+    @field_validator("field")
     @classmethod
-    def validate_density(cls, v: np.ndarray) -> np.ndarray:
+    def validate_field(cls, v: np.ndarray) -> np.ndarray:
         if v.ndim not in (2, 3):
-            raise ValueError(f"density must be 2D or 3D, got {v.ndim}D")
+            raise ValueError(f"field must be 2D or 3D, got {v.ndim}D")
         return v
 
     @property
@@ -88,5 +88,5 @@ class PipelineState(BaseModel):
 
     @model_validator(mode="after")
     def set_ndim(self) -> PipelineState:
-        self.ndim = self.density.ndim
+        self.ndim = self.field.ndim
         return self
