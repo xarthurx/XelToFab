@@ -65,8 +65,64 @@ def _pv_screenshot(vertices, faces, color="steelblue"):
 
 
 def gen_pipeline_diagram() -> None:
-    """Image 1: Pipeline flow diagram with 6 colored stage boxes."""
-    pass  # implemented in Task 2
+    """Image 1: Horizontal pipeline flow diagram with 6 colored stage boxes."""
+    fig, ax = plt.subplots(figsize=(12, 2.5))
+    ax.set_xlim(-0.5, 12.0)
+    ax.set_ylim(-1.2, 1.5)
+    ax.set_aspect("equal")
+    ax.axis("off")
+    fig.patch.set_facecolor(BG_COLOR)
+
+    # Terminals (rounded, gray)
+    terminals = [("Field", 0.0), ("Mesh", 11.5)]
+    for label, x in terminals:
+        ax.add_patch(matplotlib.patches.FancyBboxPatch(
+            (x - 0.45, -0.3), 0.9, 0.6,
+            boxstyle="round,pad=0.1",
+            facecolor="#E0E0E0", edgecolor="#666666", linewidth=1.5,
+        ))
+        ax.text(x, 0.0, label, ha="center", va="center", fontsize=10, fontweight="bold")
+
+    # Stage boxes (colored)
+    stages = list(STAGE_COLORS.keys())
+    positions = [1.7, 3.4, 5.1, 6.8, 8.5, 10.0]
+    param_annotations = {
+        "Preprocess": "threshold\nsmooth_sigma",
+        "Extract": "extraction_level",
+        "Smooth": "taubin_iterations\nsmoothing_method",
+        "Repair": "repair",
+        "Remesh": "target_edge_length\nremesh_iterations",
+        "Decimate": "decimate_ratio\ndecimate_aggressiveness",
+    }
+
+    for stage, x in zip(stages, positions, strict=True):
+        color = STAGE_COLORS[stage]
+        ax.add_patch(matplotlib.patches.FancyBboxPatch(
+            (x - 0.55, -0.3), 1.1, 0.6,
+            boxstyle="round,pad=0.08",
+            facecolor=color, edgecolor="black", linewidth=1.2, alpha=0.85,
+        ))
+        ax.text(x, 0.0, stage, ha="center", va="center", fontsize=8.5,
+                fontweight="bold", color="white")
+
+        # Parameter annotation below
+        if stage in param_annotations:
+            ax.text(x, -0.65, param_annotations[stage], ha="center", va="top",
+                    fontsize=5.5, color="#555555", fontstyle="italic")
+
+    # Arrows between all boxes: Field -> Preprocess -> ... -> Decimate -> Mesh
+    all_x = [0.0] + positions + [11.5]
+    for i in range(len(all_x) - 1):
+        x_start = all_x[i] + 0.55
+        x_end = all_x[i + 1] - 0.55
+        ax.annotate(
+            "", xy=(x_end, 0.0), xytext=(x_start, 0.0),
+            arrowprops=dict(arrowstyle="->", color="#333333", lw=1.5),
+        )
+
+    fig.savefig(OUTPUT_DIR / "pipeline-flow.png", dpi=DPI, bbox_inches="tight",
+                facecolor=BG_COLOR)
+    plt.close(fig)
 
 
 def gen_pipeline_stages() -> None:
