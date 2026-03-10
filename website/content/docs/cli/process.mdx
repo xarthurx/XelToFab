@@ -28,6 +28,7 @@ Process a scalar field into a mesh. The input field is loaded, run through the p
 | `--shape` | `TEXT` | `None` | Grid shape for flat data, e.g. `100x200` or `10x20x30` |
 | `--field-type` | `density\|sdf` | `density` | Input field type. Setting `sdf` enables smart defaults (direct extraction, no Gaussian smoothing). |
 | `--direct` | flag | `False` | Direct extraction from continuous field (skip preprocessing) |
+| `--smoothing` | `taubin\|bilateral` | `taubin` | Mesh smoothing algorithm. Use `bilateral` for feature-preserving smoothing |
 | `--viz` | flag | `False` | Save a comparison visualization (PNG) alongside the mesh |
 
 ### Smart defaults with `--field-type sdf`
@@ -85,3 +86,11 @@ xtf process field.npy -o mesh.stl --viz
 ```
 
 When `--viz` is used, a comparison PNG image is saved alongside the mesh at the same path with a `.png` extension.
+
+### Feature-preserving smoothing
+
+```bash
+xtf process field.npy -o mesh.stl --smoothing bilateral
+```
+
+Bilateral filtering preserves sharp structural features (corners, ridges) while smoothing flat surfaces. Useful when the design has distinct sharp edges that should not be blurred.

@@ -23,7 +23,7 @@ scalar field (numpy)
        │  vertices + faces (3D) or contour arrays (2D)
        ▼
 ┌──────────────┐
-│   Smooth      │  3D: Taubin smoothing (via trimesh)
+│   Smooth      │  3D: Taubin or bilateral filtering (via trimesh/numpy)
 │               │  2D: no-op (contours pass through)
 └──────┬───────┘
        │  smoothed mesh / contours
@@ -63,7 +63,7 @@ src/xeltofab/
 ├── state.py        PipelineState + PipelineParams (Pydantic models)
 ├── preprocess.py   Field preprocessing (smooth, threshold, morphology)
 ├── extract.py      Mesh/contour extraction (marching cubes/squares)
-├── smooth.py       Taubin mesh smoothing
+├── smooth.py       Mesh smoothing (Taubin λ-μ or bilateral normal-similarity)
 ├── repair.py       Watertight mesh repair (pymeshlab)
 ├── remesh.py       Isotropic remeshing (gpytoolbox, Botsch & Kobbelt)
 ├── quality.py      Mesh quality metrics (pyvista + trimesh)
@@ -137,7 +137,7 @@ The `xtf` command (installed via `[project.scripts]`) exposes three subcommands:
 | Morphological ops | `scikit-image` (opening, closing, remove_small_objects) |
 | Contour extraction | `scikit-image` (find_contours) |
 | Mesh extraction | `scikit-image` (marching_cubes) |
-| Mesh smoothing | `trimesh` (Taubin filter) |
+| Mesh smoothing | `trimesh` (Taubin filter), `numpy` (bilateral filter) |
 | Mesh repair | `pymeshlab` (optional — `uv sync --extra mesh-quality`) |
 | Isotropic remeshing | `gpytoolbox` (optional — `uv sync --extra mesh-quality`) |
 | Quality metrics | `pyvista` + `trimesh` |
@@ -159,7 +159,7 @@ tests/
 ├── test_state.py           Model validation (12 tests)
 ├── test_preprocess.py      Preprocessing behavior (6 tests)
 ├── test_extract.py         Extraction output shapes (7 tests)
-├── test_smooth.py          Smoothing effects + volume preservation (4 tests)
+├── test_smooth.py          Taubin + bilateral smoothing (9 tests)
 ├── test_repair.py          Watertight mesh repair (3 tests)
 ├── test_remesh.py          Isotropic remeshing (5 tests)
 ├── test_quality.py         Mesh quality metrics (4 tests)
@@ -184,5 +184,4 @@ Run with `uv run pytest tests/ -v`.
 See [TODO.md](TODO.md) for the full backlog. The pipeline is designed to extend with additional stages:
 
 - **Decimation** — QEM edge collapse for mesh simplification
-- **Feature-preserving smoothing** — Bilateral mesh filtering, two-step normal smoothing
 - **Mesh-to-CAD** — Patch decomposition + NURBS fitting + B-Rep assembly

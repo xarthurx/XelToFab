@@ -23,7 +23,7 @@ scalar field (numpy)
        |  vertices + faces (3D) or contour arrays (2D)
        v
 +--------------+
-|   Smooth      |  3D: Taubin smoothing (via trimesh)
+|   Smooth      |  3D: Taubin or bilateral filtering
 |               |  2D: no-op (contours pass through)
 +--------------+
        |
@@ -72,7 +72,7 @@ This creates a shallow copy with the specified fields replaced. Because copies s
 
 ### The `best_vertices` property
 
-`PipelineState` provides a `best_vertices` property that returns `smoothed_vertices` if Taubin smoothing has been applied, otherwise falls back to the raw `vertices` from extraction:
+`PipelineState` provides a `best_vertices` property that returns `smoothed_vertices` if smoothing has been applied, otherwise falls back to the raw `vertices` from extraction:
 
 ```python
 vertices = state.best_vertices  # smoothed if available, raw otherwise
@@ -102,7 +102,7 @@ The pipeline automatically detects whether the input is 2D or 3D based on `field
 | Dimension | Preprocessing | Extraction | Smoothing | Output |
 |-----------|---------------|------------|-----------|--------|
 | 2D | Same (Gaussian, threshold, morphology with `disk` kernel) | `find_contours` (marching squares) | No-op (contours pass through) | Contour arrays in `state.contours` |
-| 3D | Same (Gaussian, threshold, morphology with `ball` kernel) | `marching_cubes` | Taubin smoothing via trimesh | Triangle mesh in `state.vertices` / `state.faces` |
+| 3D | Same (Gaussian, threshold, morphology with `ball` kernel) | `marching_cubes` | Taubin or bilateral smoothing | Triangle mesh in `state.vertices` / `state.faces` |
 
 For 2D fields, `save_mesh()` is not supported (raises an error). Use the visualization functions (`plot_result`, `plot_comparison`) to render contour output.
 
@@ -128,11 +128,17 @@ The extraction level defaults to `threshold` for density fields and `0.0` for SD
 
 ### Smooth (`smooth.py`)
 
-Applies Taubin smoothing to the 3D triangle mesh using `trimesh.smoothing.filter_taubin`. This removes staircase artifacts from marching cubes while preserving volume better than Laplacian smoothing.
+XelToFab provides two mesh smoothing methods, selectable via `smoothing_method`:
+
+**Taubin smoothing** (default) applies alternating shrink/inflate passes using trimesh's `filter_taubin`. This band-pass filter removes high-frequency staircase artifacts from marching cubes while preserving low-frequency shape and volume. Best for general-purpose smoothing where uniform treatment of the surface is acceptable.
 
 Configurable via `taubin_iterations` (default: 20) and `taubin_lambda` (default: 0.5).
 
-For 2D contours, this stage is a no-op.
+**Bilateral filtering** (`smoothing_method="bilateral"`) weights each vertex displacement by both spatial proximity and normal similarity of its neighbors. Neighbors across sharp edges have divergent normals and receive near-zero weight, so the filter smooths flat regions while preserving structural features like corners, ridges, and thin walls. Per-iteration volume correction counters the inherent shrinkage of Laplacian-family smoothers.
+
+Configurable via `bilateral_iterations` (default: 10), `bilateral_sigma_s` (spatial reach; default: auto from average edge length), and `bilateral_sigma_n` (normal similarity threshold in radians; default: 0.35).
+
+For 2D contours, both methods are a no-op.
 
 ## Interactive examples
 

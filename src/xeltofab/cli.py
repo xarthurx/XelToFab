@@ -27,13 +27,14 @@ def _build_params(
     direct: bool,
     no_repair: bool,
     no_remesh: bool,
+    smoothing: str,
 ) -> PipelineParams:
     """Build PipelineParams, only passing values explicitly set by the user.
 
     This preserves PipelineParams smart defaults (e.g., SDF auto-enables
     direct extraction and disables Gaussian smoothing).
     """
-    kwargs: dict = {"threshold": threshold, "field_type": field_type}
+    kwargs: dict = {"threshold": threshold, "field_type": field_type, "smoothing_method": smoothing}
     source = click.core.ParameterSource.COMMANDLINE
     if ctx.get_parameter_source("sigma") == source:
         kwargs["smooth_sigma"] = sigma
@@ -62,6 +63,7 @@ def main() -> None:
 @click.option("--direct", is_flag=True, help="Direct extraction from continuous field (skip preprocessing)")
 @click.option("--no-repair", is_flag=True, help="Disable watertight mesh repair")
 @click.option("--no-remesh", is_flag=True, help="Disable isotropic remeshing")
+@click.option("--smoothing", type=click.Choice(["taubin", "bilateral"]), default="taubin", help="Mesh smoothing method")
 @click.option("--viz", is_flag=True, help="Save a comparison visualization alongside the mesh")
 @click.pass_context
 def process_cmd(
@@ -76,10 +78,11 @@ def process_cmd(
     direct: bool,
     no_repair: bool,
     no_remesh: bool,
+    smoothing: str,
     viz: bool,
 ) -> None:
     """Process a scalar field into a mesh."""
-    params = _build_params(ctx, threshold, sigma, field_type, direct, no_repair, no_remesh)
+    params = _build_params(ctx, threshold, sigma, field_type, direct, no_repair, no_remesh, smoothing)
     shape = _parse_shape(shape_str) if shape_str else None
 
     try:
@@ -115,6 +118,7 @@ def process_cmd(
 @click.option("--direct", is_flag=True, help="Direct extraction from continuous field (skip preprocessing)")
 @click.option("--no-repair", is_flag=True, help="Disable watertight mesh repair")
 @click.option("--no-remesh", is_flag=True, help="Disable isotropic remeshing")
+@click.option("--smoothing", type=click.Choice(["taubin", "bilateral"]), default="taubin", help="Mesh smoothing method")
 @click.pass_context
 def viz(
     ctx: click.Context,
@@ -128,9 +132,10 @@ def viz(
     direct: bool,
     no_repair: bool,
     no_remesh: bool,
+    smoothing: str,
 ) -> None:
     """Visualize a scalar field and its extraction result."""
-    params = _build_params(ctx, threshold, sigma, field_type, direct, no_repair, no_remesh)
+    params = _build_params(ctx, threshold, sigma, field_type, direct, no_repair, no_remesh, smoothing)
     shape = _parse_shape(shape_str) if shape_str else None
 
     try:

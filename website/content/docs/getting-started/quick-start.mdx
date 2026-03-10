@@ -82,6 +82,23 @@ save_mesh(result, "output.stl")
 
 SDF mode automatically enables direct extraction (skipping preprocessing) and sets the extraction level to 0.0 (the zero level set). See [Field Types](/docs/guides/field-types) for details.
 
+### Feature-preserving smoothing
+
+For meshes with sharp structural features (corners, ridges, thin walls), use bilateral filtering instead of the default Taubin smoothing:
+
+```python
+from xeltofab.io import load_field, save_mesh
+from xeltofab.pipeline import process
+from xeltofab.state import PipelineParams
+
+params = PipelineParams(smoothing_method="bilateral")
+state = load_field("field.npy", params=params)
+result = process(state)
+save_mesh(result, "output.stl")
+```
+
+Bilateral filtering weights vertex displacements by normal similarity — neighbors across sharp edges receive near-zero weight, preserving features while smoothing flat regions. See the [Parameters guide](/docs/guides/parameters) for tuning sigma values.
+
 ## CLI usage
 
 ### Process a field

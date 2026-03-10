@@ -24,6 +24,10 @@ from xeltofab.state import PipelineParams
 | `morph_radius` | `int` | `1` | `>= 0` | Morphological cleanup radius |
 | `taubin_iterations` | `int` | `20` | `>= 0` | Number of Taubin smoothing iterations |
 | `taubin_lambda` | `float` | `0.5` | `> 0.0`, `<= 1.0` | Shrinkage factor for Taubin smoothing |
+| `smoothing_method` | `Literal["taubin", "bilateral"]` | `"taubin"` | — | Mesh smoothing algorithm |
+| `bilateral_iterations` | `int` | `10` | `>= 1` | Number of bilateral filtering iterations |
+| `bilateral_sigma_s` | `float \| None` | `None` | `> 0.0` | Spatial weight reach (auto from edge length when `None`) |
+| `bilateral_sigma_n` | `float` | `0.35` | `> 0.0` | Normal similarity threshold in radians |
 | `field_type` | `Literal["density", "sdf"]` | `"density"` | — | Input field type |
 | `direct_extraction` | `bool` | `False` | — | Skip preprocessing and extract directly from the continuous field |
 | `extraction_level` | `float \| None` | `None` | — | Explicit iso-level for marching cubes/squares extraction |
@@ -83,6 +87,12 @@ params = PipelineParams(
 
 # SDF field with smart defaults
 params = PipelineParams(field_type="sdf")
+
+# Feature-preserving bilateral smoothing
+params = PipelineParams(
+    smoothing_method="bilateral",
+    bilateral_iterations=10,
+)
 
 # Pass to load_field
 state = load_field("field.npy", params=params)
