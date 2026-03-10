@@ -1,13 +1,13 @@
 ---
 title: Introduction
-description: XelToFab — Topology optimization post-processing pipeline
+description: XelToFab — Design field post-processing pipeline
 ---
 
-XelToFab converts topology optimization density fields into clean, fabrication-ready triangle meshes. It handles the full post-processing pipeline: preprocessing, mesh extraction, smoothing, and quality analysis.
+XelToFab converts scalar design fields into clean, fabrication-ready triangle meshes. It handles the full post-processing pipeline: preprocessing, mesh extraction, smoothing, repair, and quality analysis.
 
 ## What it does
 
-Given a density field (a numpy array with values in \[0, 1\]) from any topology optimization solver, XelToFab:
+Given a scalar field (a numpy array) from a topology optimization solver, neural network, or other computational design tool, XelToFab:
 
 1. **Preprocesses** the field — Gaussian smoothing, thresholding, morphological cleanup
 2. **Extracts** geometry — marching cubes (3D → triangle mesh) or marching squares (2D → contours)
@@ -17,22 +17,22 @@ Given a density field (a numpy array with values in \[0, 1\]) from any topology 
 
 - **Multi-format input** — NumPy, MATLAB, VTK, HDF5, CSV
 - **2D and 3D** — contour extraction or triangle mesh generation
-- **SDF support** — direct extraction from signed distance fields (neural models)
+- **Multiple field types** — density fields, SDFs, occupancy fields, and neural field outputs
 - **Quality metrics** — aspect ratio, min angle, scaled Jacobian via PyVista
 - **CLI and Python API** — `xtf` command-line tool or import directly
 
 ## Quick example
 
 ```python
-from xeltofab.io import load_density, save_mesh
+from xeltofab.io import load_field, save_mesh
 from xeltofab.pipeline import process
 
-result = process(load_density("density_field.npy"))
+result = process(load_field("field.npy"))
 save_mesh(result, "output.stl")
 ```
 
 ## Next steps
 
 - [Installation](/docs/getting-started/installation) — set up XelToFab
-- [Quick Start](/docs/getting-started/quick-start) — process your first density field
+- [Quick Start](/docs/getting-started/quick-start) — process your first field
 - [Pipeline Overview](/docs/guides/pipeline-overview) — understand how the pipeline works
