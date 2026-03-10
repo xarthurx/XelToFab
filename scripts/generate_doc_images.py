@@ -156,8 +156,9 @@ def gen_pipeline_stages() -> None:
     state_smo = smooth(state_ext)
 
     fig, axes = plt.subplots(1, 4, figsize=(12, 3.8))
-    titles = ["Raw Field\n(center slice)", "After Threshold\n(binary)",
-              "Marching Cubes\n(raw mesh)", "After Smoothing"]
+    # Main titles (line 1) and subtitles (line 2, parenthetical)
+    main_titles = ["Raw Field", "After Threshold", "Marching Cubes", "After Smoothing"]
+    subtitles = ["(center slice)", "(binary)", "(raw mesh)", ""]
 
     # Panel 1: Center slice of raw density field
     field = state.field
@@ -183,11 +184,16 @@ def gen_pipeline_stages() -> None:
     fig.patch.set_facecolor(BG_COLOR)
     fig.tight_layout(pad=0.5)
 
-    # Add titles at a uniform y-position so they are top-aligned
-    for ax, title in zip(axes, titles, strict=True):
+    # Place titles at uniform y — main title top-aligned, subtitle below
+    for ax, main, sub in zip(axes, main_titles, subtitles, strict=True):
         bbox = ax.get_position()
-        fig.text(bbox.x0 + bbox.width / 2, bbox.y1 + 0.02, title,
-                 ha="center", va="bottom", fontsize=9)
+        cx = bbox.x0 + bbox.width / 2
+        y_main = bbox.y1 + 0.06
+        fig.text(cx, y_main, main, ha="center", va="top", fontsize=9,
+                 fontweight="bold")
+        if sub:
+            fig.text(cx, y_main - 0.05, sub, ha="center", va="top",
+                     fontsize=8, color="#666666")
 
     fig.savefig(OUTPUT_DIR / "pipeline-stages.png", dpi=DPI, bbox_inches="tight",
                 facecolor=BG_COLOR)
