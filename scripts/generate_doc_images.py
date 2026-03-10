@@ -52,7 +52,7 @@ def _ensure_output_dir() -> None:
 # ---------------------------------------------------------------------------
 
 
-def _pv_screenshot(vertices, faces, color="steelblue"):
+def _pv_screenshot(vertices, faces, color="#88BDE6"):
     """Render a mesh off-screen and return the image as a numpy array."""
     import numpy as np
     import pyvista as pv
@@ -155,7 +155,7 @@ def gen_pipeline_stages() -> None:
     state_ext = extract(state_pre)
     state_smo = smooth(state_ext)
 
-    fig, axes = plt.subplots(1, 4, figsize=(12, 3.5))
+    fig, axes = plt.subplots(1, 4, figsize=(12, 3.8))
     titles = ["Raw Field\n(center slice)", "After Threshold\n(binary)",
               "Marching Cubes\n(raw mesh)", "After Smoothing"]
 
@@ -163,29 +163,32 @@ def gen_pipeline_stages() -> None:
     field = state.field
     mid = field.shape[0] // 2
     axes[0].imshow(field[mid], cmap="viridis", origin="lower")
-    axes[0].set_title(titles[0], fontsize=9)
     axes[0].axis("off")
 
     # Panel 2: Center slice of binary field
     assert state_pre.binary is not None
     axes[1].imshow(state_pre.binary[mid], cmap="gray", origin="lower")
-    axes[1].set_title(titles[1], fontsize=9)
     axes[1].axis("off")
 
     # Panel 3: Marching cubes mesh (pyvista screenshot)
     mesh_raw = _pv_screenshot(state_ext.vertices, state_ext.faces)
     axes[2].imshow(mesh_raw)
-    axes[2].set_title(titles[2], fontsize=9)
     axes[2].axis("off")
 
     # Panel 4: Smoothed mesh
     mesh_smooth = _pv_screenshot(state_smo.best_vertices, state_smo.faces)
     axes[3].imshow(mesh_smooth)
-    axes[3].set_title(titles[3], fontsize=9)
     axes[3].axis("off")
 
     fig.patch.set_facecolor(BG_COLOR)
-    fig.tight_layout(pad=1.0)
+    fig.tight_layout(pad=0.5)
+
+    # Add titles at a uniform y-position so they are top-aligned
+    for ax, title in zip(axes, titles, strict=True):
+        bbox = ax.get_position()
+        fig.text(bbox.x0 + bbox.width / 2, bbox.y1 + 0.02, title,
+                 ha="center", va="bottom", fontsize=9)
+
     fig.savefig(OUTPUT_DIR / "pipeline-stages.png", dpi=DPI, bbox_inches="tight",
                 facecolor=BG_COLOR)
     plt.close(fig)
@@ -380,21 +383,20 @@ def gen_quality_metrics() -> None:
     values = _compute_cell_metric(pv_mesh, metric)
     pass_pct = _compute_pass_rate(values, metric, threshold)
 
-    # Left panel: pyvista heatmap screenshot
-    # Position scalar bar below the mesh with generous spacing
+    # Left panel: pyvista heatmap — no title in pyvista, we add it in matplotlib
+    # Scalar bar at very bottom with small font to avoid overlapping the mesh
     pv_mesh.cell_data[metric] = values
-    pl = pv.Plotter(off_screen=True, window_size=[800, 700])
+    pl = pv.Plotter(off_screen=True, window_size=[800, 750])
     pl.add_mesh(
         pv_mesh, scalars=metric, cmap="RdYlGn",
         show_edges=True, edge_color="black", line_width=0.3,
         scalar_bar_args={
-            "title": _METRIC_LABELS[metric],
-            "title_font_size": 14,
-            "label_font_size": 12,
-            "position_x": 0.2,
-            "position_y": 0.02,
-            "width": 0.6,
-            "height": 0.06,
+            "title": "",
+            "label_font_size": 11,
+            "position_x": 0.25,
+            "position_y": 0.01,
+            "width": 0.5,
+            "height": 0.04,
             "vertical": False,
         },
     )
@@ -403,31 +405,35 @@ def gen_quality_metrics() -> None:
     heatmap_img = pl.screenshot(return_img=True)
     pl.close()
 
-    # Composite: left = heatmap, right = histogram
-    fig, (ax_left, ax_right) = plt.subplots(
-        1, 2, figsize=(11, 4.5),
-        gridspec_kw={"width_ratios": [1.2, 1], "wspace": 0.3},
-    )
+    # Composite figure with generous spacing
+    fig = plt.figure(figsize=(11, 5))
+    fig.patch.set_facecolor(BG_COLOR)
 
+    # Use gridspec for precise control
+    gs = fig.add_gridspec(1, 2, width_ratios=[1.2, 1], wspace=0.35)
+    ax_left = fig.add_subplot(gs[0, 0])
+    ax_right = fig.add_subplot(gs[0, 1])
+
+    # Left: heatmap with title well above image
     ax_left.imshow(heatmap_img)
-    ax_left.set_title("Per-Cell Scaled Jacobian", fontsize=11, pad=10)
+    ax_left.set_title("Per-Cell Scaled Jacobian", fontsize=11, pad=14)
     ax_left.axis("off")
 
-    # Right: histogram with clean layout
+    # Right: histogram
     counts, bin_edges, patches = ax_right.hist(
         values, bins=50, edgecolor="white", linewidth=0.3, alpha=0.9,
         color="#3182BD",
     )
-    ax_right.axvline(threshold, color="#D0021B", linestyle="--", linewidth=2,
-                     label=f"FEA threshold ({threshold})")
+    ax_right.axvline(threshold, color="#D0021B", linestyle="--", linewidth=2)
 
-    # Extend y-axis for headroom; place stats in upper-right above bars
+    # Extend y-axis generously so legend + stats sit above all bars
     y_max = counts.max()
-    ax_right.set_ylim(0, y_max * 1.4)
+    ax_right.set_ylim(0, y_max * 1.55)
 
+    # Stats annotation — top right, well above bars
     direction = ">=" if _HIGHER_IS_BETTER[metric] else "<="
     ax_right.text(
-        0.97, 0.96,
+        0.97, 0.97,
         f"{pass_pct:.1f}% pass ({direction} {threshold})\n"
         f"mean = {np.mean(values):.2f}   median = {np.median(values):.2f}",
         transform=ax_right.transAxes, ha="right", va="top",
@@ -435,17 +441,25 @@ def gen_quality_metrics() -> None:
         bbox=dict(boxstyle="round,pad=0.4", facecolor="#F5F5F0",
                   edgecolor="#CCCCCC", alpha=0.95),
     )
+
+    # Threshold legend — top left, same vertical zone as stats
+    ax_right.text(
+        0.03, 0.97,
+        f"- - FEA threshold ({threshold})",
+        transform=ax_right.transAxes, ha="left", va="top",
+        fontsize=8, color="#D0021B",
+        bbox=dict(boxstyle="round,pad=0.3", facecolor="#F5F5F0",
+                  edgecolor="#CCCCCC", alpha=0.95),
+    )
+
     ax_right.set_xlabel(_METRIC_LABELS[metric], fontsize=10)
     ax_right.set_ylabel("Number of Cells", fontsize=10)
-    ax_right.set_title("Distribution", fontsize=11, pad=10)
-    ax_right.legend(loc="upper left", fontsize=8, framealpha=0.9)
+    ax_right.set_title("Distribution", fontsize=11, pad=14)
 
     # Light grid for readability
     ax_right.yaxis.grid(True, alpha=0.3, linewidth=0.5)
     ax_right.set_axisbelow(True)
 
-    fig.patch.set_facecolor(BG_COLOR)
-    fig.tight_layout(pad=1.0)
     fig.savefig(OUTPUT_DIR / "quality-jacobian.png", dpi=DPI, bbox_inches="tight",
                 facecolor=BG_COLOR)
     plt.close(fig)
