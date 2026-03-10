@@ -1,10 +1,10 @@
 import Link from 'next/link';
 import { codeToHtml } from 'shiki';
 
-const codeExample = `from xeltofab.io import load_density, save_mesh
+const codeExample = `from xeltofab.io import load_field, save_mesh
 from xeltofab.pipeline import process
 
-result = process(load_density("field.npy"))
+result = process(load_field("field.npy"))
 save_mesh(result, "output.stl")`;
 
 const pipelineSteps = [
@@ -12,7 +12,7 @@ const pipelineSteps = [
     num: '01',
     label: 'Preprocess',
     detail: 'Gaussian smooth, threshold, morphological cleanup',
-    input: 'density field [0,1]',
+    input: 'scalar field',
   },
   {
     num: '02',
@@ -45,17 +45,17 @@ export default async function HomePage() {
       {/* Hero — left-aligned, asymmetric */}
       <section className="mx-auto w-full max-w-6xl px-6 pt-32 pb-20">
         <p className="mb-4 font-[family-name:var(--font-mono)] text-sm font-medium uppercase tracking-widest text-brand-500">
-          Topology Optimization Post-Processing
+          Design Field Post-Processing
         </p>
         <h1 className="mb-6 text-[clamp(2.5rem,6vw,4.5rem)] font-bold leading-[1.05] tracking-tight">
-          Density fields to
+          Design fields to
           <br />
-          fabrication-ready meshes.
+          fabrication-ready geometry.
         </h1>
         <p className="mb-10 max-w-lg text-lg text-fd-muted-foreground leading-relaxed">
           <strong className="font-semibold text-fd-foreground">XelToFab</strong> handles the full pipeline — preprocessing, extraction,
-          smoothing, and quality analysis — so your topology optimization
-          results are ready for FEA validation or 3D printing.
+          smoothing, repair, and quality analysis — so your optimization and
+          neural field results are ready for simulation or fabrication.
         </p>
         <div className="flex flex-wrap gap-3">
           <Link
@@ -115,7 +115,7 @@ export default async function HomePage() {
               Three lines to a mesh.
             </h2>
             <p className="text-fd-muted-foreground leading-relaxed">
-              Load any density field — NumPy, MATLAB, VTK, HDF5 — run the
+              Load any scalar field — NumPy, MATLAB, VTK, HDF5 — run the
               pipeline, save the result. Parameters are sensible defaults you
               can override when needed.
             </p>
@@ -142,7 +142,7 @@ export default async function HomePage() {
             Capabilities
           </p>
           <h2 className="mb-16 text-3xl font-bold tracking-tight">
-            Built for the topology optimization workflow.
+            Built for field-based design workflows.
           </h2>
 
           <div className="grid gap-16 sm:grid-cols-2">
@@ -152,8 +152,8 @@ export default async function HomePage() {
                 <h3 className="text-lg font-semibold">2D &amp; 3D Support</h3>
                 <p className="mt-2 text-sm text-fd-muted-foreground leading-relaxed">
                   Extract contours from 2D fields or triangle meshes from 3D
-                  volumes. SDF fields from neural models are supported with
-                  direct extraction at the zero level set.
+                  volumes. Density fields, SDFs, and occupancy fields are all
+                  supported with configurable extraction levels.
                 </p>
               </div>
               <div>
@@ -181,9 +181,9 @@ export default async function HomePage() {
               <div>
                 <h3 className="text-lg font-semibold">Multi-Format Input</h3>
                 <p className="mt-2 text-sm text-fd-muted-foreground leading-relaxed">
-                  Load density fields from NumPy, MATLAB, VTK, HDF5, CSV, and
-                  more. Auto-detection of common topology optimization variable
-                  names.
+                  Load scalar fields from NumPy, MATLAB, VTK, HDF5, CSV, and
+                  more. Auto-detection of common optimization variable names
+                  (xPhys, rho, density, etc.).
                 </p>
               </div>
               <div>

@@ -19,7 +19,7 @@ export const metadata: Metadata = {
     template: '%s | XelToFab',
   },
   description:
-    'Topology optimization post-processing pipeline: density fields to fabrication-ready meshes.',
+    'Design fields to fabrication-ready geometry. Post-processing pipeline for topology optimization, neural fields, and computational design.',
 };
 
 export default function Layout({ children }: LayoutProps<'/'>) {
