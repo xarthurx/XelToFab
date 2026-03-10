@@ -498,7 +498,7 @@ def gen_hero_overview() -> None:
     # Use gridspec: left panel, center arrow gap, right panel
     fig = plt.figure(figsize=(10, 3.5))
     fig.patch.set_facecolor(BG_COLOR)
-    gs = fig.add_gridspec(1, 3, width_ratios=[1, 0.18, 1], wspace=0.02)
+    gs = fig.add_gridspec(1, 3, width_ratios=[0.9, 0.22, 1.1], wspace=0.02)
     ax_field = fig.add_subplot(gs[0, 0])
     ax_arrow = fig.add_subplot(gs[0, 1])
     ax_mesh = fig.add_subplot(gs[0, 2])
@@ -512,11 +512,11 @@ def gen_hero_overview() -> None:
     ax_arrow.set_xlim(0, 1)
     ax_arrow.set_ylim(0, 1)
     ax_arrow.axis("off")
-    ax_arrow.text(0.5, 0.58, "XelToFab", ha="center", va="bottom",
+    ax_arrow.text(0.5, 0.55, "XelToFab", ha="center", va="bottom",
                   fontsize=9, fontweight="bold", color="#1B3A5C",
                   fontstyle="italic")
     ax_arrow.annotate(
-        "", xy=(0.95, 0.48), xytext=(0.05, 0.48),
+        "", xy=(1.0, 0.46), xytext=(0.0, 0.46),
         arrowprops=dict(arrowstyle="-|>", color="#1B3A5C", lw=1.6,
                         mutation_scale=13),
     )
