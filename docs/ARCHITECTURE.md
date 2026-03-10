@@ -156,7 +156,7 @@ Tests mirror the module structure in `tests/`:
 ```
 tests/
 ├── conftest.py             Shared fixtures + Agg backend
-├── test_state.py           Model validation (13 tests)
+├── test_state.py           Model validation (12 tests)
 ├── test_preprocess.py      Preprocessing behavior (6 tests)
 ├── test_extract.py         Extraction output shapes (7 tests)
 ├── test_smooth.py          Smoothing effects + volume preservation (4 tests)

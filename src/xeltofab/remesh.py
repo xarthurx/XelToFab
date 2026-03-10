@@ -36,15 +36,17 @@ def remesh(state: PipelineState) -> PipelineState:
         )
         return state
 
-    vertices = state.best_vertices.astype(np.float64)
-    faces = state.faces.astype(np.int32)
+    vertices = state.best_vertices.astype(np.float64, copy=False)
+    faces = state.faces.astype(np.int32, copy=False)
 
     # Auto-compute target edge length from average if not specified
     if state.params.target_edge_length is not None:
         h = state.params.target_edge_length
     else:
-        edge_vecs = vertices[faces[:, 1]] - vertices[faces[:, 0]]
-        h = float(np.mean(np.linalg.norm(edge_vecs, axis=1)))
+        e0 = np.linalg.norm(vertices[faces[:, 1]] - vertices[faces[:, 0]], axis=1)
+        e1 = np.linalg.norm(vertices[faces[:, 2]] - vertices[faces[:, 1]], axis=1)
+        e2 = np.linalg.norm(vertices[faces[:, 0]] - vertices[faces[:, 2]], axis=1)
+        h = float(np.mean(np.concatenate([e0, e1, e2])))
 
     new_vertices, new_faces = gpytoolbox.remesh_botsch(
         vertices, faces, i=state.params.remesh_iterations, h=h, project=True

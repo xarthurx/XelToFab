@@ -24,10 +24,20 @@ def test_remesh_produces_valid_mesh(processed_3d: PipelineState):
     assert np.all(result.faces >= 0)
 
 
+def _min_angle(vertices, faces):
+    """Compute minimum triangle angle using PyVista."""
+    import pyvista as pv
+
+    fpv = np.column_stack([np.full(len(faces), 3), faces]).ravel()
+    mesh = pv.PolyData(vertices.astype(np.float64), fpv)
+    mesh = mesh.compute_cell_quality(quality_measure="min_angle")
+    return float(np.min(mesh.cell_data["CellQuality"]))
+
+
 def test_remesh_improves_quality(sphere_density: np.ndarray):
     """Remeshing should improve min angle on the synthetic sphere."""
     try:
-        import pyvista as pv
+        import pyvista as pv  # noqa: F401
     except ImportError:
         pytest.skip("pyvista required for quality check")
 
@@ -36,23 +46,14 @@ def test_remesh_improves_quality(sphere_density: np.ndarray):
     # Build a state WITHOUT remeshing to get baseline quality
     no_remesh_params = PipelineParams(remesh=False)
     state_before = process(PipelineState(density=sphere_density, params=no_remesh_params))
-
-    verts_before = state_before.best_vertices
-    faces_before = state_before.faces
-    fpv = np.column_stack([np.full(len(faces_before), 3), faces_before]).ravel()
-    q_before = pv.PolyData(verts_before.astype(np.float64), fpv)
-    q_before = q_before.compute_cell_quality(quality_measure="min_angle")
-    min_before = float(np.min(q_before.cell_data["CellQuality"]))
+    min_before = _min_angle(state_before.best_vertices, state_before.faces)
 
     # Now remesh that state
     state_to_remesh = state_before.model_copy(
         update={"params": PipelineParams(remesh=True)}
     )
     result = remesh(state_to_remesh)
-    fpv2 = np.column_stack([np.full(len(result.faces), 3), result.faces]).ravel()
-    q_after = pv.PolyData(result.vertices.astype(np.float64), fpv2)
-    q_after = q_after.compute_cell_quality(quality_measure="min_angle")
-    min_after = float(np.min(q_after.cell_data["CellQuality"]))
+    min_after = _min_angle(result.vertices, result.faces)
 
     assert min_after > min_before
 

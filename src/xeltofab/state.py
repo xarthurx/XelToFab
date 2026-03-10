@@ -26,7 +26,7 @@ class PipelineParams(BaseModel):
 
     # Isotropic remeshing (3D only, requires gpytoolbox)
     remesh: bool = True
-    target_edge_length: float | None = None
+    target_edge_length: float | None = Field(default=None, gt=0.0)
     remesh_iterations: int = Field(default=10, ge=1)
 
     @model_validator(mode="after")
