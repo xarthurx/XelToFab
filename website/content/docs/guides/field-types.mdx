@@ -12,6 +12,8 @@ XelToFab supports two types of input scalar fields, configured via the `field_ty
 | `density` (default) | Design optimization solvers (SIMP, BESO), occupancy networks | [0, 1] | 0.5 (at `threshold`) |
 | `sdf` | Neural SDF models (DeepSDF, NITO, NTopo) | unbounded (negative inside, positive outside) | 0.0 (zero level set) |
 
+<img src="/images/guides/field-types-comparison.png" alt="Density field vs SDF field: raw values and extracted contours" width={800} />
+
 ## Density fields
 
 Density fields contain continuous values in [0, 1] where higher values indicate material presence. This is the standard output format from topology optimization solvers such as SIMP and BESO.

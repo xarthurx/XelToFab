@@ -7,47 +7,9 @@ description: How the XelToFab pipeline processes scalar fields into meshes
 
 XelToFab processes design optimization output through six stages:
 
-```
-scalar field (numpy)
-       |
-       v
-+--------------+
-|  Preprocess   |  Gaussian smooth -> threshold -> morphology -> remove small components
-+--------------+
-       |  binary array (0/1)
-       v
-+--------------+
-|   Extract     |  2D: marching squares -> contours
-|               |  3D: marching cubes -> triangle mesh
-+--------------+
-       |  vertices + faces (3D) or contour arrays (2D)
-       v
-+--------------+
-|   Smooth      |  3D: Taubin or bilateral filtering
-|               |  2D: no-op (contours pass through)
-+--------------+
-       |  smoothed mesh
-       v
-+--------------+
-|   Repair      |  3D: fix non-manifold edges/vertices (pymeshlab)
-|               |  2D: no-op
-+--------------+
-       |  repaired mesh
-       v
-+--------------+
-|   Remesh      |  3D: isotropic remeshing (gpytoolbox, Botsch & Kobbelt)
-|               |  2D: no-op
-+--------------+
-       |  uniform triangle mesh
-       v
-+--------------+
-|  Decimate     |  3D: QEM edge collapse (pyfqmr)
-|               |  2D: no-op
-+--------------+
-       |  optimized mesh
-       v
-  Output: STL/OBJ/PLY (3D) or visualization (2D)
-```
+<img src="/images/guides/pipeline-flow.png" alt="XelToFab 6-stage pipeline: Preprocess → Extract → Smooth → Repair → Remesh → Decimate" width={800} />
+
+<img src="/images/guides/pipeline-stages.png" alt="Pipeline progression: raw field → binary threshold → marching cubes mesh → smoothed mesh" width={800} />
 
 The orchestrator in `pipeline.py` chains these stages:
 
