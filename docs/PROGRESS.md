@@ -148,3 +148,42 @@ Session log of learnings, failures, solutions discovered, and context gathered d
 **Refactoring:** Added `best_vertices` property to `PipelineState` to eliminate the duplicated `smoothed_vertices if ... else vertices` pattern across 5 locations (io.py, viz.py, benchmark). Extracted `_to_pyvista()` helper to avoid double PolyData construction. Used modern `cell_quality()` API instead of deprecated `compute_cell_quality()`.
 
 **Fix:** `3be9dc4`
+
+---
+
+### 2026-03-10 — pymeshlab Plugins Fail on WSL2 Due to Missing libOpenGL
+
+**Problem:** pymeshlab 2025.7's `meshing_isotropic_explicit_remeshing` and `meshing_close_holes`
+filters were unavailable. The fallback `generate_resampled_uniform_mesh` produced degenerate
+triangles (min angle dropped from 30° to 0.3° on sphere).
+
+**Root cause:** These filters live in `libfilter_meshing.so`, which requires `libOpenGL.so.0`.
+On WSL2 without `libopengl0` installed, the plugin silently fails to load. pymeshlab does not
+error — it just omits the filters from its registry.
+
+**Resolution:** Replaced pymeshlab remeshing with `gpytoolbox.remesh_botsch` (Botsch & Kobbelt
+algorithm). gpytoolbox is a pure C++/Python library with no OpenGL dependency. Kept pymeshlab
+for repair operations (non-manifold fix, duplicate removal) which use core plugins unaffected
+by the OpenGL issue.
+
+**Prevention:** When depending on pymeshlab filters, verify they exist at runtime with
+`hasattr(ms, 'filter_name')` or try/except. Document which filters require which plugins.
+For headless/WSL environments, prefer libraries without GUI framework dependencies.
+
+---
+
+### 2026-03-10 — Boundary Triangles Limit Worst-Case Mesh Quality Metrics
+
+**Problem:** After remeshing, FEA worst-case metrics (min angle, max aspect ratio) showed no
+improvement on TO models. Mean/median metrics improved dramatically.
+
+**Root cause:** All degenerate triangles are at domain boundary edges — where marching cubes
+clips the isosurface at grid boundaries. The Botsch & Kobbelt algorithm correctly preserves
+boundary vertices and edges, so these triangles remain unchanged.
+
+**Resolution:** Accepted as inherent limitation of voxel-based extraction. After remeshing,
+99.6% of faces meet FEA quality targets (min angle >20°). Boundary faces are typically
+constrained in FEA anyway. Documented in quality log.
+
+**Prevention:** Report median/percentile quality metrics alongside worst-case. When interpreting
+mesh quality, distinguish boundary vs interior faces.
