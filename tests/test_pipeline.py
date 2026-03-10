@@ -51,8 +51,8 @@ def test_process_3d_direct_density(sphere_field: np.ndarray):
 
 
 def test_process_3d_no_repair_remesh(sphere_field: np.ndarray):
-    """Pipeline with repair/remesh disabled preserves smoothed_vertices."""
-    params = PipelineParams(repair=False, remesh=False)
+    """Pipeline with repair/remesh/decimate disabled preserves smoothed_vertices."""
+    params = PipelineParams(repair=False, remesh=False, decimate=False)
     result = process(PipelineState(field=sphere_field, params=params))
     assert result.smoothed_vertices is not None
 

@@ -33,6 +33,12 @@ class PipelineParams(BaseModel):
     target_edge_length: float | None = Field(default=None, gt=0.0)
     remesh_iterations: int = Field(default=10, ge=1)
 
+    # QEM decimation (3D only, requires pyfqmr)
+    decimate: bool = True
+    target_faces: int | None = Field(default=None, gt=0)
+    decimate_ratio: float = Field(default=0.5, gt=0.0, le=1.0)
+    decimate_aggressiveness: int = Field(default=7, ge=1, le=10)
+
     @model_validator(mode="after")
     def apply_field_type_defaults(self) -> PipelineParams:
         """Apply smart defaults based on field_type.

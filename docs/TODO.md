@@ -4,7 +4,7 @@
 
 > Baseline captured: `benchmarks/baseline/` (metrics + visualizations from current pipeline)
 
-- [ ] QEM decimation (quadric edge collapse) — `pymeshlab` or `pyfqmr`
+- [x] QEM decimation (quadric edge collapse) — `pyfqmr` (`decimate.py`)
 - [x] Feature-preserving smoothing — bilateral mesh filtering (`smoothing_method='bilateral'`)
 - [x] Watertight repair — non-manifold fixing via pymeshlab (`repair.py`)
 - [x] Isotropic remeshing — `gpytoolbox.remesh_botsch` (Botsch & Kobbelt); 99%+ faces FEA-ready

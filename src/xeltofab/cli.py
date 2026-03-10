@@ -27,6 +27,7 @@ def _build_params(
     direct: bool,
     no_repair: bool,
     no_remesh: bool,
+    no_decimate: bool,
     smoothing: str,
 ) -> PipelineParams:
     """Build PipelineParams, only passing values explicitly set by the user.
@@ -44,6 +45,8 @@ def _build_params(
         kwargs["repair"] = False
     if no_remesh:
         kwargs["remesh"] = False
+    if no_decimate:
+        kwargs["decimate"] = False
     return PipelineParams(**kwargs)
 
 
@@ -63,6 +66,7 @@ def main() -> None:
 @click.option("--direct", is_flag=True, help="Direct extraction from continuous field (skip preprocessing)")
 @click.option("--no-repair", is_flag=True, help="Disable watertight mesh repair")
 @click.option("--no-remesh", is_flag=True, help="Disable isotropic remeshing")
+@click.option("--no-decimate", is_flag=True, help="Disable QEM mesh decimation")
 @click.option("--smoothing", type=click.Choice(["taubin", "bilateral"]), default="taubin", help="Mesh smoothing method")
 @click.option("--viz", is_flag=True, help="Save a comparison visualization alongside the mesh")
 @click.pass_context
@@ -78,11 +82,12 @@ def process_cmd(
     direct: bool,
     no_repair: bool,
     no_remesh: bool,
+    no_decimate: bool,
     smoothing: str,
     viz: bool,
 ) -> None:
     """Process a scalar field into a mesh."""
-    params = _build_params(ctx, threshold, sigma, field_type, direct, no_repair, no_remesh, smoothing)
+    params = _build_params(ctx, threshold, sigma, field_type, direct, no_repair, no_remesh, no_decimate, smoothing)
     shape = _parse_shape(shape_str) if shape_str else None
 
     try:
@@ -118,6 +123,7 @@ def process_cmd(
 @click.option("--direct", is_flag=True, help="Direct extraction from continuous field (skip preprocessing)")
 @click.option("--no-repair", is_flag=True, help="Disable watertight mesh repair")
 @click.option("--no-remesh", is_flag=True, help="Disable isotropic remeshing")
+@click.option("--no-decimate", is_flag=True, help="Disable QEM mesh decimation")
 @click.option("--smoothing", type=click.Choice(["taubin", "bilateral"]), default="taubin", help="Mesh smoothing method")
 @click.pass_context
 def viz(
@@ -132,10 +138,11 @@ def viz(
     direct: bool,
     no_repair: bool,
     no_remesh: bool,
+    no_decimate: bool,
     smoothing: str,
 ) -> None:
     """Visualize a scalar field and its extraction result."""
-    params = _build_params(ctx, threshold, sigma, field_type, direct, no_repair, no_remesh, smoothing)
+    params = _build_params(ctx, threshold, sigma, field_type, direct, no_repair, no_remesh, no_decimate, smoothing)
     shape = _parse_shape(shape_str) if shape_str else None
 
     try:
