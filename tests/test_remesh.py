@@ -24,16 +24,6 @@ def test_remesh_produces_valid_mesh(processed_3d: PipelineState):
     assert np.all(result.faces >= 0)
 
 
-def _min_angle(vertices, faces):
-    """Compute minimum triangle angle using PyVista."""
-    import pyvista as pv
-
-    fpv = np.column_stack([np.full(len(faces), 3), faces]).ravel()
-    mesh = pv.PolyData(vertices.astype(np.float64), fpv)
-    mesh = mesh.cell_quality(quality_measure="min_angle")
-    return float(np.min(mesh.cell_data["min_angle"]))
-
-
 def test_remesh_improves_quality(sphere_field: np.ndarray):
     """Remeshing should improve min angle on the synthetic sphere."""
     try:
@@ -42,16 +32,17 @@ def test_remesh_improves_quality(sphere_field: np.ndarray):
         pytest.skip("pyvista required for quality check")
 
     from xeltofab.pipeline import process
+    from xeltofab.quality import compute_quality
 
     # Build a state WITHOUT remeshing to get baseline quality
     no_remesh_params = PipelineParams(remesh=False)
     state_before = process(PipelineState(field=sphere_field, params=no_remesh_params))
-    min_before = _min_angle(state_before.best_vertices, state_before.faces)
+    min_before = compute_quality(state_before)["min_angle"]["min"]
 
     # Now remesh that state
     state_to_remesh = state_before.model_copy(update={"params": PipelineParams(remesh=True)})
     result = remesh(state_to_remesh)
-    min_after = _min_angle(result.vertices, result.faces)
+    min_after = compute_quality(result)["min_angle"]["min"]
 
     assert min_after > min_before
 
