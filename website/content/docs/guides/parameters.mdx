@@ -26,7 +26,7 @@ params = PipelineParams(
 
 | Parameter | Type | Default | Range | Description |
 |-----------|------|---------|-------|-------------|
-| `threshold` | `float` | `0.5` | [0.0, 1.0] | Density threshold for binarization in preprocessing |
+| `threshold` | `float` | `0.5` | [0.0, 1.0] | Binarization threshold for preprocessing (e.g., density cutoff) |
 | `smooth_sigma` | `float` | `1.0` | >= 0.0 | Gaussian smoothing sigma applied before thresholding. Set to 0.0 to disable |
 | `morph_radius` | `int` | `1` | >= 0 | Radius of the morphological structuring element (disk for 2D, ball for 3D). Set to 0 to disable morphological cleanup |
 | `taubin_iterations` | `int` | `20` | >= 0 | Number of Taubin smoothing iterations on the extracted mesh. Set to 0 to disable |
@@ -57,14 +57,14 @@ These overrides only apply when the parameter was **not explicitly passed**. If 
 
 ### Threshold
 
-- **Lower threshold (0.3-0.4)**: Includes more material, produces thicker features. Use when the TO solver was aggressive with material removal
+- **Lower threshold (0.3-0.4)**: Includes more material, produces thicker features. Use when the solver was aggressive with material removal
 - **Higher threshold (0.6-0.7)**: Excludes more material, produces thinner features. Use when the solver left too much intermediate density
 - The threshold only applies when `direct_extraction=False`
 
 ### Gaussian sigma
 
 - **`smooth_sigma=0.0`**: No Gaussian smoothing. Use for clean or already-smoothed fields
-- **`smooth_sigma=0.5-1.0`**: Light smoothing. Good for most TO results
+- **`smooth_sigma=0.5-1.0`**: Light smoothing. Good for most design optimization results
 - **`smooth_sigma=2.0+`**: Heavy smoothing. Blurs fine features but removes more noise. Be cautious of thin features being smoothed away
 
 ### Morphological radius
@@ -85,7 +85,7 @@ These overrides only apply when the parameter was **not explicitly passed**. If 
 Enable `direct_extraction=True` when:
 
 - The input field is a clean SDF (automatically enabled for `field_type="sdf"`)
-- The TO solver has fully converged and density values are near 0 or 1
+- The solver has fully converged and density values are near 0 or 1
 - You want to control the exact isovalue via `extraction_level`
 
 ## CLI mapping

@@ -1,14 +1,14 @@
 ---
 title: Pipeline Overview
-description: How the XelToFab pipeline processes density fields into meshes
+description: How the XelToFab pipeline processes scalar fields into meshes
 ---
 
 ## The 3-stage pipeline
 
-XelToFab processes topology optimization output through three stages:
+XelToFab processes design optimization output through three stages:
 
 ```
-density array (numpy)
+scalar field (numpy)
        |
        v
 +--------------+
@@ -60,8 +60,8 @@ This creates a shallow copy with the specified fields replaced. Because copies s
 
 | Field | Type | Set by |
 |-------|------|--------|
-| `density` | `ndarray` | User input (loaded from file) |
-| `ndim` | `int` | Auto-computed from `density.ndim` (2 or 3) |
+| `field` | `ndarray` | User input (loaded from file) |
+| `ndim` | `int` | Auto-computed from `field.ndim` (2 or 3) |
 | `params` | `PipelineParams` | User input (or defaults) |
 | `binary` | `ndarray \| None` | `preprocess()` |
 | `volume_fraction` | `float \| None` | `preprocess()` |
@@ -97,7 +97,7 @@ In direct mode, the pipeline runs only two stages: **extract** and **smooth**.
 
 ## 2D vs 3D paths
 
-The pipeline automatically detects whether the input is 2D or 3D based on `density.ndim`:
+The pipeline automatically detects whether the input is 2D or 3D based on `field.ndim`:
 
 | Dimension | Preprocessing | Extraction | Smoothing | Output |
 |-----------|---------------|------------|-----------|--------|
@@ -122,7 +122,7 @@ Sets `state.binary` and `state.volume_fraction`.
 - **3D**: `skimage.measure.marching_cubes` at the effective extraction level
 - **2D**: `skimage.measure.find_contours` at the effective extraction level
 
-In preprocessed mode, extraction operates on the binary field. In direct mode, it operates on the original continuous density/SDF field.
+In preprocessed mode, extraction operates on the binary field. In direct mode, it operates on the original continuous scalar field.
 
 The extraction level defaults to `threshold` for density fields and `0.0` for SDF fields, but can be overridden with `extraction_level`.
 
@@ -136,7 +136,7 @@ For 2D contours, this stage is a no-op.
 
 ## Interactive examples
 
-Here is a mesh extracted from a 3D heat conduction topology optimization result:
+Here is a mesh extracted from a 3D heat conduction design optimization result:
 
 <MeshViewer src="/models/heat_cond_51_s0.stl" height={500} />
 

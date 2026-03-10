@@ -1,6 +1,6 @@
 ---
 title: Input Formats
-description: All supported file formats for loading density and SDF fields
+description: All supported file formats for loading scalar fields (density, SDF, and more)
 ---
 
 ## Supported formats
@@ -32,16 +32,16 @@ uv run xtf formats
 The simplest format. `.npy` files contain a single array. `.npz` files can contain multiple arrays.
 
 ```python
-from xeltofab.io import load_density
+from xeltofab.io import load_field
 
 # .npy -- loads the single array directly
-state = load_density("field.npy")
+state = load_field("field.npy")
 
 # .npz -- uses "density" key if present, otherwise the first key
-state = load_density("field.npz")
+state = load_field("field.npz")
 
 # .npz -- specify which array to load
-state = load_density("field.npz", field_name="xPhys")
+state = load_field("field.npz", field_name="xPhys")
 ```
 
 CLI:
@@ -53,7 +53,7 @@ uv run xtf process field.npz -o output.stl --field-name xPhys
 
 ### MATLAB (`.mat`)
 
-Loads `.mat` files via `scipy.io.loadmat`. The loader auto-detects common topology optimization variable names in priority order:
+Loads `.mat` files via `scipy.io.loadmat`. The loader auto-detects common design optimization variable names in priority order:
 
 1. `xPhys`
 2. `densities`
@@ -66,10 +66,10 @@ If none of these are found and the file contains a single variable, that variabl
 
 ```python
 # Auto-detect variable name
-state = load_density("result.mat")
+state = load_field("result.mat")
 
 # Specify explicitly
-state = load_density("result.mat", field_name="xPhys")
+state = load_field("result.mat", field_name="xPhys")
 ```
 
 CLI:
@@ -88,14 +88,14 @@ Loads comma-delimited or whitespace-delimited data via `numpy.loadtxt`. The load
 For 2D grids stored as a table (rows and columns), the shape is inferred automatically:
 
 ```python
-state = load_density("field.csv")
+state = load_field("field.csv")
 ```
 
 For flat data (one value per line or a single row) that represents a 2D or 3D grid, provide the `shape` parameter:
 
 ```python
-state = load_density("field.csv", shape=(50, 100))       # 2D
-state = load_density("field.csv", shape=(10, 20, 30))    # 3D
+state = load_field("field.csv", shape=(50, 100))       # 2D
+state = load_field("field.csv", shape=(10, 20, 30))    # 3D
 ```
 
 CLI:
@@ -111,11 +111,11 @@ The flat data is reshaped to the specified dimensions. The total number of value
 
 Loads VTK structured grid files via PyVista. Requires the optional `vtk` extra.
 
-The loader auto-detects density fields by looking for cell data or point data arrays with names matching common TO patterns (`density`, `rho`, `xphys`, `x`), checking cell data first (since TO densities are per-element). If no match is found and only one data array exists, it is used automatically.
+The loader auto-detects scalar fields by looking for cell data or point data arrays with names matching common design optimization patterns (`density`, `rho`, `xphys`, `x`), checking cell data first (since element densities are per-element). If no match is found and only one data array exists, it is used automatically.
 
 ```python
-state = load_density("result.vtk")
-state = load_density("result.vti", field_name="density")
+state = load_field("result.vtk")
+state = load_field("result.vti", field_name="density")
 ```
 
 CLI:
@@ -131,11 +131,11 @@ Grid dimensions are extracted from the VTK structured grid metadata. Cell data a
 
 Loads HDF5 files via h5py. Requires the optional `hdf5` extra.
 
-Auto-detection searches all datasets recursively, checking leaf names against the same known TO variable names as the MATLAB loader (`xPhys`, `densities`, `x`, `rho`, `dc`, `density`).
+Auto-detection searches all datasets recursively, checking leaf names against the same known variable names as the MATLAB loader (`xPhys`, `densities`, `x`, `rho`, `dc`, `density`).
 
 ```python
-state = load_density("result.h5")
-state = load_density("result.h5", field_name="simulations/density")
+state = load_field("result.h5")
+state = load_field("result.h5", field_name="simulations/density")
 ```
 
 CLI:
@@ -150,15 +150,15 @@ uv run xtf process result.h5 -o output.stl --field-name simulations/density
 XDMF files are XML metadata files that reference HDF5 datasets. The loader parses the XDMF XML, finds `Attribute` elements with `DataItem` children in HDF format, and reads the referenced data from the companion `.h5` file.
 
 ```python
-state = load_density("result.xdmf")
-state = load_density("result.xdmf", field_name="density")
+state = load_field("result.xdmf")
+state = load_field("result.xdmf", field_name="density")
 ```
 
 The companion HDF5 file must be in the same directory as the XDMF file.
 
 ## Common options
 
-All loaders accept these parameters via `load_density()`:
+All loaders accept these parameters via `load_field()`:
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
