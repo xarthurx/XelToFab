@@ -63,6 +63,8 @@ fig = plot_comparison(result)
 fig.savefig("comparison.png", dpi=150)
 ```
 
+<img src="/images/getting-started/quick-start-2d.png" alt="2D field input and extracted contours comparison" width={800} />
+
 The pipeline automatically detects 2D vs 3D based on the array dimensions. 2D fields produce contour arrays (stored in `result.contours`), while 3D fields produce triangle meshes (stored in `result.vertices` and `result.faces`).
 
 ### SDF fields
@@ -96,6 +98,8 @@ state = load_field("field.npy", params=params)
 result = process(state)
 save_mesh(result, "output.stl")
 ```
+
+<img src="/images/getting-started/quick-start-smoothing.png" alt="Taubin vs bilateral smoothing comparison on corner model" width={800} />
 
 Bilateral filtering weights vertex displacements by normal similarity — neighbors across sharp edges receive near-zero weight, preserving features while smoothing flat regions. See the [Parameters guide](/docs/guides/parameters) for tuning sigma values.
 
