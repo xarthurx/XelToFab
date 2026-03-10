@@ -155,7 +155,7 @@ def gen_pipeline_stages() -> None:
     state_ext = extract(state_pre)
     state_smo = smooth(state_ext)
 
-    fig, axes = plt.subplots(1, 4, figsize=(12, 4.0))
+    fig, axes = plt.subplots(1, 4, figsize=(12, 3.8))
     # Main titles (line 1) and subtitles (line 2, parenthetical)
     main_titles = ["Raw Field", "After Threshold", "Marching Cubes", "After Smoothing"]
     subtitles = ["(center slice)", "(binary)", "(raw mesh)", ""]
@@ -182,16 +182,17 @@ def gen_pipeline_stages() -> None:
     axes[3].axis("off")
 
     fig.patch.set_facecolor(BG_COLOR)
-    fig.subplots_adjust(top=0.82)
+    fig.tight_layout(pad=0.5)
 
-    # Place titles at uniform y — main title top-aligned, subtitle below
+    # Place titles at uniform y — main title top-aligned, subtitle tight below
     for ax, main, sub in zip(axes, main_titles, subtitles, strict=True):
         bbox = ax.get_position()
         cx = bbox.x0 + bbox.width / 2
-        fig.text(cx, 0.95, main, ha="center", va="top", fontsize=9,
+        y_top = bbox.y1 + 0.06
+        fig.text(cx, y_top, main, ha="center", va="top", fontsize=9,
                  fontweight="bold")
         if sub:
-            fig.text(cx, 0.89, sub, ha="center", va="top",
+            fig.text(cx, y_top - 0.04, sub, ha="center", va="top",
                      fontsize=8, color="#666666")
 
     fig.savefig(OUTPUT_DIR / "pipeline-stages.png", dpi=DPI, bbox_inches="tight",
