@@ -97,3 +97,160 @@ def plot_quality_heatmap(
     )
     pl.camera_position = "iso"
     return pl
+
+
+def plot_quality_overview(state: PipelineState) -> pv.Plotter:
+    """1x3 heatmap panel: aspect ratio, min angle, scaled Jacobian.
+
+    Returns an off-screen Plotter with three subplots.
+    """
+    _validate_3d_mesh(state)
+
+    pv_mesh = _build_pv_mesh(state)
+
+    pl = pv.Plotter(
+        off_screen=True,
+        shape=(1, 3),
+        window_size=[2400, 768],
+    )
+
+    for col, metric in enumerate(_VALID_METRICS):
+        pl.subplot(0, col)
+        values = _compute_cell_metric(pv_mesh, metric)
+        mesh_copy = pv_mesh.copy()
+        mesh_copy.cell_data[metric] = values
+
+        effective_cmap = "RdYlGn" if _HIGHER_IS_BETTER[metric] else "RdYlGn_r"
+
+        pl.add_mesh(
+            mesh_copy,
+            scalars=metric,
+            cmap=effective_cmap,
+            show_edges=True,
+            edge_color="black",
+            line_width=0.3,
+            scalar_bar_args={"title": _METRIC_LABELS[metric]},
+        )
+        pl.camera_position = "iso"
+
+    return pl
+
+
+def plot_metric_histogram(
+    state: PipelineState,
+    metric: str = "min_angle",
+    bins: int = 50,
+    threshold: float | None = None,
+) -> "Figure":
+    """Histogram of per-cell metric values with FEA threshold line.
+
+    Parameters
+    ----------
+    state : PipelineState
+        Processed pipeline state with 3D mesh data.
+    metric : str
+        Quality metric: "min_angle", "aspect_ratio", or "scaled_jacobian".
+    bins : int
+        Number of histogram bins.
+    threshold : float | None
+        FEA threshold to draw. None uses the default for the metric.
+
+    Returns
+    -------
+    matplotlib.figure.Figure
+    """
+    import matplotlib.pyplot as plt
+
+    _validate_3d_mesh(state)
+    if metric not in _VALID_METRICS:
+        raise ValueError(f"Unknown metric '{metric}'. Choose from: {_VALID_METRICS}")
+
+    pv_mesh = _build_pv_mesh(state)
+    values = _compute_cell_metric(pv_mesh, metric)
+
+    if threshold is None:
+        threshold = _THRESHOLDS[metric]
+
+    higher_better = _HIGHER_IS_BETTER[metric]
+    if higher_better:
+        pass_count = int(np.sum(values >= threshold))
+    else:
+        pass_count = int(np.sum(values <= threshold))
+    pass_pct = 100.0 * pass_count / len(values)
+
+    fig, ax = plt.subplots(figsize=(8, 5))
+    ax.hist(values, bins=bins, edgecolor="black", linewidth=0.5, alpha=0.8)
+
+    # Threshold line
+    ax.axvline(threshold, color="red", linestyle="--", linewidth=2, label=f"FEA threshold ({threshold})")
+
+    # Stats annotation
+    direction = ">=" if higher_better else "<="
+    ax.annotate(
+        f"{pass_pct:.1f}% pass ({direction} {threshold})\n"
+        f"mean={np.mean(values):.2f}, median={np.median(values):.2f}",
+        xy=(0.97, 0.95),
+        xycoords="axes fraction",
+        ha="right",
+        va="top",
+        fontsize=10,
+        bbox=dict(boxstyle="round,pad=0.3", facecolor="wheat", alpha=0.8),
+    )
+
+    ax.set_xlabel(_METRIC_LABELS[metric])
+    ax.set_ylabel("Number of Cells")
+    ax.set_title(f"{_METRIC_LABELS[metric]} Distribution ({len(values)} cells)")
+    ax.legend(loc="upper left")
+    fig.tight_layout()
+    return fig
+
+
+def plot_metric_overview(
+    state: PipelineState,
+    bins: int = 50,
+) -> "Figure":
+    """1x3 histogram panel for all three quality metrics.
+
+    Returns a matplotlib Figure with three subplots showing the distribution
+    of aspect ratio, min angle, and scaled Jacobian with FEA threshold lines.
+    """
+    import matplotlib.pyplot as plt
+
+    _validate_3d_mesh(state)
+
+    pv_mesh = _build_pv_mesh(state)
+
+    fig, axes = plt.subplots(1, 3, figsize=(18, 5))
+
+    for ax, metric in zip(axes, _VALID_METRICS, strict=True):
+        values = _compute_cell_metric(pv_mesh, metric)
+        threshold = _THRESHOLDS[metric]
+        higher_better = _HIGHER_IS_BETTER[metric]
+
+        if higher_better:
+            pass_count = int(np.sum(values >= threshold))
+        else:
+            pass_count = int(np.sum(values <= threshold))
+        pass_pct = 100.0 * pass_count / len(values)
+
+        ax.hist(values, bins=bins, edgecolor="black", linewidth=0.5, alpha=0.8)
+        ax.axvline(threshold, color="red", linestyle="--", linewidth=2)
+
+        direction = ">=" if higher_better else "<="
+        ax.annotate(
+            f"{pass_pct:.1f}% pass\n({direction} {threshold})",
+            xy=(0.97, 0.95),
+            xycoords="axes fraction",
+            ha="right",
+            va="top",
+            fontsize=9,
+            bbox=dict(boxstyle="round,pad=0.3", facecolor="wheat", alpha=0.8),
+        )
+
+        ax.set_xlabel(_METRIC_LABELS[metric])
+        ax.set_ylabel("Cells")
+        ax.set_title(_METRIC_LABELS[metric])
+
+    fig.suptitle(f"Mesh Quality Distribution ({pv_mesh.n_cells} cells)", fontsize=13)
+    fig.tight_layout()
+    return fig
