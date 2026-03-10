@@ -14,7 +14,8 @@ def test_pipeline_params_defaults():
     assert params.taubin_iterations == 20
     assert params.taubin_lambda == 0.5
     assert params.repair is True
-    assert params.remesh is False
+    assert params.remesh is True
+    assert params.remesh_iterations == 10
     assert params.target_edge_length is None
 
 
@@ -83,3 +84,15 @@ def test_pipeline_params_effective_extraction_level():
     assert PipelineParams(field_type="density").effective_extraction_level == 0.5
     assert PipelineParams(field_type="sdf").effective_extraction_level == 0.0
     assert PipelineParams(field_type="sdf", extraction_level=0.1).effective_extraction_level == 0.1
+
+
+def test_pipeline_params_remesh_enabled_by_default():
+    """Remesh should be enabled by default after gpytoolbox swap."""
+    params = PipelineParams()
+    assert params.remesh is True
+    assert params.remesh_iterations == 10
+
+
+def test_pipeline_params_custom_remesh_iterations():
+    params = PipelineParams(remesh_iterations=20)
+    assert params.remesh_iterations == 20

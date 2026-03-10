@@ -24,11 +24,10 @@ class PipelineParams(BaseModel):
     # Mesh repair (3D only, requires pymeshlab)
     repair: bool = True
 
-    # Isotropic remeshing (3D only, requires pymeshlab)
-    # Disabled by default: pymeshlab 2025.7 lacks meshing_isotropic_explicit_remeshing;
-    # the available generate_resampled_uniform_mesh produces degenerate triangles.
-    remesh: bool = False
+    # Isotropic remeshing (3D only, requires gpytoolbox)
+    remesh: bool = True
     target_edge_length: float | None = None
+    remesh_iterations: int = Field(default=10, ge=1)
 
     @model_validator(mode="after")
     def apply_field_type_defaults(self) -> PipelineParams:
