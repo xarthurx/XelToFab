@@ -27,7 +27,7 @@ from xeltofab.io import load_field, save_mesh
 from xeltofab.pipeline import process
 from xeltofab.quality import compute_quality
 from xeltofab.state import PipelineParams, PipelineState
-from xeltofab.viz import plot_comparison
+from xeltofab.field_plots import plot_comparison
 
 # ---------------------------------------------------------------------------
 # Model registry

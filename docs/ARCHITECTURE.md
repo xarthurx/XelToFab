@@ -83,7 +83,7 @@ src/xeltofab/
 │   ├── csv_loader.py   .csv/.txt (with shape parsing)
 │   ├── vtk_loader.py   .vtk/.vtr/.vti (optional: pyvista)
 │   └── hdf5_loader.py  .h5/.hdf5/.xdmf (optional: h5py)
-├── viz.py          Matplotlib visualization (field, result, comparison plots)
+├── field_plots.py  Matplotlib visualization (field, result, comparison plots)
 ├── cli.py          Click CLI (xtf process, xtf viz, xtf formats)
 └── __init__.py
 ```
@@ -174,7 +174,7 @@ tests/
 ├── test_quality.py         Mesh quality metrics (4 tests)
 ├── test_io.py              File round-trip (6 tests)
 ├── test_pipeline.py        End-to-end 2D + 3D (7 tests)
-├── test_viz.py             Plot generation (8 tests)
+├── test_field_plots.py     Plot generation (8 tests)
 ├── test_cli.py             CLI invocation (8 tests)
 └── test_loaders/
     ├── test_dispatch.py        Registry + format resolution (6 tests)

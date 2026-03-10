@@ -102,7 +102,7 @@ src/xeltofab/
 ├── pipeline.py     Orchestrator
 ├── io.py           File I/O (multi-format load, mesh export)
 ├── loaders/        Format-specific loaders (numpy, matlab, csv, vtk, hdf5)
-├── viz.py          Matplotlib visualization
+├── field_plots.py  Matplotlib visualization
 └── cli.py          CLI (xtf)
 ```
 

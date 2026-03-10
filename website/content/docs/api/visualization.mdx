@@ -6,7 +6,7 @@ description: Functions for plotting design fields and extraction results
 ## Import
 
 ```python
-from xeltofab.viz import plot_field, plot_result, plot_comparison
+from xeltofab.field_plots import plot_field, plot_result, plot_comparison
 ```
 
 All visualization functions return a `matplotlib.figure.Figure` object. Call `plt.show()` to display interactively, or use `fig.savefig()` to save to a file.
@@ -30,7 +30,7 @@ Plot the raw input design field.
 ```python
 import matplotlib.pyplot as plt
 from xeltofab import load_field
-from xeltofab.viz import plot_field
+from xeltofab.field_plots import plot_field
 
 state = load_field("field.npy")
 fig = plot_field(state)
@@ -54,7 +54,7 @@ Plot the extraction result after processing.
 ```python
 import matplotlib.pyplot as plt
 from xeltofab import load_field, process
-from xeltofab.viz import plot_result
+from xeltofab.field_plots import plot_result
 
 state = process(load_field("field.npy"))
 fig = plot_result(state)
@@ -78,7 +78,7 @@ Side-by-side comparison of the input field and the extraction result.
 ```python
 import matplotlib.pyplot as plt
 from xeltofab import load_field, process
-from xeltofab.viz import plot_comparison
+from xeltofab.field_plots import plot_comparison
 
 state = process(load_field("field.npy"))
 fig = plot_comparison(state)

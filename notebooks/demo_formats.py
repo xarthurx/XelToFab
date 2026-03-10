@@ -57,7 +57,7 @@ def _():
     from xeltofab.io import load_density, save_mesh
     from xeltofab.loaders import get_supported_formats
     from xeltofab.state import PipelineParams
-    from xeltofab.viz import plot_density
+    from xeltofab.field_plots import plot_density
 
     return PipelineParams, get_supported_formats, load_density, plot_density, save_mesh
 

@@ -54,7 +54,7 @@ For 2D fields, the pipeline extracts contours instead of a triangle mesh. Use `p
 ```python
 from xeltofab.io import load_field
 from xeltofab.pipeline import process
-from xeltofab.viz import plot_comparison
+from xeltofab.field_plots import plot_comparison
 
 state = load_field("beam_2d.npy")
 result = process(state)

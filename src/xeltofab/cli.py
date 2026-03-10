@@ -10,7 +10,7 @@ from xeltofab.io import load_field, save_mesh
 from xeltofab.loaders import get_supported_formats
 from xeltofab.pipeline import process
 from xeltofab.state import PipelineParams
-from xeltofab.viz import plot_comparison
+from xeltofab.field_plots import plot_comparison
 
 
 def _parse_shape(value: str) -> tuple[int, ...]:
