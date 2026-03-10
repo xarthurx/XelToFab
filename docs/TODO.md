@@ -15,7 +15,7 @@
 - [x] Fix PyVista deprecation warnings (`compute_cell_quality` → `cell_quality`)
 - [x] Update `ARCHITECTURE.md` — add decimate stage, update module map, CLI section
 - [x] Update website docs for decimation feature (pipeline overview, parameters, CLI pages)
-- [ ] Commit pending `decimate.py`/`test_decimate.py` cleanup
+- [x] Commit pending `decimate.py`/`test_decimate.py` cleanup (`855adef`)
 
 ## Benchmark Enhancements
 
