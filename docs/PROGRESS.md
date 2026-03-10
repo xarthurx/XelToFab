@@ -199,3 +199,20 @@ mesh quality, distinguish boundary vs interior faces.
 **Resolution:** Switched to normal-similarity bilateral filtering — standard Laplacian-style displacement weighted by spatial distance × normal similarity. Added per-iteration volume correction (uniform scaling to match original volume) to counter inherent shrinkage. This correctly reduces displacement at feature edges (where neighbor normals diverge) while smoothing flat regions normally.
 
 **Prevention:** When implementing a mesh processing algorithm from a specific paper, verify that its assumptions (mesh density, noise model, neighborhood size) match the actual input data. Test on representative meshes, not just synthetic primitives.
+
+---
+
+### 2026-03-10 — Website Documentation Illustrations (Tier 1)
+
+**Problem:** 16 of 17 website doc pages were text-only, making conceptual content (pipeline architecture, field types, parameters, quality metrics) hard to understand without visuals.
+
+**Resolution:** Created `scripts/generate_doc_images.py` — a reproducible script generating 7 PNG images via matplotlib/pyvista for the 4 Tier 1 guide pages:
+- Pipeline flow diagram (monochromatic blue palette)
+- Pipeline stages progression (corner 3D model)
+- Field types comparison (density vs SDF, 1×2)
+- 3 parameter sensitivity strips (threshold, sigma, taubin — separate images per section)
+- Quality metrics composite (scaled Jacobian heatmap + histogram)
+
+Images embedded in MDX pages via `<img>` tags. Supports `--only NAME` for selective regeneration.
+
+**Prevention:** For matplotlib figure layout, always use `fig.text()` with explicit coordinates for multi-panel titles instead of `ax.set_title()` — the latter positions relative to each subplot's bounding box, which varies between image types (imshow vs screenshot), causing misalignment.
