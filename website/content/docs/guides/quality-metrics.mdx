@@ -13,6 +13,8 @@ For finite element analysis (FEA) to produce accurate results, mesh elements mus
 | Minimum angle | > 20 degrees | Smallest interior angle in each triangle. Higher is better (60 = equilateral) |
 | Scaled Jacobian | > 0.5 | Measures element distortion. Higher is better (1.0 = ideal) |
 
+<img src="/images/guides/quality-jacobian.png" alt="Scaled Jacobian heatmap and histogram showing FEA quality distribution" width={800} />
+
 Elements that violate these thresholds can cause numerical instability, poor conditioning, or inaccurate stress/strain results in FEA solvers.
 
 ## How metrics are computed
