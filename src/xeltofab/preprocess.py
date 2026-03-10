@@ -1,4 +1,4 @@
-"""Density field preprocessing: threshold, smooth, cleanup."""
+"""Field preprocessing: smooth -> threshold -> morphology -> keep largest component."""
 
 from __future__ import annotations
 
@@ -10,15 +10,15 @@ from xeltofab.state import PipelineState
 
 
 def preprocess(state: PipelineState) -> PipelineState:
-    """Preprocess density field: smooth -> threshold -> morphology -> keep largest component."""
+    """Preprocess field: smooth -> threshold -> morphology -> keep largest component."""
     params = state.params
-    density = state.density
+    field = state.field
 
     # Record original volume fraction
-    volume_fraction = float(np.mean(density))
+    volume_fraction = float(np.mean(field))
 
     # Gaussian smooth
-    smoothed = gaussian_filter(density, sigma=params.smooth_sigma)
+    smoothed = gaussian_filter(field, sigma=params.smooth_sigma)
 
     # Threshold to binary
     binary = (smoothed >= params.threshold).astype(np.uint8)

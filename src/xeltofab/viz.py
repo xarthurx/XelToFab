@@ -1,4 +1,4 @@
-"""Visualization functions for density fields and meshes."""
+"""Visualization functions for scalar fields and meshes."""
 
 from __future__ import annotations
 
@@ -15,20 +15,20 @@ def _field_vrange(state: PipelineState) -> tuple[float | None, float | None]:
 
 def _background(state: PipelineState):
     """Return the best available 2D background for visualization."""
-    return state.binary if state.binary is not None else state.density
+    return state.binary if state.binary is not None else state.field
 
 
-def plot_density(state: PipelineState) -> Figure:
-    """Plot the raw density field. 2D: heatmap. 3D: mid-plane slices."""
+def plot_field(state: PipelineState) -> Figure:
+    """Plot the raw input field. 2D: heatmap. 3D: mid-plane slices."""
     vmin, vmax = _field_vrange(state)
     if state.ndim == 2:
         fig, ax = plt.subplots()
-        im = ax.imshow(state.density, cmap="viridis", origin="lower", vmin=vmin, vmax=vmax)
+        im = ax.imshow(state.field, cmap="viridis", origin="lower", vmin=vmin, vmax=vmax)
         fig.colorbar(im, ax=ax, label="Density")
         ax.set_title("Input Field")
     else:
         fig, axes = plt.subplots(1, 3, figsize=(15, 4))
-        d = state.density
+        d = state.field
         slices = [
             (d[d.shape[0] // 2, :, :], "XY (mid-Z)"),
             (d[:, d.shape[1] // 2, :], "XZ (mid-Y)"),
@@ -75,11 +75,11 @@ def plot_result(state: PipelineState) -> Figure:
 
 
 def plot_comparison(state: PipelineState) -> Figure:
-    """Side-by-side: density field vs extraction result."""
+    """Side-by-side: input field vs extraction result."""
     vmin, vmax = _field_vrange(state)
     if state.ndim == 2:
         fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
-        ax1.imshow(state.density, cmap="viridis", origin="lower", vmin=vmin, vmax=vmax)
+        ax1.imshow(state.field, cmap="viridis", origin="lower", vmin=vmin, vmax=vmax)
         ax1.set_title("Input Field")
         ax2.imshow(_background(state), cmap="gray", origin="lower")
         if state.contours is not None:
@@ -88,7 +88,7 @@ def plot_comparison(state: PipelineState) -> Figure:
         ax2.set_title("Extracted Contours")
     else:
         fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
-        d = state.density
+        d = state.field
         ax1.imshow(d[d.shape[0] // 2, :, :], cmap="viridis", origin="lower", vmin=vmin, vmax=vmax)
         ax1.set_title("Input Field (mid-Z slice)")
         vertices = state.best_vertices

@@ -1,4 +1,4 @@
-"""Mesh/contour extraction from density/SDF fields."""
+"""Mesh/contour extraction from scalar fields."""
 
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ def extract(state: PipelineState) -> PipelineState:
     Otherwise, extracts from the preprocessed binary field at the same level.
     """
     if state.params.direct_extraction:
-        field = np.asarray(state.density, dtype=np.float64)
+        field = np.asarray(state.field, dtype=np.float64)
     else:
         if state.binary is None:
             raise ValueError("binary field is None — run preprocess() first")
