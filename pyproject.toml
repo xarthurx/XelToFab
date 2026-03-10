@@ -1,7 +1,7 @@
 [project]
 name = "xeltofab"
 version = "0.1.0"
-description = "Topology optimization post-processing: density fields to meshes to fabrication"
+description = "Design fields to fabrication-ready geometry"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [

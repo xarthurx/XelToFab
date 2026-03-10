@@ -30,8 +30,7 @@ def remesh(state: PipelineState) -> PipelineState:
         import gpytoolbox
     except ImportError:
         warnings.warn(
-            "gpytoolbox not installed — skipping isotropic remeshing. "
-            "Install with: uv sync --extra mesh-quality",
+            "gpytoolbox not installed — skipping isotropic remeshing. Install with: uv sync --extra mesh-quality",
             stacklevel=2,
         )
         return state
@@ -52,8 +51,10 @@ def remesh(state: PipelineState) -> PipelineState:
         vertices, faces, i=state.params.remesh_iterations, h=h, project=True
     )
 
-    return state.model_copy(update={
-        "vertices": new_vertices,
-        "faces": new_faces,
-        "smoothed_vertices": None,
-    })
+    return state.model_copy(
+        update={
+            "vertices": new_vertices,
+            "faces": new_faces,
+            "smoothed_vertices": None,
+        }
+    )

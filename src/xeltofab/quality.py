@@ -20,9 +20,7 @@ def compute_quality(state: PipelineState) -> dict:
 
     if state.ndim == 2:
         metrics["num_contours"] = len(state.contours) if state.contours else 0
-        metrics["total_contour_points"] = (
-            sum(len(c) for c in state.contours) if state.contours else 0
-        )
+        metrics["total_contour_points"] = sum(len(c) for c in state.contours) if state.contours else 0
         if state.volume_fraction is not None:
             metrics["volume_fraction"] = round(float(state.volume_fraction), 6)
         return metrics
@@ -48,9 +46,7 @@ def compute_quality(state: PipelineState) -> dict:
     try:
         import pyvista as pv
 
-        faces_pv = np.column_stack(
-            [np.full(len(state.faces), 3), state.faces]
-        ).ravel()
+        faces_pv = np.column_stack([np.full(len(state.faces), 3), state.faces]).ravel()
         pv_mesh = pv.PolyData(vertices.astype(np.float64), faces_pv)
 
         quality_measures = ["aspect_ratio", "min_angle", "scaled_jacobian"]

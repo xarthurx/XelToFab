@@ -22,8 +22,7 @@ def repair(state: PipelineState) -> PipelineState:
         import pymeshlab
     except ImportError:
         warnings.warn(
-            "pymeshlab not installed — skipping mesh repair. "
-            "Install with: uv sync --extra mesh-quality",
+            "pymeshlab not installed — skipping mesh repair. Install with: uv sync --extra mesh-quality",
             stacklevel=2,
         )
         return state
@@ -46,8 +45,10 @@ def repair(state: PipelineState) -> PipelineState:
     out = ms.current_mesh()
     out.compact()
 
-    return state.model_copy(update={
-        "vertices": out.vertex_matrix(),
-        "faces": out.face_matrix(),
-        "smoothed_vertices": None,
-    })
+    return state.model_copy(
+        update={
+            "vertices": out.vertex_matrix(),
+            "faces": out.face_matrix(),
+            "smoothed_vertices": None,
+        }
+    )
