@@ -23,7 +23,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
-from xeltofab.io import load_density, save_mesh
+from xeltofab.io import load_field, save_mesh
 from xeltofab.pipeline import process
 from xeltofab.quality import compute_quality
 from xeltofab.state import PipelineParams, PipelineState
@@ -89,7 +89,7 @@ def _to_pyvista(state: PipelineState):
 def compute_metrics(state: PipelineState, elapsed: float, pv_mesh=None) -> dict:
     """Compute mesh quality metrics from a processed pipeline state."""
     metrics = compute_quality(state)
-    metrics["input_shape"] = list(state.density.shape)
+    metrics["input_shape"] = list(state.field.shape)
     metrics["field_type"] = state.params.field_type
     metrics["direct_extraction"] = state.params.direct_extraction
     metrics["processing_time_s"] = round(elapsed, 4)
@@ -101,7 +101,7 @@ def compute_metrics(state: PipelineState, elapsed: float, pv_mesh=None) -> dict:
 # ---------------------------------------------------------------------------
 
 def save_comparison_plot(state: PipelineState, output_path: Path) -> None:
-    """Save a matplotlib comparison plot (density vs result)."""
+    """Save a matplotlib comparison plot (field vs result)."""
     fig = plot_comparison(state)
     fig.savefig(output_path, dpi=150, bbox_inches="tight")
     plt.close(fig)
@@ -197,12 +197,12 @@ def main() -> None:
         # Load
         params = PipelineParams(field_type=model.field_type)
         if model.path:
-            state = load_density(model.path, params=params)
+            state = load_field(model.path, params=params)
         else:
-            density = _generate_synthetic(model.generator)
-            state = PipelineState(density=density, params=params)
+            field = _generate_synthetic(model.generator)
+            state = PipelineState(field=field, params=params)
 
-        print(f"  Input shape: {state.density.shape}, field_type: {model.field_type}")
+        print(f"  Input shape: {state.field.shape}, field_type: {model.field_type}")
 
         # Process
         t0 = time.perf_counter()

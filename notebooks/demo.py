@@ -20,9 +20,9 @@ def _(mo):
     mo.md(r"""
     # XelToFab Pipeline Demo
 
-    Interactive demo of the topology optimization post-processing pipeline.
+    Interactive demo of the design field post-processing pipeline.
 
-    **Pipeline:** Density field → Preprocess (smooth + threshold + morphology)
+    **Pipeline:** Scalar field → Preprocess (smooth + threshold + morphology)
     → Extract (marching cubes/squares) → Smooth (Taubin) → Mesh / Contours
 
     Use the controls below to adjust parameters and watch the pipeline react.
@@ -53,17 +53,17 @@ def _():
 def _():
     from pathlib import Path
 
-    from xeltofab.io import load_density
+    from xeltofab.io import load_field
     from xeltofab.pipeline import process
     from xeltofab.state import PipelineParams, PipelineState
-    from xeltofab.viz import plot_comparison, plot_density, plot_result
+    from xeltofab.viz import plot_comparison, plot_field, plot_result
 
     return (
         Path,
         PipelineParams,
         PipelineState,
         plot_comparison,
-        plot_density,
+        plot_field,
         plot_result,
         process,
     )
@@ -111,7 +111,7 @@ def _(mo):
     mo.md(r"""
     ## Controls
 
-    **Thr** — density threshold for binarisation &nbsp;|&nbsp;
+    **Thr** — field threshold for binarisation &nbsp;|&nbsp;
     **σ** — Gaussian smoothing radius &nbsp;|&nbsp;
     **Tau** — Taubin smoothing iter. on the extracted mesh
     """)
@@ -167,9 +167,9 @@ def _(
     taubin_slider,
     threshold_slider,
 ):
-    # Load density field based on selection
+    # Load field based on selection
     _kind, _source = geometry_options[dim_picker.value]
-    density = _source() if _kind == "synthetic" else np.load(_source)
+    field = _source() if _kind == "synthetic" else np.load(_source)
 
     # Build params from sliders
     params = PipelineParams(
@@ -179,7 +179,7 @@ def _(
     )
 
     # Run pipeline
-    state = PipelineState(density=density, params=params)
+    state = PipelineState(field=field, params=params)
     result = process(state)
     return (result,)
 
@@ -187,14 +187,14 @@ def _(
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    ## Density Field
+    ## Input Field
     """)
     return
 
 
 @app.cell
-def _(mo, plot_density, plt, result):
-    _fig = plot_density(result)
+def _(mo, plot_field, plt, result):
+    _fig = plot_field(result)
     out = mo.as_html(_fig)
     plt.close(_fig)
     out
@@ -253,7 +253,7 @@ def _(mo, plot_comparison, plt, result):
 
         _verts = result.smoothed_vertices if result.smoothed_vertices is not None else result.vertices
         _faces = result.faces
-        _d = result.density
+        _d = result.field
         _mid_slice = _d[_d.shape[0] // 2, :, :]
 
         _panel_h = 350  # consistent height for all three panels
@@ -261,7 +261,7 @@ def _(mo, plot_comparison, plt, result):
         # Density mid-slice (matplotlib)
         _fig_den, _ax_den = plt.subplots(figsize=(4, 4))
         _ax_den.imshow(_mid_slice, cmap="viridis", origin="lower", vmin=0, vmax=1, aspect="equal")
-        _ax_den.set_title("Density (mid-Z)")
+        _ax_den.set_title("Field (mid-Z)")
         _fig_den.tight_layout()
         _density_html = mo.as_html(_fig_den)
         plt.close(_fig_den)
@@ -313,7 +313,7 @@ def _(mo):
 def _(mo, result):
     _stats = []
     _stats.append(f"**Dimensions:** {result.ndim}D")
-    _stats.append(f"**Density shape:** `{result.density.shape}`")
+    _stats.append(f"**Field shape:** `{result.field.shape}`")
     _stats.append(
         f"**Volume fraction:** {result.volume_fraction:.4f}"
         if result.volume_fraction is not None

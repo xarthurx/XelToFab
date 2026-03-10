@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-**XelToFab** — Topology optimization post-processing pipeline: density fields → meshes → fabrication-ready geometry. Python 3.13+, `uv` project management. Package: `xeltofab` (`src/xeltofab/`).
+**XelToFab** — Design field post-processing pipeline: scalar fields → meshes → fabrication-ready geometry. Python 3.13+, `uv` project management. Package: `xeltofab` (`src/xeltofab/`).
 
 Research notes: `~/winHome/repo/xKnowledgeSync/99_academic.work/MAX_Mark/proj_XelToFab/`
 Background material: `~/winHome/repo/xKnowledgeSync/99_academic.work/MAX_Mark/` (brainstorms, strategy, glossary)
@@ -44,7 +44,7 @@ Collaboration: M4X–IDEAL Lab with Prof. Mark Fuge.
 
 ## Conventions
 
-- Input: numpy arrays of continuous density values in [0, 1]
+- Input: numpy arrays — density fields in [0, 1] or SDF fields (unbounded)
 - Mesh quality targets (FEA): aspect ratio < 5, min angle > 20°, scaled Jacobian > 0.5
 - Always validate volume preservation after smoothing
 - Re-verify connectivity after decimation (thin TO features can collapse)

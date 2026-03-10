@@ -2,12 +2,12 @@
 
 ## Overview
 
-XelToFab is a topology optimization post-processing pipeline that converts density fields (numpy arrays) into clean triangle meshes and 2D contour representations. The pipeline is implemented as a sequence of pure functions that thread an immutable `PipelineState` object through each stage.
+XelToFab is a design field post-processing pipeline that converts scalar design fields (numpy arrays) into clean triangle meshes and 2D contour representations. The pipeline is implemented as a sequence of pure functions that thread an immutable `PipelineState` object through each stage.
 
 ## Pipeline Stages
 
 ```
-density array (numpy, [0,1])
+scalar field (numpy)
         │
         ▼
 ┌──────────────┐
@@ -61,7 +61,7 @@ website/                       Documentation site (Fumadocs + Next.js 16)
 
 src/xeltofab/
 ├── state.py        PipelineState + PipelineParams (Pydantic models)
-├── preprocess.py   Density field preprocessing (smooth, threshold, morphology)
+├── preprocess.py   Field preprocessing (smooth, threshold, morphology)
 ├── extract.py      Mesh/contour extraction (marching cubes/squares)
 ├── smooth.py       Taubin mesh smoothing
 ├── repair.py       Watertight mesh repair (pymeshlab)
@@ -76,7 +76,7 @@ src/xeltofab/
 │   ├── csv_loader.py   .csv/.txt (with shape parsing)
 │   ├── vtk_loader.py   .vtk/.vtr/.vti (optional: pyvista)
 │   └── hdf5_loader.py  .h5/.hdf5/.xdmf (optional: h5py)
-├── viz.py          Matplotlib visualization (density, result, comparison plots)
+├── viz.py          Matplotlib visualization (field, result, comparison plots)
 ├── cli.py          Click CLI (xtf process, xtf viz, xtf formats)
 └── __init__.py
 ```
@@ -93,7 +93,7 @@ def stage(state: PipelineState) -> PipelineState:
 
 | Field | Type | Set by |
 |-------|------|--------|
-| `density` | `ndarray` | user input |
+| `field` | `ndarray` | user input |
 | `ndim` | `int` | auto-computed (2 or 3) |
 | `params` | `PipelineParams` | user input |
 | `binary` | `ndarray` | `preprocess()` |
@@ -133,7 +133,7 @@ The `xtf` command (installed via `[project.scripts]`) exposes three subcommands:
 
 | Purpose | Library |
 |---------|---------|
-| Density smoothing | `scipy.ndimage` (Gaussian filter) |
+| Field smoothing | `scipy.ndimage` (Gaussian filter) |
 | Morphological ops | `scikit-image` (opening, closing, remove_small_objects) |
 | Contour extraction | `scikit-image` (find_contours) |
 | Mesh extraction | `scikit-image` (marching_cubes) |
