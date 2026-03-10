@@ -56,8 +56,8 @@ def decimate(state: PipelineState) -> PipelineState:
 
     return state.model_copy(
         update={
-            "vertices": np.asarray(new_vertices),
-            "faces": np.asarray(new_faces),
+            "vertices": new_vertices,
+            "faces": new_faces,
             "smoothed_vertices": None,
         }
     )

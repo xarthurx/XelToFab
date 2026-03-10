@@ -1,6 +1,9 @@
 # tests/test_decimate.py
 import numpy as np
+import pytest
 import trimesh
+
+pytest.importorskip("pyfqmr")
 
 from xeltofab.decimate import decimate
 from xeltofab.extract import extract

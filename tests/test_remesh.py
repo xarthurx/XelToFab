@@ -30,8 +30,8 @@ def _min_angle(vertices, faces):
 
     fpv = np.column_stack([np.full(len(faces), 3), faces]).ravel()
     mesh = pv.PolyData(vertices.astype(np.float64), fpv)
-    mesh = mesh.compute_cell_quality(quality_measure="min_angle")
-    return float(np.min(mesh.cell_data["CellQuality"]))
+    mesh = mesh.cell_quality(quality_measure="min_angle")
+    return float(np.min(mesh.cell_data["min_angle"]))
 
 
 def test_remesh_improves_quality(sphere_field: np.ndarray):

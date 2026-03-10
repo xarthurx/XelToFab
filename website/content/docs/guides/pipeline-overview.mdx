@@ -3,9 +3,9 @@ title: Pipeline Overview
 description: How the XelToFab pipeline processes scalar fields into meshes
 ---
 
-## The 3-stage pipeline
+## The pipeline
 
-XelToFab processes design optimization output through three stages:
+XelToFab processes design optimization output through six stages:
 
 ```
 scalar field (numpy)
@@ -26,7 +26,25 @@ scalar field (numpy)
 |   Smooth      |  3D: Taubin or bilateral filtering
 |               |  2D: no-op (contours pass through)
 +--------------+
-       |
+       |  smoothed mesh
+       v
++--------------+
+|   Repair      |  3D: fix non-manifold edges/vertices (pymeshlab)
+|               |  2D: no-op
++--------------+
+       |  repaired mesh
+       v
++--------------+
+|   Remesh      |  3D: isotropic remeshing (gpytoolbox, Botsch & Kobbelt)
+|               |  2D: no-op
++--------------+
+       |  uniform triangle mesh
+       v
++--------------+
+|  Decimate     |  3D: QEM edge collapse (pyfqmr)
+|               |  2D: no-op
++--------------+
+       |  optimized mesh
        v
   Output: STL/OBJ/PLY (3D) or visualization (2D)
 ```
@@ -36,7 +54,7 @@ The orchestrator in `pipeline.py` chains these stages:
 ```python
 from xeltofab.pipeline import process
 
-result = process(state)  # preprocess -> extract -> smooth
+result = process(state)  # preprocess -> extract -> smooth -> repair -> remesh -> decimate
 ```
 
 ## PipelineState threading pattern
@@ -93,7 +111,7 @@ params = PipelineParams(direct_extraction=True, extraction_level=0.3)
 
 This is the default behavior for SDF fields (`field_type="sdf"`), where the input is already a clean continuous field and binarization would degrade quality. For density fields, direct extraction can be useful when the solver output is already well-converged and does not need cleanup.
 
-In direct mode, the pipeline runs only two stages: **extract** and **smooth**.
+In direct mode, the pipeline skips preprocessing and runs: **extract** → **smooth** → **repair** → **remesh** → **decimate**.
 
 ## 2D vs 3D paths
 
@@ -101,8 +119,8 @@ The pipeline automatically detects whether the input is 2D or 3D based on `field
 
 | Dimension | Preprocessing | Extraction | Smoothing | Output |
 |-----------|---------------|------------|-----------|--------|
-| 2D | Same (Gaussian, threshold, morphology with `disk` kernel) | `find_contours` (marching squares) | No-op (contours pass through) | Contour arrays in `state.contours` |
-| 3D | Same (Gaussian, threshold, morphology with `ball` kernel) | `marching_cubes` | Taubin or bilateral smoothing | Triangle mesh in `state.vertices` / `state.faces` |
+| 2D | Same (Gaussian, threshold, morphology with `disk` kernel) | `find_contours` (marching squares) | No-op for smooth/repair/remesh/decimate | Contour arrays in `state.contours` |
+| 3D | Same (Gaussian, threshold, morphology with `ball` kernel) | `marching_cubes` | Taubin or bilateral smoothing, repair, remesh, decimate | Triangle mesh in `state.vertices` / `state.faces` |
 
 For 2D fields, `save_mesh()` is not supported (raises an error). Use the visualization functions (`plot_result`, `plot_comparison`) to render contour output.
 
@@ -139,6 +157,30 @@ Configurable via `taubin_iterations` (default: 20) and `taubin_lambda` (default:
 Configurable via `bilateral_iterations` (default: 10), `bilateral_sigma_s` (spatial reach; default: auto from average edge length), and `bilateral_sigma_n` (normal similarity threshold in radians; default: 0.35).
 
 For 2D contours, both methods are a no-op.
+
+### Repair (`repair.py`)
+
+Fixes non-manifold edges and vertices using pymeshlab. This ensures the mesh is valid for downstream operations (remeshing, decimation, FEA simulation). Enabled by default; disable with `repair=False` or `--no-repair`.
+
+For 2D contours, this is a no-op.
+
+### Remesh (`remesh.py`)
+
+Isotropic remeshing via `gpytoolbox.remesh_botsch` (Botsch & Kobbelt algorithm). Replaces the marching cubes triangulation with uniform, well-shaped triangles. After remeshing, 99%+ of faces meet FEA quality targets (min angle >20°).
+
+Configurable via `target_edge_length` (default: auto from mesh bounding box) and `remesh_iterations` (default: 10). Enabled by default; disable with `remesh=False` or `--no-remesh`.
+
+For 2D contours, this is a no-op.
+
+### Decimate (`decimate.py`)
+
+QEM (Quadric Error Metrics) mesh decimation via pyfqmr. Reduces face count while minimizing geometric error through intelligent edge collapse. Runs after remeshing to optimize the uniform triangle mesh for file size and simulation efficiency.
+
+Control the target with either `target_faces` (absolute face count) or `decimate_ratio` (proportional reduction, default 0.5 = 50%). The `decimate_aggressiveness` parameter (1--10, default 7) controls error tolerance. Boundary edges are preserved to protect domain boundaries.
+
+Enabled by default; disable with `decimate=False` or `--no-decimate`.
+
+For 2D contours, this is a no-op.
 
 ## Interactive examples
 

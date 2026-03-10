@@ -40,6 +40,12 @@ scalar field (numpy)
 └──────┬───────┘
        │  uniform triangle mesh
        ▼
+┌──────────────┐
+│  Decimate     │  3D: QEM edge collapse (via pyfqmr)
+│               │  2D: no-op
+└──────┬───────┘
+       │  optimized mesh
+       ▼
     Output: STL/OBJ/PLY (3D) or PNG visualization (2D)
 ```
 
@@ -67,7 +73,8 @@ src/xeltofab/
 ├── repair.py       Watertight mesh repair (pymeshlab)
 ├── remesh.py       Isotropic remeshing (gpytoolbox, Botsch & Kobbelt)
 ├── quality.py      Mesh quality metrics (pyvista + trimesh)
-├── pipeline.py     Orchestrator: process() chains preprocess → extract → smooth → repair → remesh
+├── decimate.py     QEM mesh decimation (pyfqmr, quadric edge collapse)
+├── pipeline.py     Orchestrator: process() chains preprocess → extract → smooth → repair → remesh → decimate
 ├── io.py           File I/O: multi-format load (via loaders/), save STL/OBJ
 ├── loaders/        Format-specific loaders (dispatched by extension)
 │   ├── __init__.py     Loader registry, resolve_loader(), get_supported_formats()
@@ -127,7 +134,7 @@ The `xtf` command (installed via `[project.scripts]`) exposes three subcommands:
 - **`xtf viz <input> [-o <output>]`** — Run the pipeline and display/save a comparison plot
 - **`xtf formats`** — List supported input formats and their availability
 
-`process` and `viz` accept `--threshold`, `--sigma`, `--field-name` (for multi-variable files), `--shape` (for flat CSV/TXT data, e.g. `50x100`), `--field-type` (`density` or `sdf`), `--direct` (skip preprocessing), `--no-repair`, and `--no-remesh`.
+`process` and `viz` accept `--threshold`, `--sigma`, `--field-name` (for multi-variable files), `--shape` (for flat CSV/TXT data, e.g. `50x100`), `--field-type` (`density` or `sdf`), `--direct` (skip preprocessing), `--no-repair`, `--no-remesh`, `--no-decimate`, and `--smoothing` (`taubin` or `bilateral`).
 
 ## Dependencies
 
@@ -138,6 +145,7 @@ The `xtf` command (installed via `[project.scripts]`) exposes three subcommands:
 | Contour extraction | `scikit-image` (find_contours) |
 | Mesh extraction | `scikit-image` (marching_cubes) |
 | Mesh smoothing | `trimesh` (Taubin filter), `numpy` (bilateral filter) |
+| Mesh decimation | `pyfqmr` (QEM edge collapse) |
 | Mesh repair | `pymeshlab` (optional — `uv sync --extra mesh-quality`) |
 | Isotropic remeshing | `gpytoolbox` (optional — `uv sync --extra mesh-quality`) |
 | Quality metrics | `pyvista` + `trimesh` |
@@ -162,6 +170,7 @@ tests/
 ├── test_smooth.py          Taubin + bilateral smoothing (9 tests)
 ├── test_repair.py          Watertight mesh repair (3 tests)
 ├── test_remesh.py          Isotropic remeshing (5 tests)
+├── test_decimate.py        QEM mesh decimation (6 tests)
 ├── test_quality.py         Mesh quality metrics (4 tests)
 ├── test_io.py              File round-trip (6 tests)
 ├── test_pipeline.py        End-to-end 2D + 3D (7 tests)
@@ -183,5 +192,4 @@ Run with `uv run pytest tests/ -v`.
 
 See [TODO.md](TODO.md) for the full backlog. The pipeline is designed to extend with additional stages:
 
-- **Decimation** — QEM edge collapse for mesh simplification
 - **Mesh-to-CAD** — Patch decomposition + NURBS fitting + B-Rep assembly

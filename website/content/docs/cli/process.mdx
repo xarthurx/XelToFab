@@ -9,7 +9,7 @@ description: Process a scalar field into a mesh from the command line
 xtf process [OPTIONS] INPUT_PATH
 ```
 
-Process a scalar field into a mesh. The input field is loaded, run through the pipeline (preprocessing, extraction, smoothing), and the resulting mesh is saved to the output path.
+Process a scalar field into a mesh. The input field is loaded, run through the full pipeline (preprocessing, extraction, smoothing, repair, remeshing, decimation), and the resulting mesh is saved to the output path.
 
 ## Arguments
 
@@ -28,6 +28,9 @@ Process a scalar field into a mesh. The input field is loaded, run through the p
 | `--shape` | `TEXT` | `None` | Grid shape for flat data, e.g. `100x200` or `10x20x30` |
 | `--field-type` | `density\|sdf` | `density` | Input field type. Setting `sdf` enables smart defaults (direct extraction, no Gaussian smoothing). |
 | `--direct` | flag | `False` | Direct extraction from continuous field (skip preprocessing) |
+| `--no-repair` | flag | `False` | Disable watertight mesh repair |
+| `--no-remesh` | flag | `False` | Disable isotropic remeshing |
+| `--no-decimate` | flag | `False` | Disable QEM mesh decimation |
 | `--smoothing` | `taubin\|bilateral` | `taubin` | Mesh smoothing algorithm. Use `bilateral` for feature-preserving smoothing |
 | `--viz` | flag | `False` | Save a comparison visualization (PNG) alongside the mesh |
 
@@ -94,3 +97,17 @@ xtf process field.npy -o mesh.stl --smoothing bilateral
 ```
 
 Bilateral filtering preserves sharp structural features (corners, ridges) while smoothing flat surfaces. Useful when the design has distinct sharp edges that should not be blurred.
+
+### Skip decimation (preserve full polygon count)
+
+```bash
+xtf process field.npy -o mesh.stl --no-decimate
+```
+
+### Skip all post-processing (raw marching cubes output)
+
+```bash
+xtf process field.npy -o mesh.stl --no-repair --no-remesh --no-decimate
+```
+
+Useful for debugging or when you need the raw extraction output without any mesh optimization.

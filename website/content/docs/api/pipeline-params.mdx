@@ -31,6 +31,14 @@ from xeltofab.state import PipelineParams
 | `field_type` | `Literal["density", "sdf"]` | `"density"` | — | Input field type |
 | `direct_extraction` | `bool` | `False` | — | Skip preprocessing and extract directly from the continuous field |
 | `extraction_level` | `float \| None` | `None` | — | Explicit iso-level for marching cubes/squares extraction |
+| `repair` | `bool` | `True` | — | Enable watertight mesh repair (3D only) |
+| `remesh` | `bool` | `True` | — | Enable isotropic remeshing (3D only) |
+| `target_edge_length` | `float \| None` | `None` | `> 0.0` | Target edge length for remeshing (auto from bounding box when `None`) |
+| `remesh_iterations` | `int` | `10` | `>= 1` | Number of Botsch & Kobbelt remeshing iterations |
+| `decimate` | `bool` | `True` | — | Enable QEM mesh decimation (3D only) |
+| `target_faces` | `int \| None` | `None` | `> 0` | Absolute target face count (overrides `decimate_ratio`) |
+| `decimate_ratio` | `float` | `0.5` | `> 0.0`, `<= 1.0` | Fraction of faces to keep |
+| `decimate_aggressiveness` | `int` | `7` | `>= 1`, `<= 10` | QEM edge collapse error tolerance |
 
 ## Smart defaults for SDF fields
 
@@ -93,6 +101,18 @@ params = PipelineParams(
     smoothing_method="bilateral",
     bilateral_iterations=10,
 )
+
+# Control decimation
+params = PipelineParams(
+    decimate_ratio=0.3,          # keep 30% of faces
+    decimate_aggressiveness=5,   # conservative
+)
+
+# Absolute face count target
+params = PipelineParams(target_faces=10000)
+
+# Disable post-processing stages
+params = PipelineParams(repair=False, remesh=False, decimate=False)
 
 # Pass to load_field
 state = load_field("field.npy", params=params)

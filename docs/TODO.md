@@ -10,6 +10,13 @@
 - [x] Isotropic remeshing — `gpytoolbox.remesh_botsch` (Botsch & Kobbelt); 99%+ faces FEA-ready
 - [x] Mesh quality metrics — aspect ratio, min angle, scaled Jacobian via `quality.py`
 
+## Housekeeping
+
+- [x] Fix PyVista deprecation warnings (`compute_cell_quality` → `cell_quality`)
+- [x] Update `ARCHITECTURE.md` — add decimate stage, update module map, CLI section
+- [x] Update website docs for decimation feature (pipeline overview, parameters, CLI pages)
+- [ ] Commit pending `decimate.py`/`test_decimate.py` cleanup
+
 ## Benchmark Enhancements
 
 - [ ] Quality heatmaps — color triangles by aspect ratio / min angle / Jacobian (pyvista)
@@ -21,7 +28,7 @@
 - [ ] Volume rendering of density fields
 - [ ] Interactive parameter tuning with live preview
 
-## Mesh-to-CAD Pipeline (Tier 3 — Research Frontier)
+## Mesh-to-CAD Pipeline (Tier 3 — Research Frontier, on hold)
 
 - [ ] Patch decomposition — quadrangulation via Instant Meshes, motorcycle graph layout
 - [ ] NURBS surface fitting — B-spline fitting per patch, oscillation control

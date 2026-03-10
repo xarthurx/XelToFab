@@ -20,6 +20,10 @@ params = PipelineParams(
     field_type="density",
     direct_extraction=False,
     extraction_level=None,
+    repair=True,
+    remesh=True,
+    decimate=True,
+    decimate_ratio=0.5,
 )
 ```
 
@@ -39,6 +43,14 @@ params = PipelineParams(
 | `field_type` | `"density" \| "sdf"` | `"density"` | -- | Type of input field. Affects default values for other parameters |
 | `direct_extraction` | `bool` | `False` | -- | Skip preprocessing and extract directly from the continuous input field |
 | `extraction_level` | `float \| None` | `None` | -- | Explicit isovalue for marching cubes/squares. When `None`, defaults to `threshold` for density or `0.0` for SDF |
+| `repair` | `bool` | `True` | -- | Enable watertight mesh repair (3D only, requires pymeshlab) |
+| `remesh` | `bool` | `True` | -- | Enable isotropic remeshing (3D only, requires gpytoolbox) |
+| `target_edge_length` | `float \| None` | `None` | > 0.0 | Target edge length for remeshing. When `None`, auto-computed from mesh bounding box |
+| `remesh_iterations` | `int` | `10` | >= 1 | Number of Botsch & Kobbelt remeshing iterations |
+| `decimate` | `bool` | `True` | -- | Enable QEM mesh decimation (3D only, requires pyfqmr) |
+| `target_faces` | `int \| None` | `None` | > 0 | Absolute target face count. When set, overrides `decimate_ratio` |
+| `decimate_ratio` | `float` | `0.5` | (0.0, 1.0] | Fraction of faces to keep (0.5 = reduce by 50%). Ignored when `target_faces` is set |
+| `decimate_aggressiveness` | `int` | `7` | [1, 10] | QEM edge collapse error tolerance. Higher values allow more aggressive reduction |
 
 ### Computed property
 
@@ -95,6 +107,17 @@ Use `smoothing_method="bilateral"` when the mesh has sharp features (corners, ri
 - **`bilateral_sigma_n=0.35`**: Default. Edges with >~40° normal deviation are preserved. Lower values (0.1-0.2) preserve more features but smooth less. Higher values (0.5-1.0) smooth more aggressively across features
 - **When to use bilateral over Taubin**: Bilateral filtering is best when the mesh has both smooth regions and sharp structural features. On uniformly smooth meshes (like spheres), Taubin produces comparable or better results with less volume drift
 
+### Decimation
+
+QEM decimation reduces face count after remeshing. It runs by default with `decimate_ratio=0.5` (50% reduction):
+
+- **`decimate=False`** or **`--no-decimate`**: Skip decimation entirely. Use when you need maximum geometric fidelity or the mesh is already at an acceptable face count
+- **`decimate_ratio=0.3`**: Keep only 30% of faces. Good for lightweight visualization meshes
+- **`decimate_ratio=0.8`**: Keep 80% of faces. Minimal reduction, maximum quality
+- **`target_faces=10000`**: Set an absolute face count limit. Useful when targeting a specific polygon budget for FEA or rendering
+- **`decimate_aggressiveness=3-5`**: Conservative decimation, slower but preserves more detail
+- **`decimate_aggressiveness=7-10`**: Aggressive decimation, faster with more approximation error
+
 ### Direct extraction
 
 Enable `direct_extraction=True` when:
@@ -114,7 +137,10 @@ CLI flags map to `PipelineParams` fields:
 | `--field-type` | `field_type` |
 | `--direct` | `direct_extraction` |
 | `--smoothing` | `smoothing_method` |
+| `--no-repair` | `repair=False` |
+| `--no-remesh` | `remesh=False` |
+| `--no-decimate` | `decimate=False` |
 
 The CLI preserves smart defaults: if you pass `--field-type sdf` without `--sigma` or `--direct`, the SDF defaults are applied automatically.
 
-Parameters not exposed via CLI (`morph_radius`, `taubin_iterations`, `taubin_lambda`, `extraction_level`) can be configured through the Python API.
+Parameters not exposed via CLI (`morph_radius`, `taubin_iterations`, `taubin_lambda`, `extraction_level`, `target_edge_length`, `remesh_iterations`, `target_faces`, `decimate_ratio`, `decimate_aggressiveness`) can be configured through the Python API.
