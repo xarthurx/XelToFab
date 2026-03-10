@@ -19,7 +19,7 @@ from xeltofab.state import PipelineParams
 
 | Field | Type | Default | Constraints | Description |
 |-------|------|---------|-------------|-------------|
-| `threshold` | `float` | `0.5` | `>= 0.0`, `<= 1.0` | Density threshold for binarization |
+| `threshold` | `float` | `0.5` | `>= 0.0`, `<= 1.0` | Field threshold for binarization |
 | `smooth_sigma` | `float` | `1.0` | `>= 0.0` | Gaussian smoothing sigma for preprocessing |
 | `morph_radius` | `int` | `1` | `>= 0` | Morphological cleanup radius |
 | `taubin_iterations` | `int` | `20` | `>= 0` | Number of Taubin smoothing iterations |
@@ -69,12 +69,12 @@ assert params.effective_extraction_level == 0.3
 ## Usage
 
 ```python
-from xeltofab import PipelineParams, load_density
+from xeltofab import PipelineParams, load_field
 
 # Default parameters
 params = PipelineParams()
 
-# Custom parameters for a density field
+# Custom parameters
 params = PipelineParams(
     threshold=0.4,
     smooth_sigma=1.5,
@@ -84,6 +84,6 @@ params = PipelineParams(
 # SDF field with smart defaults
 params = PipelineParams(field_type="sdf")
 
-# Pass to load_density
-state = load_density("field.npy", params=params)
+# Pass to load_field
+state = load_field("field.npy", params=params)
 ```

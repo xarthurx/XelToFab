@@ -1,25 +1,27 @@
 ---
 title: Visualization
-description: Functions for plotting density fields and extraction results
+description: Functions for plotting design fields and extraction results
 ---
 
 ## Import
 
 ```python
-from xeltofab.viz import plot_density, plot_result, plot_comparison
+from xeltofab.viz import plot_field, plot_result, plot_comparison
 ```
 
 All visualization functions return a `matplotlib.figure.Figure` object. Call `plt.show()` to display interactively, or use `fig.savefig()` to save to a file.
 
 ---
 
-## plot_density
+## plot_field
+
+> **Note:** Previously named `plot_density()`. The old name is available as a deprecated alias.
 
 ```python
-def plot_density(state: PipelineState) -> Figure
+def plot_field(state: PipelineState) -> Figure
 ```
 
-Plot the raw input density field.
+Plot the raw input design field.
 
 **2D fields:** Renders a heatmap with the `viridis` colormap and a color bar labeled "Density". Density fields are displayed with a fixed range of \[0, 1\]; SDF fields use auto-scaled ranges.
 
@@ -27,11 +29,11 @@ Plot the raw input density field.
 
 ```python
 import matplotlib.pyplot as plt
-from xeltofab import load_density
-from xeltofab.viz import plot_density
+from xeltofab import load_field
+from xeltofab.viz import plot_field
 
-state = load_density("field.npy")
-fig = plot_density(state)
+state = load_field("field.npy")
+fig = plot_field(state)
 plt.show()
 ```
 
@@ -45,16 +47,16 @@ def plot_result(state: PipelineState) -> Figure
 
 Plot the extraction result after processing.
 
-**2D fields:** Displays the binary field (or raw density if preprocessing was skipped) as a grayscale background with extracted contours overlaid in red.
+**2D fields:** Displays the binary field (or raw field if preprocessing was skipped) as a grayscale background with extracted contours overlaid in red.
 
 **3D fields:** Renders a 3D triangle surface plot (`plot_trisurf`) with semi-transparent faces and wireframe edges. Uses `best_vertices` for the highest-quality geometry available.
 
 ```python
 import matplotlib.pyplot as plt
-from xeltofab import load_density, process
+from xeltofab import load_field, process
 from xeltofab.viz import plot_result
 
-state = process(load_density("field.npy"))
+state = process(load_field("field.npy"))
 fig = plot_result(state)
 plt.show()
 ```
@@ -69,16 +71,16 @@ def plot_comparison(state: PipelineState) -> Figure
 
 Side-by-side comparison of the input field and the extraction result.
 
-**2D fields:** Left panel shows the input density heatmap. Right panel shows the binary background with contours overlaid. If `volume_fraction` is available, it is displayed as the figure title.
+**2D fields:** Left panel shows the input field heatmap. Right panel shows the binary background with contours overlaid. If `volume_fraction` is available, it is displayed as the figure title.
 
 **3D fields:** Left panel shows the mid-Z slice of the input field. Right panel shows a 3D triangle surface plot of the extracted mesh. If `volume_fraction` is available, it is displayed as the figure title.
 
 ```python
 import matplotlib.pyplot as plt
-from xeltofab import load_density, process
+from xeltofab import load_field, process
 from xeltofab.viz import plot_comparison
 
-state = process(load_density("field.npy"))
+state = process(load_field("field.npy"))
 fig = plot_comparison(state)
 fig.savefig("comparison.png", dpi=150)
 plt.close(fig)

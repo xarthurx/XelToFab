@@ -19,9 +19,9 @@ from xeltofab.state import PipelineState
 
 | Field | Type | Default | Set by |
 |-------|------|---------|--------|
-| `density` | `np.ndarray` | *(required)* | Constructor / `load_density` |
-| `ndim` | `int` | `0` | Auto-computed from `density` |
-| `params` | `PipelineParams` | `PipelineParams()` | Constructor / `load_density` |
+| `field` | `np.ndarray` | *(required)* | Constructor / `load_field` |
+| `ndim` | `int` | `0` | Auto-computed from `field` |
+| `params` | `PipelineParams` | `PipelineParams()` | Constructor / `load_field` |
 | `binary` | `np.ndarray \| None` | `None` | Preprocessing stage |
 | `vertices` | `np.ndarray \| None` | `None` | Extraction stage (3D) |
 | `faces` | `np.ndarray \| None` | `None` | Extraction stage (3D) |
@@ -31,7 +31,7 @@ from xeltofab.state import PipelineState
 
 ## Validation
 
-The `density` field is validated on construction:
+The `field` field is validated on construction:
 
 - Must be a 2D or 3D numpy array. Arrays with other dimensions raise a `ValueError`.
 
@@ -40,20 +40,20 @@ import numpy as np
 from xeltofab import PipelineState
 
 # Valid: 2D array
-state = PipelineState(density=np.zeros((100, 200)))
+state = PipelineState(field=np.zeros((100, 200)))
 assert state.ndim == 2
 
 # Valid: 3D array
-state = PipelineState(density=np.zeros((10, 20, 30)))
+state = PipelineState(field=np.zeros((10, 20, 30)))
 assert state.ndim == 3
 
 # Invalid: 1D array raises ValueError
-# PipelineState(density=np.zeros(100))  # ValueError: density must be 2D or 3D
+# PipelineState(field=np.zeros(100))  # ValueError: field must be 2D or 3D
 ```
 
 ## ndim auto-computation
 
-The `ndim` field is automatically set from `density.ndim` via a model validator. You never need to set it manually.
+The `ndim` field is automatically set from `field.ndim` via a model validator. You never need to set it manually.
 
 ## best_vertices property
 
@@ -66,9 +66,9 @@ The `best_vertices` property returns the highest-quality vertex data available:
 This property is used by `save_mesh` and the visualization functions to always use the best available geometry.
 
 ```python
-from xeltofab import load_density, process
+from xeltofab import load_field, process
 
-state = process(load_density("field.npy"))
+state = process(load_field("field.npy"))
 
 # After processing, best_vertices returns the smoothed mesh
 vertices = state.best_vertices  # smoothed_vertices if available, else vertices
@@ -81,7 +81,7 @@ Stage functions do not mutate state in-place. Instead, they return new state obj
 ```python
 # Inside a stage function (internal pattern)
 def some_stage(state: PipelineState) -> PipelineState:
-    new_data = compute_something(state.density)
+    new_data = compute_something(state.field)
     return state.model_copy(update={"binary": new_data})
 ```
 

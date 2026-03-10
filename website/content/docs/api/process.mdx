@@ -21,7 +21,7 @@ def process(state: PipelineState) -> PipelineState
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `state` | `PipelineState` | A state object containing the density field and pipeline parameters |
+| `state` | `PipelineState` | A state object containing the design field and pipeline parameters |
 
 ## Return value
 
@@ -42,10 +42,10 @@ If `params.direct_extraction` is `True`, the preprocessing step is skipped entir
 ## Example
 
 ```python
-from xeltofab import load_density, process, save_mesh
+from xeltofab import load_field, process, save_mesh
 
 # Load and process
-state = load_density("density_field.npy")
+state = load_field("design_field.npy")
 result = process(state)
 
 # Access results

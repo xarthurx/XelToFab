@@ -1,20 +1,22 @@
 ---
-title: load_density
-description: Load a density field from file into a PipelineState
+title: load_field
+description: Load a design field from file into a PipelineState
 ---
+
+> **Note:** Previously named `load_density()`. The old name is available as a deprecated alias.
 
 ## Import
 
 ```python
-from xeltofab import load_density
+from xeltofab import load_field
 # or
-from xeltofab.io import load_density
+from xeltofab.io import load_field
 ```
 
 ## Signature
 
 ```python
-def load_density(
+def load_field(
     path: str | Path,
     field_name: str | None = None,
     shape: tuple[int, ...] | None = None,
@@ -33,7 +35,7 @@ def load_density(
 
 ## Return value
 
-Returns a `PipelineState` with the loaded `density` array and the given `params`.
+Returns a `PipelineState` with the loaded `field` array and the given `params`.
 
 ## Supported formats
 
@@ -52,42 +54,42 @@ Run `xtf formats` to check which formats are available in your environment.
 ### NumPy array
 
 ```python
-from xeltofab import load_density
+from xeltofab import load_field
 
-state = load_density("density_field.npy")
+state = load_field("design_field.npy")
 ```
 
 ### NumPy archive with named array
 
 ```python
-state = load_density("fields.npz", field_name="density")
+state = load_field("fields.npz", field_name="density")
 ```
 
 ### MATLAB file
 
 ```python
-state = load_density("topology_result.mat", field_name="xPhys")
+state = load_field("topology_result.mat", field_name="xPhys")
 ```
 
 ### CSV with reshape
 
 ```python
-state = load_density("flat_field.csv", shape=(100, 200))
+state = load_field("flat_field.csv", shape=(100, 200))
 ```
 
 ### HDF5 file
 
 ```python
-state = load_density("simulation.h5", field_name="density")
+state = load_field("simulation.h5", field_name="density")
 ```
 
 ### With custom parameters
 
 ```python
-from xeltofab import PipelineParams, load_density
+from xeltofab import PipelineParams, load_field
 
 params = PipelineParams(threshold=0.4, smooth_sigma=1.5)
-state = load_density("field.npy", params=params)
+state = load_field("field.npy", params=params)
 ```
 
 ## Errors
