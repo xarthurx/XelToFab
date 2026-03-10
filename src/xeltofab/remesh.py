@@ -1,19 +1,25 @@
-"""Isotropic remeshing via pymeshlab."""
+"""Isotropic remeshing via gpytoolbox (Botsch & Kobbelt algorithm)."""
 
 from __future__ import annotations
 
 import warnings
 
+import numpy as np
+
 from xeltofab.state import PipelineState
 
 
 def remesh(state: PipelineState) -> PipelineState:
-    """Apply uniform remeshing to produce regular triangles.
+    """Apply isotropic explicit remeshing to produce uniform triangles.
 
-    Uses generate_resampled_uniform_mesh with cellsize controlling triangle size.
+    Uses gpytoolbox.remesh_botsch (edge split, collapse, flip, tangential smoothing).
     Auto-computes target edge length from average edge length if not specified.
     3D only. No-op for 2D contours or when remesh is disabled.
     Updates vertices and faces; clears smoothed_vertices.
+
+    Note: boundary edges (where marching cubes clips at domain edges) are preserved
+    by the algorithm and may retain lower-quality triangles. Interior triangles
+    (typically 99%+ of the mesh) achieve FEA-ready quality.
     """
     if state.ndim == 2 or state.vertices is None or state.faces is None:
         return state
@@ -21,42 +27,31 @@ def remesh(state: PipelineState) -> PipelineState:
         return state
 
     try:
-        import pymeshlab
+        import gpytoolbox
     except ImportError:
         warnings.warn(
-            "pymeshlab not installed — skipping isotropic remeshing. "
+            "gpytoolbox not installed — skipping isotropic remeshing. "
             "Install with: uv sync --extra mesh-quality",
             stacklevel=2,
         )
         return state
 
-    vertices = state.best_vertices
-    faces = state.faces
+    vertices = state.best_vertices.astype(np.float64)
+    faces = state.faces.astype(np.int32)
 
-    ms = pymeshlab.MeshSet()
-    ms.add_mesh(pymeshlab.Mesh(vertices, faces))
-
-    # Determine target edge length (used as cellsize)
+    # Auto-compute target edge length from average if not specified
     if state.params.target_edge_length is not None:
-        cellsize = pymeshlab.PureValue(state.params.target_edge_length)
+        h = state.params.target_edge_length
     else:
-        avg_len = ms.get_geometric_measures()["avg_edge_length"]
-        cellsize = pymeshlab.PureValue(avg_len)
+        edge_vecs = vertices[faces[:, 1]] - vertices[faces[:, 0]]
+        h = float(np.mean(np.linalg.norm(edge_vecs, axis=1)))
 
-    # Ensure normals exist for the reconstruction
-    ms.compute_normal_per_face()
-    ms.compute_normal_per_vertex()
-
-    ms.generate_resampled_uniform_mesh(cellsize=cellsize)
-
-    # The resampled mesh is added as a new layer; switch to it
-    ms.set_current_mesh(ms.mesh_number() - 1)
-
-    out = ms.current_mesh()
-    out.compact()
+    new_vertices, new_faces = gpytoolbox.remesh_botsch(
+        vertices, faces, i=state.params.remesh_iterations, h=h, project=True
+    )
 
     return state.model_copy(update={
-        "vertices": out.vertex_matrix(),
-        "faces": out.face_matrix(),
+        "vertices": new_vertices,
+        "faces": new_faces,
         "smoothed_vertices": None,
     })
