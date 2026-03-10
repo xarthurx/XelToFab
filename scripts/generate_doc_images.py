@@ -311,8 +311,75 @@ def gen_parameter_sensitivity() -> None:
 
 
 def gen_quality_metrics() -> None:
-    """Image 5: Quality heatmap + histogram composite."""
-    pass  # implemented in Task 6
+    """Image 5: Scaled Jacobian heatmap + histogram composite."""
+    import numpy as np
+    import pyvista as pv
+    from xeltofab.io import load_field
+    from xeltofab.pipeline import process
+    from xeltofab.quality_plots import (  # internal APIs for reuse
+        _build_pv_mesh,
+        _compute_cell_metric,
+        _compute_pass_rate,
+        _HIGHER_IS_BETTER,
+        _METRIC_LABELS,
+        _THRESHOLDS,
+    )
+
+    # Process real TO data through full pipeline
+    state = load_field("data/examples/heat_conduction_3d_51x51x51_sample0.npy")
+    result = process(state)
+
+    metric = "scaled_jacobian"
+    threshold = _THRESHOLDS[metric]
+
+    # Build mesh and compute metric
+    pv_mesh = _build_pv_mesh(result)
+    values = _compute_cell_metric(pv_mesh, metric)
+    pass_pct = _compute_pass_rate(values, metric, threshold)
+
+    # Left panel: pyvista heatmap screenshot
+    pv_mesh.cell_data[metric] = values
+    pl = pv.Plotter(off_screen=True, window_size=[800, 600])
+    pl.add_mesh(
+        pv_mesh, scalars=metric, cmap="RdYlGn",
+        show_edges=True, edge_color="black", line_width=0.3,
+        scalar_bar_args={"title": _METRIC_LABELS[metric]},
+    )
+    pl.camera_position = "iso"
+    pl.set_background(BG_COLOR)
+    heatmap_img = pl.screenshot(return_img=True)
+    pl.close()
+
+    # Composite: left = heatmap image, right = histogram
+    fig, (ax_left, ax_right) = plt.subplots(1, 2, figsize=(10, 4.5),
+                                             gridspec_kw={"width_ratios": [1.2, 1]})
+
+    ax_left.imshow(heatmap_img)
+    ax_left.set_title("Per-Cell Scaled Jacobian", fontsize=10)
+    ax_left.axis("off")
+
+    # Right: histogram
+    ax_right.hist(values, bins=50, edgecolor="black", linewidth=0.5, alpha=0.8,
+                  color="#4A90D9")
+    ax_right.axvline(threshold, color="red", linestyle="--", linewidth=2,
+                     label=f"FEA threshold ({threshold})")
+    direction = ">=" if _HIGHER_IS_BETTER[metric] else "<="
+    ax_right.annotate(
+        f"{pass_pct:.1f}% pass ({direction} {threshold})\n"
+        f"mean={np.mean(values):.2f}, median={np.median(values):.2f}",
+        xy=(0.97, 0.95), xycoords="axes fraction", ha="right", va="top",
+        fontsize=9, bbox=dict(boxstyle="round,pad=0.3", facecolor="wheat", alpha=0.8),
+    )
+    ax_right.set_xlabel(_METRIC_LABELS[metric], fontsize=10)
+    ax_right.set_ylabel("Number of Cells", fontsize=10)
+    ax_right.set_title("Distribution", fontsize=10)
+    ax_right.legend(loc="upper left", fontsize=8)
+
+    fig.patch.set_facecolor(BG_COLOR)
+    fig.tight_layout(pad=1.5)
+    fig.savefig(OUTPUT_DIR / "quality-jacobian.png", dpi=DPI, bbox_inches="tight",
+                facecolor=BG_COLOR)
+    plt.close(fig)
 
 
 # ---------------------------------------------------------------------------
