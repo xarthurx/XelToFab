@@ -126,8 +126,54 @@ def gen_pipeline_diagram() -> None:
 
 
 def gen_pipeline_stages() -> None:
-    """Image 2: Stage-by-stage visual progression."""
-    pass  # implemented in Task 3
+    """Image 2: 1x4 grid showing pipeline progression on 3D heat conduction data."""
+    import numpy as np
+    from xeltofab.io import load_field
+    from xeltofab.preprocess import preprocess
+    from xeltofab.extract import extract
+    from xeltofab.smooth import smooth
+
+    # Load real TO data
+    state = load_field("data/examples/heat_conduction_3d_51x51x51_sample0.npy")
+
+    # Run stages individually to capture intermediates
+    state_pre = preprocess(state)
+    state_ext = extract(state_pre)
+    state_smo = smooth(state_ext)
+
+    fig, axes = plt.subplots(1, 4, figsize=(12, 3.5))
+    titles = ["Raw Field\n(center slice)", "After Threshold\n(binary)", "Marching Cubes\n(raw mesh)", "After Smoothing"]
+
+    # Panel 1: Center slice of raw density field
+    field = state.field
+    mid = field.shape[0] // 2
+    axes[0].imshow(field[mid], cmap="viridis", origin="lower")
+    axes[0].set_title(titles[0], fontsize=9)
+    axes[0].axis("off")
+
+    # Panel 2: Center slice of binary field
+    assert state_pre.binary is not None
+    axes[1].imshow(state_pre.binary[mid], cmap="gray", origin="lower")
+    axes[1].set_title(titles[1], fontsize=9)
+    axes[1].axis("off")
+
+    # Panel 3: Marching cubes mesh (pyvista screenshot)
+    mesh_raw = _pv_screenshot(state_ext.vertices, state_ext.faces)
+    axes[2].imshow(mesh_raw)
+    axes[2].set_title(titles[2], fontsize=9)
+    axes[2].axis("off")
+
+    # Panel 4: Smoothed mesh
+    mesh_smooth = _pv_screenshot(state_smo.best_vertices, state_smo.faces)
+    axes[3].imshow(mesh_smooth)
+    axes[3].set_title(titles[3], fontsize=9)
+    axes[3].axis("off")
+
+    fig.patch.set_facecolor(BG_COLOR)
+    fig.tight_layout(pad=1.0)
+    fig.savefig(OUTPUT_DIR / "pipeline-stages.png", dpi=DPI, bbox_inches="tight",
+                facecolor=BG_COLOR)
+    plt.close(fig)
 
 
 def gen_field_types() -> None:
