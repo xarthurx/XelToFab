@@ -6,7 +6,7 @@ from pathlib import Path
 
 import click
 
-from xeltofab.io import load_density, save_mesh
+from xeltofab.io import load_field, save_mesh
 from xeltofab.loaders import get_supported_formats
 from xeltofab.pipeline import process
 from xeltofab.state import PipelineParams
@@ -48,13 +48,13 @@ def _build_params(
 
 @click.group()
 def main() -> None:
-    """XelToFab — Topology optimization post-processing pipeline."""
+    """XelToFab — Design fields to fabrication-ready geometry."""
 
 
 @main.command()
 @click.argument("input_path", type=click.Path(exists=True, path_type=Path))
 @click.option("-o", "--output", "output_path", type=click.Path(path_type=Path), required=True)
-@click.option("--threshold", type=float, default=0.5, help="Density threshold [0-1]")
+@click.option("--threshold", type=float, default=0.5, help="Field threshold [0-1]")
 @click.option("--sigma", type=float, default=1.0, help="Gaussian smoothing sigma")
 @click.option("-f", "--field-name", default=None, help="Field/variable name to extract from input file")
 @click.option("--shape", "shape_str", default=None, help="Grid shape for flat data, e.g. 100x200 or 10x20x30")
@@ -78,12 +78,12 @@ def process_cmd(
     no_remesh: bool,
     viz: bool,
 ) -> None:
-    """Process a density field into a mesh."""
+    """Process a scalar field into a mesh."""
     params = _build_params(ctx, threshold, sigma, field_type, direct, no_repair, no_remesh)
     shape = _parse_shape(shape_str) if shape_str else None
 
     try:
-        state = load_density(input_path, field_name=field_name, shape=shape, params=params)
+        state = load_field(input_path, field_name=field_name, shape=shape, params=params)
     except (ValueError, KeyError, ImportError) as e:
         raise click.ClickException(str(e)) from None
 
@@ -107,7 +107,7 @@ def process_cmd(
 @main.command()
 @click.argument("input_path", type=click.Path(exists=True, path_type=Path))
 @click.option("-o", "--output", "output_path", type=click.Path(path_type=Path), default=None)
-@click.option("--threshold", type=float, default=0.5, help="Density threshold [0-1]")
+@click.option("--threshold", type=float, default=0.5, help="Field threshold [0-1]")
 @click.option("--sigma", type=float, default=1.0, help="Gaussian smoothing sigma")
 @click.option("-f", "--field-name", default=None, help="Field/variable name to extract from input file")
 @click.option("--shape", "shape_str", default=None, help="Grid shape for flat data, e.g. 100x200 or 10x20x30")
@@ -129,12 +129,12 @@ def viz(
     no_repair: bool,
     no_remesh: bool,
 ) -> None:
-    """Visualize a density field and its extraction result."""
+    """Visualize a scalar field and its extraction result."""
     params = _build_params(ctx, threshold, sigma, field_type, direct, no_repair, no_remesh)
     shape = _parse_shape(shape_str) if shape_str else None
 
     try:
-        state = load_density(input_path, field_name=field_name, shape=shape, params=params)
+        state = load_field(input_path, field_name=field_name, shape=shape, params=params)
     except (ValueError, KeyError, ImportError) as e:
         raise click.ClickException(str(e)) from None
 

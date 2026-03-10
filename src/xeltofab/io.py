@@ -1,4 +1,4 @@
-"""Density field loading and mesh export."""
+"""Scalar field loading and mesh export."""
 
 from __future__ import annotations
 
@@ -10,13 +10,13 @@ from xeltofab.loaders import resolve_loader
 from xeltofab.state import PipelineParams, PipelineState
 
 
-def load_density(
+def load_field(
     path: str | Path,
     field_name: str | None = None,
     shape: tuple[int, ...] | None = None,
     params: PipelineParams | None = None,
 ) -> PipelineState:
-    """Load a density field from a supported file format.
+    """Load a scalar field from a supported file format.
 
     Supported formats: .npy, .npz, .mat, .vtk, .vtr, .vti, .csv, .txt, .h5, .hdf5, .xdmf
     """
@@ -25,9 +25,13 @@ def load_density(
         params = PipelineParams()
 
     loader = resolve_loader(path)
-    density = loader(path, field_name, shape)
+    field = loader(path, field_name, shape)
 
-    return PipelineState(density=density, params=params)
+    return PipelineState(field=field, params=params)
+
+
+# Deprecated alias — use load_field() instead
+load_density = load_field
 
 
 def save_mesh(state: PipelineState, path: str | Path) -> None:
