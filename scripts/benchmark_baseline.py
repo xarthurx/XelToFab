@@ -28,6 +28,7 @@ from xeltofab.pipeline import process
 from xeltofab.quality import compute_quality
 from xeltofab.state import PipelineParams, PipelineState
 from xeltofab.field_plots import plot_comparison
+from xeltofab.quality_plots import plot_metric_overview, plot_quality_overview
 
 # ---------------------------------------------------------------------------
 # Model registry
@@ -122,6 +123,26 @@ def save_mesh_render(pv_mesh, output_path: Path) -> None:
         pl.close()
     except Exception as e:
         print(f"  WARNING: 3D render failed: {e}")
+
+
+def save_quality_heatmap(state: PipelineState, output_path: Path) -> None:
+    """Save a 1x3 quality heatmap overview (off-screen)."""
+    try:
+        pl = plot_quality_overview(state)
+        pl.screenshot(str(output_path))
+        pl.close()
+    except Exception as e:
+        print(f"  WARNING: Quality heatmap failed: {e}")
+
+
+def save_quality_histograms(state: PipelineState, output_path: Path) -> None:
+    """Save a 1x3 metric histogram overview."""
+    try:
+        fig = plot_metric_overview(state)
+        fig.savefig(output_path, dpi=150, bbox_inches="tight")
+        plt.close(fig)
+    except Exception as e:
+        print(f"  WARNING: Quality histograms failed: {e}")
 
 
 # ---------------------------------------------------------------------------
@@ -240,6 +261,16 @@ def main() -> None:
             render_path = output_dir / f"{model.name}_mesh.png"
             save_mesh_render(pv_mesh, render_path)
             print(f"  Saved 3D render: {render_path}")
+
+        # Save quality heatmaps (3D only)
+        if result.ndim == 3 and result.vertices is not None:
+            quality_path = output_dir / f"{model.name}_quality.png"
+            save_quality_heatmap(result, quality_path)
+            print(f"  Saved quality heatmap: {quality_path}")
+
+            hist_path = output_dir / f"{model.name}_histograms.png"
+            save_quality_histograms(result, hist_path)
+            print(f"  Saved histograms: {hist_path}")
 
     # Write metrics JSON
     metrics_path = output_dir / "metrics.json"
