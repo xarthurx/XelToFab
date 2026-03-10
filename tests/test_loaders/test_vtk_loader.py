@@ -11,13 +11,13 @@ from xeltofab.loaders.vtk_loader import load  # noqa: E402
 
 
 def test_load_vtr_cell_data(tmp_path: Path):
-    """Load density from a rectilinear grid with cell data."""
+    """Load field from a rectilinear grid with cell data."""
     grid = pyvista.RectilinearGrid(
         np.linspace(0, 1, 11),  # 10 cells in x
         np.linspace(0, 1, 21),  # 20 cells in y
     )
-    density = np.random.rand(grid.n_cells)
-    grid.cell_data["density"] = density
+    field = np.random.rand(grid.n_cells)
+    grid.cell_data["density"] = field
     path = tmp_path / "test.vtr"
     grid.save(path)
 
@@ -25,7 +25,7 @@ def test_load_vtr_cell_data(tmp_path: Path):
     assert result.ndim == 2
     assert result.shape == (10, 20)
     # VTK uses Fortran (column-major) ordering for cell data
-    np.testing.assert_array_almost_equal(result.ravel(order="F"), density, decimal=5)
+    np.testing.assert_array_almost_equal(result.ravel(order="F"), field, decimal=5)
 
 
 def test_load_vtk_explicit_field_name(tmp_path: Path):
@@ -47,8 +47,8 @@ def test_load_vtr_3d(tmp_path: Path):
         np.linspace(0, 1, 8),
         np.linspace(0, 1, 4),
     )
-    density = np.random.rand(grid.n_cells)
-    grid.cell_data["rho"] = density
+    field = np.random.rand(grid.n_cells)
+    grid.cell_data["rho"] = field
     path = tmp_path / "test.vtr"
     grid.save(path)
 
@@ -105,8 +105,8 @@ def test_load_vtk_point_data(tmp_path: Path):
         np.linspace(0, 1, 6),  # 5 cells, 6 nodes in x
         np.linspace(0, 1, 8),  # 7 cells, 8 nodes in y
     )
-    density = np.random.rand(grid.n_points)
-    grid.point_data["density"] = density
+    field = np.random.rand(grid.n_points)
+    grid.point_data["density"] = field
     path = tmp_path / "test.vtr"
     grid.save(path)
 

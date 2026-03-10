@@ -17,10 +17,10 @@ def test_cli_formats_subcommand():
     assert ".npy" in result.output
 
 
-def test_cli_process_mat_file(tmp_path: Path, small_sphere_density: np.ndarray):
+def test_cli_process_mat_file(tmp_path: Path, small_sphere_field: np.ndarray):
     """Process a .mat file through the CLI."""
     input_path = tmp_path / "test.mat"
-    scipy.io.savemat(input_path, {"xPhys": small_sphere_density})
+    scipy.io.savemat(input_path, {"xPhys": small_sphere_field})
     output_path = tmp_path / "output.stl"
 
     runner = CliRunner()
@@ -29,9 +29,9 @@ def test_cli_process_mat_file(tmp_path: Path, small_sphere_density: np.ndarray):
     assert output_path.exists()
 
 
-def test_cli_process_mat_with_field_name(tmp_path: Path, small_sphere_density: np.ndarray):
+def test_cli_process_mat_with_field_name(tmp_path: Path, small_sphere_field: np.ndarray):
     input_path = tmp_path / "test.mat"
-    scipy.io.savemat(input_path, {"custom_name": small_sphere_density})
+    scipy.io.savemat(input_path, {"custom_name": small_sphere_field})
     output_path = tmp_path / "output.stl"
 
     runner = CliRunner()
@@ -63,10 +63,10 @@ def test_cli_process_unsupported_format(tmp_path: Path):
     assert "Unsupported file format" in result.output
 
 
-def test_cli_missing_field_name_shows_error(tmp_path: Path, small_sphere_density: np.ndarray):
+def test_cli_missing_field_name_shows_error(tmp_path: Path, small_sphere_field: np.ndarray):
     """Missing --field-name should produce a friendly Click error, not a raw KeyError."""
     input_path = tmp_path / "test.mat"
-    scipy.io.savemat(input_path, {"real_field": small_sphere_density})
+    scipy.io.savemat(input_path, {"real_field": small_sphere_field})
     output_path = tmp_path / "output.stl"
 
     runner = CliRunner()

@@ -86,13 +86,13 @@ def test_load_xdmf(tmp_path: Path):
 
 
 def test_load_xdmf_geometry_before_density(tmp_path: Path):
-    """XDMF with geometry DataItem before density — must return density, not coords."""
-    density = np.random.rand(10, 20).astype(np.float64)
+    """XDMF with geometry DataItem before density — must return field, not coords."""
+    field = np.random.rand(10, 20).astype(np.float64)
     coords = np.random.rand(11 * 21, 2).astype(np.float64)  # geometry is different shape
     h5_path = tmp_path / "data.h5"
     with h5py.File(h5_path, "w") as f:
         f.create_dataset("geometry", data=coords)
-        f.create_dataset("density", data=density)
+        f.create_dataset("density", data=field)
 
     xdmf_path = tmp_path / "data.xdmf"
     xdmf_path.write_text("""\
@@ -117,7 +117,7 @@ def test_load_xdmf_geometry_before_density(tmp_path: Path):
 """)
 
     result = load(xdmf_path, field_name=None, shape=None)
-    np.testing.assert_array_almost_equal(result, density)
+    np.testing.assert_array_almost_equal(result, field)
 
 
 def test_load_xdmf_with_namespace(tmp_path: Path):
