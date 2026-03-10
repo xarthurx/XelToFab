@@ -177,8 +177,64 @@ def gen_pipeline_stages() -> None:
 
 
 def gen_field_types() -> None:
-    """Image 3: Density vs SDF 2x2 comparison."""
-    pass  # implemented in Task 4
+    """Image 3: Density vs SDF 2x2 comparison grid (2D fields)."""
+    import numpy as np
+    from xeltofab.io import load_field
+    from xeltofab.pipeline import process
+    from xeltofab.state import PipelineParams, PipelineState
+
+    # Load real density field
+    state_density = load_field("data/examples/beams_2d_100x200_sample0.npy")
+    result_density = process(state_density)
+
+    # Generate synthetic 2D SDF: signed distance to two circles
+    y, x = np.mgrid[0:100, 0:200].astype(np.float64)
+    d1 = np.sqrt((x - 70) ** 2 + (y - 50) ** 2) - 25
+    d2 = np.sqrt((x - 140) ** 2 + (y - 50) ** 2) - 20
+    sdf_field = np.minimum(d1, d2)  # union of two circles
+
+    params_sdf = PipelineParams(field_type="sdf")
+    state_sdf = PipelineState(field=sdf_field, params=params_sdf)
+    result_sdf = process(state_sdf)
+
+    fig, axes = plt.subplots(2, 2, figsize=(10, 5))
+
+    # Top-left: Density field heatmap
+    im0 = axes[0, 0].imshow(state_density.field, cmap="YlOrRd", origin="lower",
+                             vmin=0, vmax=1)
+    axes[0, 0].set_title("Density Field (0\u21921)", fontsize=10)
+    axes[0, 0].axis("off")
+    fig.colorbar(im0, ax=axes[0, 0], fraction=0.046, pad=0.04)
+
+    # Top-right: SDF field heatmap
+    vmax = np.abs(sdf_field).max()
+    im1 = axes[0, 1].imshow(sdf_field, cmap="RdBu", origin="lower",
+                             vmin=-vmax, vmax=vmax)
+    axes[0, 1].set_title("SDF Field (signed distance)", fontsize=10)
+    axes[0, 1].axis("off")
+    fig.colorbar(im1, ax=axes[0, 1], fraction=0.046, pad=0.04)
+
+    # Bottom-left: Density field with extracted contours at threshold=0.5
+    axes[1, 0].imshow(state_density.field, cmap="gray_r", origin="lower", alpha=0.5)
+    if result_density.contours:
+        for contour in result_density.contours:
+            axes[1, 0].plot(contour[:, 1], contour[:, 0], "b-", linewidth=1.5)
+    axes[1, 0].set_title("Extracted at threshold=0.5", fontsize=10)
+    axes[1, 0].axis("off")
+
+    # Bottom-right: SDF field with extracted contours at level=0
+    axes[1, 1].imshow(sdf_field, cmap="gray", origin="lower", alpha=0.4)
+    if result_sdf.contours:
+        for contour in result_sdf.contours:
+            axes[1, 1].plot(contour[:, 1], contour[:, 0], "r-", linewidth=1.5)
+    axes[1, 1].set_title("Extracted at level=0.0", fontsize=10)
+    axes[1, 1].axis("off")
+
+    fig.patch.set_facecolor(BG_COLOR)
+    fig.tight_layout(pad=1.5)
+    fig.savefig(OUTPUT_DIR / "field-types-comparison.png", dpi=DPI, bbox_inches="tight",
+                facecolor=BG_COLOR)
+    plt.close(fig)
 
 
 def gen_parameter_sensitivity() -> None:
