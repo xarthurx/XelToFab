@@ -53,6 +53,15 @@ def _compute_cell_metric(pv_mesh: pv.PolyData, metric: str) -> np.ndarray:
     return np.asarray(qual.cell_data[metric], dtype=np.float64)
 
 
+def _compute_pass_rate(values: np.ndarray, metric: str, threshold: float) -> float:
+    """Return percentage of cells passing the FEA threshold."""
+    if _HIGHER_IS_BETTER[metric]:
+        pass_count = int(np.sum(values >= threshold))
+    else:
+        pass_count = int(np.sum(values <= threshold))
+    return 100.0 * pass_count / len(values)
+
+
 def plot_quality_heatmap(
     state: PipelineState,
     metric: str = "min_angle",
@@ -171,12 +180,7 @@ def plot_metric_histogram(
     if threshold is None:
         threshold = _THRESHOLDS[metric]
 
-    higher_better = _HIGHER_IS_BETTER[metric]
-    if higher_better:
-        pass_count = int(np.sum(values >= threshold))
-    else:
-        pass_count = int(np.sum(values <= threshold))
-    pass_pct = 100.0 * pass_count / len(values)
+    pass_pct = _compute_pass_rate(values, metric, threshold)
 
     fig, ax = plt.subplots(figsize=(8, 5))
     ax.hist(values, bins=bins, edgecolor="black", linewidth=0.5, alpha=0.8)
@@ -185,7 +189,7 @@ def plot_metric_histogram(
     ax.axvline(threshold, color="red", linestyle="--", linewidth=2, label=f"FEA threshold ({threshold})")
 
     # Stats annotation
-    direction = ">=" if higher_better else "<="
+    direction = ">=" if _HIGHER_IS_BETTER[metric] else "<="
     ax.annotate(
         f"{pass_pct:.1f}% pass ({direction} {threshold})\n"
         f"mean={np.mean(values):.2f}, median={np.median(values):.2f}",
@@ -225,18 +229,12 @@ def plot_metric_overview(
     for ax, metric in zip(axes, _VALID_METRICS, strict=True):
         values = _compute_cell_metric(pv_mesh, metric)
         threshold = _THRESHOLDS[metric]
-        higher_better = _HIGHER_IS_BETTER[metric]
-
-        if higher_better:
-            pass_count = int(np.sum(values >= threshold))
-        else:
-            pass_count = int(np.sum(values <= threshold))
-        pass_pct = 100.0 * pass_count / len(values)
+        pass_pct = _compute_pass_rate(values, metric, threshold)
 
         ax.hist(values, bins=bins, edgecolor="black", linewidth=0.5, alpha=0.8)
         ax.axvline(threshold, color="red", linestyle="--", linewidth=2)
 
-        direction = ">=" if higher_better else "<="
+        direction = ">=" if _HIGHER_IS_BETTER[metric] else "<="
         ax.annotate(
             f"{pass_pct:.1f}% pass\n({direction} {threshold})",
             xy=(0.97, 0.95),

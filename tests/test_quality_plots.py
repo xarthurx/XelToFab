@@ -9,48 +9,35 @@ pv = pytest.importorskip("pyvista")
 from xeltofab.state import PipelineParams, PipelineState
 
 
-@pytest.fixture
-def mesh_state(sphere_field: np.ndarray) -> PipelineState:
-    """A processed 3D state with vertices and faces."""
-    from xeltofab.pipeline import process
-
-    return process(PipelineState(field=sphere_field, params=PipelineParams()))
-
-
-@pytest.fixture
-def state_2d(processed_2d: PipelineState) -> PipelineState:
-    return processed_2d
-
-
-def test_heatmap_returns_plotter(mesh_state: PipelineState):
+def test_heatmap_returns_plotter(processed_3d: PipelineState):
     from xeltofab.quality_plots import plot_quality_heatmap
 
-    pl = plot_quality_heatmap(mesh_state, metric="min_angle")
+    pl = plot_quality_heatmap(processed_3d, metric="min_angle")
     assert isinstance(pl, pv.Plotter)
     pl.close()
 
 
-def test_heatmap_aspect_ratio(mesh_state: PipelineState):
+def test_heatmap_aspect_ratio(processed_3d: PipelineState):
     from xeltofab.quality_plots import plot_quality_heatmap
 
-    pl = plot_quality_heatmap(mesh_state, metric="aspect_ratio")
+    pl = plot_quality_heatmap(processed_3d, metric="aspect_ratio")
     assert isinstance(pl, pv.Plotter)
     pl.close()
 
 
-def test_heatmap_scaled_jacobian(mesh_state: PipelineState):
+def test_heatmap_scaled_jacobian(processed_3d: PipelineState):
     from xeltofab.quality_plots import plot_quality_heatmap
 
-    pl = plot_quality_heatmap(mesh_state, metric="scaled_jacobian")
+    pl = plot_quality_heatmap(processed_3d, metric="scaled_jacobian")
     assert isinstance(pl, pv.Plotter)
     pl.close()
 
 
-def test_heatmap_2d_raises(state_2d: PipelineState):
+def test_heatmap_2d_raises(processed_2d: PipelineState):
     from xeltofab.quality_plots import plot_quality_heatmap
 
     with pytest.raises(ValueError, match="3D"):
-        plot_quality_heatmap(state_2d)
+        plot_quality_heatmap(processed_2d)
 
 
 def test_heatmap_no_mesh_raises():
@@ -61,43 +48,43 @@ def test_heatmap_no_mesh_raises():
         plot_quality_heatmap(state)
 
 
-def test_heatmap_overview(mesh_state: PipelineState):
+def test_heatmap_overview(processed_3d: PipelineState):
     from xeltofab.quality_plots import plot_quality_overview
 
-    pl = plot_quality_overview(mesh_state)
+    pl = plot_quality_overview(processed_3d)
     assert isinstance(pl, pv.Plotter)
     pl.close()
 
 
-def test_histogram_returns_figure(mesh_state: PipelineState):
+def test_histogram_returns_figure(processed_3d: PipelineState):
     import matplotlib.pyplot as plt
     from matplotlib.figure import Figure
 
     from xeltofab.quality_plots import plot_metric_histogram
 
-    fig = plot_metric_histogram(mesh_state, metric="min_angle")
+    fig = plot_metric_histogram(processed_3d, metric="min_angle")
     assert isinstance(fig, Figure)
     plt.close(fig)
 
 
-def test_histogram_custom_threshold(mesh_state: PipelineState):
+def test_histogram_custom_threshold(processed_3d: PipelineState):
     import matplotlib.pyplot as plt
     from matplotlib.figure import Figure
 
     from xeltofab.quality_plots import plot_metric_histogram
 
-    fig = plot_metric_histogram(mesh_state, metric="min_angle", threshold=30.0)
+    fig = plot_metric_histogram(processed_3d, metric="min_angle", threshold=30.0)
     assert isinstance(fig, Figure)
     plt.close(fig)
 
 
-def test_histogram_threshold_line(mesh_state: PipelineState):
+def test_histogram_threshold_line(processed_3d: PipelineState):
     """Verify the threshold vertical line and pass-rate annotation are present."""
     import matplotlib.pyplot as plt
 
     from xeltofab.quality_plots import plot_metric_histogram
 
-    fig = plot_metric_histogram(mesh_state, metric="min_angle")
+    fig = plot_metric_histogram(processed_3d, metric="min_angle")
     ax = fig.axes[0]
     # Check at least one vertical line exists (the threshold line)
     assert len(ax.lines) >= 1, "Expected threshold line"
@@ -114,19 +101,19 @@ def test_histogram_no_mesh_raises():
         plot_metric_histogram(state)
 
 
-def test_histogram_overview(mesh_state: PipelineState):
+def test_histogram_overview(processed_3d: PipelineState):
     import matplotlib.pyplot as plt
     from matplotlib.figure import Figure
 
     from xeltofab.quality_plots import plot_metric_overview
 
-    fig = plot_metric_overview(mesh_state)
+    fig = plot_metric_overview(processed_3d)
     assert isinstance(fig, Figure)
     plt.close(fig)
 
 
-def test_histogram_2d_raises(state_2d: PipelineState):
+def test_histogram_2d_raises(processed_2d: PipelineState):
     from xeltofab.quality_plots import plot_metric_histogram
 
     with pytest.raises(ValueError, match="3D"):
-        plot_metric_histogram(state_2d)
+        plot_metric_histogram(processed_2d)

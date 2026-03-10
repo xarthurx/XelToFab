@@ -129,8 +129,10 @@ def save_quality_heatmap(state: PipelineState, output_path: Path) -> None:
     """Save a 1x3 quality heatmap overview (off-screen)."""
     try:
         pl = plot_quality_overview(state)
-        pl.screenshot(str(output_path))
-        pl.close()
+        try:
+            pl.screenshot(str(output_path))
+        finally:
+            pl.close()
     except Exception as e:
         print(f"  WARNING: Quality heatmap failed: {e}")
 
@@ -139,8 +141,10 @@ def save_quality_histograms(state: PipelineState, output_path: Path) -> None:
     """Save a 1x3 metric histogram overview."""
     try:
         fig = plot_metric_overview(state)
-        fig.savefig(output_path, dpi=150, bbox_inches="tight")
-        plt.close(fig)
+        try:
+            fig.savefig(output_path, dpi=150, bbox_inches="tight")
+        finally:
+            plt.close(fig)
     except Exception as e:
         print(f"  WARNING: Quality histograms failed: {e}")
 
