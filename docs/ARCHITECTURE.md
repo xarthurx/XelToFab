@@ -84,6 +84,7 @@ src/xeltofab/
 │   ├── vtk_loader.py   .vtk/.vtr/.vti (optional: pyvista)
 │   └── hdf5_loader.py  .h5/.hdf5/.xdmf (optional: h5py)
 ├── field_plots.py  Matplotlib visualization (field, result, comparison plots)
+├── quality_plots.py Quality visualization (PyVista heatmaps, matplotlib histograms)
 ├── cli.py          Click CLI (xtf process, xtf viz, xtf formats)
 └── __init__.py
 ```
@@ -149,6 +150,7 @@ The `xtf` command (installed via `[project.scripts]`) exposes three subcommands:
 | Mesh repair | `pymeshlab` (optional — `uv sync --extra mesh-quality`) |
 | Isotropic remeshing | `gpytoolbox` (optional — `uv sync --extra mesh-quality`) |
 | Quality metrics | `pyvista` + `trimesh` |
+| Quality visualization | `pyvista` (heatmaps), `matplotlib` (histograms) |
 | Mesh I/O | `trimesh` (STL, OBJ, PLY export) |
 | MATLAB loading | `scipy.io` (loadmat) |
 | VTK loading | `pyvista` (optional — `uv sync --extra vtk`) |
@@ -175,6 +177,7 @@ tests/
 ├── test_io.py              File round-trip (6 tests)
 ├── test_pipeline.py        End-to-end 2D + 3D (7 tests)
 ├── test_field_plots.py     Plot generation (8 tests)
+├── test_quality_plots.py   Quality visualization (12 tests)
 ├── test_cli.py             CLI invocation (8 tests)
 └── test_loaders/
     ├── test_dispatch.py        Registry + format resolution (6 tests)

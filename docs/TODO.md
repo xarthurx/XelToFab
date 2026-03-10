@@ -19,8 +19,8 @@
 
 ## Benchmark Enhancements
 
-- [ ] Quality heatmaps — color triangles by aspect ratio / min angle / Jacobian (pyvista)
-- [ ] Metric histograms — distribution plots of mesh quality metrics per model
+- [x] Quality heatmaps — color triangles by aspect ratio / min angle / Jacobian (pyvista)
+- [x] Metric histograms — distribution plots of mesh quality metrics per model
 
 ## Visualization Upgrades
 
