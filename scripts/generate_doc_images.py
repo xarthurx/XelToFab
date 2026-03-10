@@ -1,10 +1,11 @@
-"""Generate documentation images for website guide pages.
+"""Generate documentation images for website guide and getting-started pages.
 
 Usage:
     uv run python scripts/generate_doc_images.py [--only NAME]
 
 Valid --only values: pipeline_diagram, pipeline_stages, field_types,
-    parameter_sensitivity, quality_metrics
+    parameter_sensitivity, quality_metrics, hero_overview,
+    quickstart_2d, quickstart_smoothing
 """
 
 from __future__ import annotations
@@ -19,6 +20,7 @@ import matplotlib.pyplot as plt
 
 # Shared constants
 OUTPUT_DIR = Path("website/public/images/guides")
+OUTPUT_DIR_GS = Path("website/public/images/getting-started")
 DPI = 150
 BG_COLOR = "white"
 
@@ -45,6 +47,7 @@ _STAGE_TEXT = {
 
 def _ensure_output_dir() -> None:
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    OUTPUT_DIR_GS.mkdir(parents=True, exist_ok=True)
 
 
 # ---------------------------------------------------------------------------
@@ -472,6 +475,127 @@ def gen_quality_metrics() -> None:
 
 
 # ---------------------------------------------------------------------------
+# Tier 2 — Getting Started page images
+# ---------------------------------------------------------------------------
+
+
+def gen_hero_overview() -> None:
+    """Tier 2 — Hero image for index: density field → XelToFab → triangle mesh."""
+    from xeltofab.io import load_field
+    from xeltofab.pipeline import process
+
+    # Use heat_conduction model — higher res than corner (used in Tier 1 pipeline-stages)
+    state = load_field("data/examples/heat_conduction_3d_51x51x51_sample0.npy")
+    result = process(state)
+
+    # Left: mid-slice of raw density field
+    field = state.field
+    mid = field.shape[0] // 2
+
+    # Right: final smoothed mesh via pyvista
+    mesh_img = _pv_screenshot(result.best_vertices, result.faces)
+
+    fig, (ax_field, ax_mesh) = plt.subplots(1, 2, figsize=(10, 3.5))
+    fig.patch.set_facecolor(BG_COLOR)
+
+    # Left panel: density field slice
+    im = ax_field.imshow(field[mid], cmap="YlOrRd", origin="lower", vmin=0, vmax=1)
+    ax_field.set_title("Density Field", fontsize=11, fontweight="bold")
+    ax_field.axis("off")
+    fig.colorbar(im, ax=ax_field, fraction=0.046, pad=0.04)
+
+    # Right panel: final mesh
+    ax_mesh.imshow(mesh_img)
+    ax_mesh.set_title("Triangle Mesh", fontsize=11, fontweight="bold")
+    ax_mesh.axis("off")
+
+    # Arrow with "XelToFab" label between panels
+    fig.tight_layout(pad=1.5)
+    # Place arrow annotation in figure coordinates (between the two axes)
+    fig.text(0.5, 0.5, "XelToFab\n→", ha="center", va="center",
+             fontsize=12, fontweight="bold", color=STAGE_COLORS["Smooth"],
+             bbox=dict(boxstyle="round,pad=0.3", facecolor="#E8F0FA",
+                       edgecolor=STAGE_COLORS["Smooth"], linewidth=1.5))
+
+    fig.savefig(OUTPUT_DIR_GS / "hero-overview.png", dpi=DPI, bbox_inches="tight",
+                facecolor=BG_COLOR)
+    plt.close(fig)
+
+
+def gen_quickstart_2d() -> None:
+    """Tier 2 — 2D comparison for quick-start: input field vs extracted contours."""
+    from xeltofab.io import load_field
+    from xeltofab.pipeline import process
+
+    state = load_field("data/examples/beams_2d_100x200_sample0.npy")
+    result = process(state)
+
+    fig, (ax_in, ax_out) = plt.subplots(1, 2, figsize=(10, 3.2))
+    fig.patch.set_facecolor(BG_COLOR)
+
+    # Left: raw input field
+    im = ax_in.imshow(state.field, cmap="YlOrRd", origin="lower", vmin=0, vmax=1)
+    ax_in.set_title("Input Field", fontsize=11, fontweight="bold")
+    ax_in.axis("off")
+    fig.colorbar(im, ax=ax_in, fraction=0.046, pad=0.04)
+
+    # Right: field with extracted contours overlaid
+    ax_out.imshow(state.field, cmap="YlOrRd", origin="lower", vmin=0, vmax=1)
+    if result.contours:
+        for contour in result.contours:
+            ax_out.plot(contour[:, 1], contour[:, 0], color="#1a1a1a", linewidth=1.5)
+    ax_out.set_title("Extracted Contours", fontsize=11, fontweight="bold")
+    ax_out.axis("off")
+
+    fig.tight_layout(pad=1.5)
+    fig.savefig(OUTPUT_DIR_GS / "quick-start-2d.png", dpi=DPI, bbox_inches="tight",
+                facecolor=BG_COLOR)
+    plt.close(fig)
+
+
+def gen_quickstart_smoothing() -> None:
+    """Tier 2 — Taubin vs bilateral smoothing for quick-start."""
+    from xeltofab.io import load_field
+    from xeltofab.preprocess import preprocess
+    from xeltofab.extract import extract
+    from xeltofab.smooth import smooth
+    from xeltofab.state import PipelineParams
+
+    # Corner model — sharp 90-degree features make difference visible
+    state = load_field("data/examples/corner_3d_20x20x20_vf50_sample0.npy")
+    state_pre = preprocess(state)
+    state_ext = extract(state_pre)
+
+    # Taubin smoothing (default)
+    params_taubin = PipelineParams(taubin_iterations=30)
+    st_taubin = state_ext.model_copy(update={"params": params_taubin})
+    st_taubin = smooth(st_taubin)
+    img_taubin = _pv_screenshot(st_taubin.best_vertices, st_taubin.faces)
+
+    # Bilateral smoothing
+    params_bilateral = PipelineParams(smoothing_method="bilateral")
+    st_bilateral = state_ext.model_copy(update={"params": params_bilateral})
+    st_bilateral = smooth(st_bilateral)
+    img_bilateral = _pv_screenshot(st_bilateral.best_vertices, st_bilateral.faces)
+
+    fig, (ax_tau, ax_bil) = plt.subplots(1, 2, figsize=(10, 3.5))
+    fig.patch.set_facecolor(BG_COLOR)
+
+    ax_tau.imshow(img_taubin)
+    ax_tau.set_title("Taubin Smoothing", fontsize=11, fontweight="bold")
+    ax_tau.axis("off")
+
+    ax_bil.imshow(img_bilateral)
+    ax_bil.set_title("Bilateral Smoothing", fontsize=11, fontweight="bold")
+    ax_bil.axis("off")
+
+    fig.tight_layout(pad=1.0)
+    fig.savefig(OUTPUT_DIR_GS / "quick-start-smoothing.png", dpi=DPI,
+                bbox_inches="tight", facecolor=BG_COLOR)
+    plt.close(fig)
+
+
+# ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
 
@@ -481,6 +605,9 @@ GENERATORS = {
     "field_types": gen_field_types,
     "parameter_sensitivity": gen_parameter_sensitivity,
     "quality_metrics": gen_quality_metrics,
+    "hero_overview": gen_hero_overview,
+    "quickstart_2d": gen_quickstart_2d,
+    "quickstart_smoothing": gen_quickstart_smoothing,
 }
 
 
