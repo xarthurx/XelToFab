@@ -22,14 +22,24 @@ OUTPUT_DIR = Path("website/public/images/guides")
 DPI = 150
 BG_COLOR = "white"
 
-# Pipeline stage colors (reused across images 1 and 2)
+# Pipeline stage colors — monochromatic blue palette, dark to light progression
+# Gives visual flow without rainbow noise
 STAGE_COLORS = {
-    "Preprocess": "#4A90D9",
-    "Extract": "#50B86C",
-    "Smooth": "#F5A623",
-    "Repair": "#D0021B",
-    "Remesh": "#9B59B6",
-    "Decimate": "#1ABC9C",
+    "Preprocess": "#1B3A5C",
+    "Extract": "#265E8A",
+    "Smooth": "#3182BD",
+    "Repair": "#6BAED6",
+    "Remesh": "#9ECAE1",
+    "Decimate": "#C6DBEF",
+}
+# Text color per stage (white on dark, dark on light)
+_STAGE_TEXT = {
+    "Preprocess": "white",
+    "Extract": "white",
+    "Smooth": "white",
+    "Repair": "#1a1a1a",
+    "Remesh": "#1a1a1a",
+    "Decimate": "#1a1a1a",
 }
 
 
@@ -65,27 +75,25 @@ def _pv_screenshot(vertices, faces, color="steelblue"):
 
 
 def gen_pipeline_diagram() -> None:
-    """Image 1: Horizontal pipeline flow diagram with 6 colored stage boxes."""
+    """Image 1: Horizontal pipeline flow diagram with even spacing and blue palette."""
+    stages = list(STAGE_COLORS.keys())
+    n_stages = len(stages)
+    # Even spacing: 8 elements (Field + 6 stages + Mesh), gap=1.5 between centers
+    gap = 1.5
+    all_labels = ["Field"] + stages + ["Mesh"]
+    all_x = [i * gap for i in range(len(all_labels))]
+    total_w = all_x[-1]
+
     fig, ax = plt.subplots(figsize=(12, 2.5))
-    ax.set_xlim(-0.5, 12.0)
-    ax.set_ylim(-1.2, 1.5)
+    ax.set_xlim(-0.8, total_w + 0.8)
+    ax.set_ylim(-1.2, 1.3)
     ax.set_aspect("equal")
     ax.axis("off")
     fig.patch.set_facecolor(BG_COLOR)
 
-    # Terminals (rounded, gray)
-    terminals = [("Field", 0.0), ("Mesh", 11.5)]
-    for label, x in terminals:
-        ax.add_patch(matplotlib.patches.FancyBboxPatch(
-            (x - 0.45, -0.3), 0.9, 0.6,
-            boxstyle="round,pad=0.1",
-            facecolor="#E0E0E0", edgecolor="#666666", linewidth=1.5,
-        ))
-        ax.text(x, 0.0, label, ha="center", va="center", fontsize=10, fontweight="bold")
+    box_hw = 0.55  # half-width
+    box_hh = 0.3   # half-height
 
-    # Stage boxes (colored)
-    stages = list(STAGE_COLORS.keys())
-    positions = [1.7, 3.4, 5.1, 6.8, 8.5, 10.0]
     param_annotations = {
         "Preprocess": "threshold\nsmooth_sigma",
         "Extract": "extraction_level",
@@ -95,29 +103,35 @@ def gen_pipeline_diagram() -> None:
         "Decimate": "decimate_ratio\ndecimate_aggressiveness",
     }
 
-    for stage, x in zip(stages, positions, strict=True):
-        color = STAGE_COLORS[stage]
+    for label, x in zip(all_labels, all_x, strict=True):
+        is_terminal = label in ("Field", "Mesh")
+        if is_terminal:
+            fc, ec, tc = "#E8E8E8", "#999999", "#333333"
+        else:
+            fc = STAGE_COLORS[label]
+            ec = "#333333"
+            tc = _STAGE_TEXT[label]
+
         ax.add_patch(matplotlib.patches.FancyBboxPatch(
-            (x - 0.55, -0.3), 1.1, 0.6,
+            (x - box_hw, -box_hh), box_hw * 2, box_hh * 2,
             boxstyle="round,pad=0.08",
-            facecolor=color, edgecolor="black", linewidth=1.2, alpha=0.85,
+            facecolor=fc, edgecolor=ec, linewidth=1.2,
         ))
-        ax.text(x, 0.0, stage, ha="center", va="center", fontsize=8.5,
-                fontweight="bold", color="white")
+        ax.text(x, 0.0, label, ha="center", va="center",
+                fontsize=9 if is_terminal else 8.5, fontweight="bold", color=tc)
 
-        # Parameter annotation below
-        if stage in param_annotations:
-            ax.text(x, -0.65, param_annotations[stage], ha="center", va="top",
-                    fontsize=5.5, color="#555555", fontstyle="italic")
+        # Parameter annotation below stage boxes
+        if label in param_annotations:
+            ax.text(x, -box_hh - 0.35, param_annotations[label],
+                    ha="center", va="top", fontsize=5.5, color="#666666",
+                    fontstyle="italic")
 
-    # Arrows between all boxes: Field -> Preprocess -> ... -> Decimate -> Mesh
-    all_x = [0.0] + positions + [11.5]
+    # Arrows
     for i in range(len(all_x) - 1):
-        x_start = all_x[i] + 0.55
-        x_end = all_x[i + 1] - 0.55
         ax.annotate(
-            "", xy=(x_end, 0.0), xytext=(x_start, 0.0),
-            arrowprops=dict(arrowstyle="->", color="#333333", lw=1.5),
+            "", xy=(all_x[i + 1] - box_hw - 0.05, 0.0),
+            xytext=(all_x[i] + box_hw + 0.05, 0.0),
+            arrowprops=dict(arrowstyle="-|>", color="#555555", lw=1.3),
         )
 
     fig.savefig(OUTPUT_DIR / "pipeline-flow.png", dpi=DPI, bbox_inches="tight",
@@ -126,15 +140,15 @@ def gen_pipeline_diagram() -> None:
 
 
 def gen_pipeline_stages() -> None:
-    """Image 2: 1x4 grid showing pipeline progression on 3D heat conduction data."""
+    """Image 2: 1x4 grid showing pipeline progression on corner 3D model."""
     import numpy as np
     from xeltofab.io import load_field
     from xeltofab.preprocess import preprocess
     from xeltofab.extract import extract
     from xeltofab.smooth import smooth
 
-    # Load real TO data
-    state = load_field("data/examples/heat_conduction_3d_51x51x51_sample0.npy")
+    # Use corner model — simpler geometry, easier to parse visually
+    state = load_field("data/examples/corner_3d_20x20x20_vf50_sample0.npy")
 
     # Run stages individually to capture intermediates
     state_pre = preprocess(state)
@@ -142,7 +156,8 @@ def gen_pipeline_stages() -> None:
     state_smo = smooth(state_ext)
 
     fig, axes = plt.subplots(1, 4, figsize=(12, 3.5))
-    titles = ["Raw Field\n(center slice)", "After Threshold\n(binary)", "Marching Cubes\n(raw mesh)", "After Smoothing"]
+    titles = ["Raw Field\n(center slice)", "After Threshold\n(binary)",
+              "Marching Cubes\n(raw mesh)", "After Smoothing"]
 
     # Panel 1: Center slice of raw density field
     field = state.field
@@ -197,7 +212,9 @@ def gen_field_types() -> None:
     state_sdf = PipelineState(field=sdf_field, params=params_sdf)
     result_sdf = process(state_sdf)
 
-    fig, axes = plt.subplots(2, 2, figsize=(10, 5))
+    vmax_sdf = np.abs(sdf_field).max()
+
+    fig, axes = plt.subplots(2, 2, figsize=(10, 5.5))
 
     # Top-left: Density field heatmap
     im0 = axes[0, 0].imshow(state_density.field, cmap="YlOrRd", origin="lower",
@@ -207,28 +224,33 @@ def gen_field_types() -> None:
     fig.colorbar(im0, ax=axes[0, 0], fraction=0.046, pad=0.04)
 
     # Top-right: SDF field heatmap
-    vmax = np.abs(sdf_field).max()
     im1 = axes[0, 1].imshow(sdf_field, cmap="RdBu", origin="lower",
-                             vmin=-vmax, vmax=vmax)
+                             vmin=-vmax_sdf, vmax=vmax_sdf)
     axes[0, 1].set_title("SDF Field (signed distance)", fontsize=10)
     axes[0, 1].axis("off")
     fig.colorbar(im1, ax=axes[0, 1], fraction=0.046, pad=0.04)
 
-    # Bottom-left: Density field with extracted contours at threshold=0.5
-    axes[1, 0].imshow(state_density.field, cmap="gray_r", origin="lower", alpha=0.5)
+    # Bottom-left: Same density colormap + extracted contours at threshold=0.5
+    im2 = axes[1, 0].imshow(state_density.field, cmap="YlOrRd", origin="lower",
+                             vmin=0, vmax=1)
     if result_density.contours:
         for contour in result_density.contours:
-            axes[1, 0].plot(contour[:, 1], contour[:, 0], "b-", linewidth=1.5)
+            axes[1, 0].plot(contour[:, 1], contour[:, 0], color="#1a1a1a",
+                            linewidth=2.0)
     axes[1, 0].set_title("Extracted at threshold=0.5", fontsize=10)
     axes[1, 0].axis("off")
+    fig.colorbar(im2, ax=axes[1, 0], fraction=0.046, pad=0.04)
 
-    # Bottom-right: SDF field with extracted contours at level=0
-    axes[1, 1].imshow(sdf_field, cmap="gray", origin="lower", alpha=0.4)
+    # Bottom-right: Same SDF colormap + extracted contours at level=0
+    im3 = axes[1, 1].imshow(sdf_field, cmap="RdBu", origin="lower",
+                             vmin=-vmax_sdf, vmax=vmax_sdf)
     if result_sdf.contours:
         for contour in result_sdf.contours:
-            axes[1, 1].plot(contour[:, 1], contour[:, 0], "r-", linewidth=1.5)
+            axes[1, 1].plot(contour[:, 1], contour[:, 0], color="#1a1a1a",
+                            linewidth=2.0)
     axes[1, 1].set_title("Extracted at level=0.0", fontsize=10)
     axes[1, 1].axis("off")
+    fig.colorbar(im3, ax=axes[1, 1], fraction=0.046, pad=0.04)
 
     fig.patch.set_facecolor(BG_COLOR)
     fig.tight_layout(pad=1.5)
@@ -246,9 +268,9 @@ def gen_parameter_sensitivity() -> None:
     from xeltofab.smooth import smooth
     from xeltofab.state import PipelineParams
 
-    # Load data
+    # Load data — thermoelastic is coarser (16^3), making smoothing diffs visible
     state_2d = load_field("data/examples/beams_2d_100x200_sample0.npy")
-    state_3d = load_field("data/examples/heat_conduction_3d_51x51x51_sample0.npy")
+    state_3d = load_field("data/examples/thermoelastic_3d_16x16x16_sample0.npy")
 
     fig, axes = plt.subplots(3, 3, figsize=(10, 7.5))
     fig.patch.set_facecolor(BG_COLOR)
@@ -359,15 +381,22 @@ def gen_quality_metrics() -> None:
     ax_left.axis("off")
 
     # Right: histogram
-    ax_right.hist(values, bins=50, edgecolor="black", linewidth=0.5, alpha=0.8,
-                  color="#4A90D9")
-    ax_right.axvline(threshold, color="red", linestyle="--", linewidth=2,
+    counts, bin_edges, patches = ax_right.hist(
+        values, bins=50, edgecolor="black", linewidth=0.5, alpha=0.8,
+        color="#3182BD",
+    )
+    ax_right.axvline(threshold, color="#D0021B", linestyle="--", linewidth=2,
                      label=f"FEA threshold ({threshold})")
+
+    # Extend y-axis to make room for annotation above bars
+    y_max = counts.max()
+    ax_right.set_ylim(0, y_max * 1.35)
+
     direction = ">=" if _HIGHER_IS_BETTER[metric] else "<="
     ax_right.annotate(
         f"{pass_pct:.1f}% pass ({direction} {threshold})\n"
         f"mean={np.mean(values):.2f}, median={np.median(values):.2f}",
-        xy=(0.97, 0.95), xycoords="axes fraction", ha="right", va="top",
+        xy=(0.97, 0.97), xycoords="axes fraction", ha="right", va="top",
         fontsize=9, bbox=dict(boxstyle="round,pad=0.3", facecolor="wheat", alpha=0.8),
     )
     ax_right.set_xlabel(_METRIC_LABELS[metric], fontsize=10)
