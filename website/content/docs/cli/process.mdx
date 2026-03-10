@@ -1,6 +1,6 @@
 ---
 title: xtf process
-description: Process a density field into a mesh from the command line
+description: Process a scalar field into a mesh from the command line
 ---
 
 ## Usage
@@ -9,20 +9,20 @@ description: Process a density field into a mesh from the command line
 xtf process [OPTIONS] INPUT_PATH
 ```
 
-Process a density field into a mesh. The input field is loaded, run through the pipeline (preprocessing, extraction, smoothing), and the resulting mesh is saved to the output path.
+Process a scalar field into a mesh. The input field is loaded, run through the pipeline (preprocessing, extraction, smoothing), and the resulting mesh is saved to the output path.
 
 ## Arguments
 
 | Argument | Description |
 |----------|-------------|
-| `INPUT_PATH` | Path to the input density field file (must exist) |
+| `INPUT_PATH` | Path to the input scalar field file (must exist) |
 
 ## Options
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `-o`, `--output` | `PATH` | *(required)* | Output mesh file path (format determined by extension: `.stl`, `.obj`, `.ply`) |
-| `--threshold` | `FLOAT` | `0.5` | Density threshold \[0-1\] for binarization |
+| `--threshold` | `FLOAT` | `0.5` | Field threshold \[0-1\] for binarization |
 | `--sigma` | `FLOAT` | `1.0` | Gaussian smoothing sigma for preprocessing |
 | `-f`, `--field-name` | `TEXT` | `None` | Field/variable name to extract from input file (for `.npz`, `.mat`, `.h5`, etc.) |
 | `--shape` | `TEXT` | `None` | Grid shape for flat data, e.g. `100x200` or `10x20x30` |
@@ -44,7 +44,7 @@ You can still override these by explicitly passing `--sigma 1.0` or omitting `--
 ### Basic 3D processing
 
 ```bash
-xtf process density_field.npy -o output.stl
+xtf process scalar_field.npy -o output.stl
 ```
 
 ### Custom threshold and smoothing
@@ -56,7 +56,7 @@ xtf process field.npy -o mesh.obj --threshold 0.4 --sigma 1.5
 ### MATLAB file with named variable
 
 ```bash
-xtf process topology_result.mat -o mesh.stl -f xPhys
+xtf process design_result.mat -o mesh.stl -f xPhys
 ```
 
 ### CSV with shape specification
