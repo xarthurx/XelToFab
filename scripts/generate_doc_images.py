@@ -155,7 +155,7 @@ def gen_pipeline_stages() -> None:
     state_ext = extract(state_pre)
     state_smo = smooth(state_ext)
 
-    fig, axes = plt.subplots(1, 4, figsize=(12, 3.8))
+    fig, axes = plt.subplots(1, 4, figsize=(12, 3.9))
     # Main titles (line 1) and subtitles (line 2, parenthetical)
     main_titles = ["Raw Field", "After Threshold", "Marching Cubes", "After Smoothing"]
     subtitles = ["(center slice)", "(binary)", "(raw mesh)", ""]
