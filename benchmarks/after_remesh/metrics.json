@@ -1,0 +1,254 @@
+{
+  "heat_cond_51_s0": {
+    "ndim": 3,
+    "num_vertices": 6796,
+    "num_faces": 13328,
+    "volume_fraction": 0.307418,
+    "is_watertight": false,
+    "surface_area": 4266.076568,
+    "aspect_ratio": {
+      "min": 1.0005,
+      "mean": 1.0802,
+      "max": 2.2499,
+      "std": 0.0667
+    },
+    "min_angle": {
+      "min": 17.6153,
+      "mean": 53.7863,
+      "max": 59.9569,
+      "std": 4.0017
+    },
+    "scaled_jacobian": {
+      "min": 0.3494,
+      "mean": 0.9294,
+      "max": 0.9996,
+      "std": 0.0505
+    },
+    "input_shape": [
+      51,
+      51,
+      51
+    ],
+    "field_type": "density",
+    "direct_extraction": false,
+    "processing_time_s": 0.3946
+  },
+  "heat_cond_51_s1": {
+    "ndim": 3,
+    "num_vertices": 16705,
+    "num_faces": 32364,
+    "volume_fraction": 0.452245,
+    "is_watertight": false,
+    "surface_area": 10692.345474,
+    "aspect_ratio": {
+      "min": 1.0001,
+      "mean": 1.0944,
+      "max": 6.8628,
+      "std": 0.0821
+    },
+    "min_angle": {
+      "min": 6.3011,
+      "mean": 52.8174,
+      "max": 59.9905,
+      "std": 4.1485
+    },
+    "scaled_jacobian": {
+      "min": 0.1267,
+      "mean": 0.9176,
+      "max": 0.9999,
+      "std": 0.0537
+    },
+    "input_shape": [
+      51,
+      51,
+      51
+    ],
+    "field_type": "density",
+    "direct_extraction": false,
+    "processing_time_s": 0.7265
+  },
+  "thermoelastic_16_s0": {
+    "ndim": 3,
+    "num_vertices": 950,
+    "num_faces": 1748,
+    "volume_fraction": 0.349996,
+    "is_watertight": false,
+    "surface_area": 530.009282,
+    "aspect_ratio": {
+      "min": 1.0002,
+      "mean": 1.1517,
+      "max": 50.013,
+      "std": 1.3143
+    },
+    "min_angle": {
+      "min": 0.8153,
+      "mean": 52.1378,
+      "max": 59.9776,
+      "std": 5.9759
+    },
+    "scaled_jacobian": {
+      "min": 0.0164,
+      "mean": 0.907,
+      "max": 0.9998,
+      "std": 0.083
+    },
+    "input_shape": [
+      16,
+      16,
+      16
+    ],
+    "field_type": "density",
+    "direct_extraction": false,
+    "processing_time_s": 0.0768
+  },
+  "corner_3d_vf50_s0": {
+    "ndim": 3,
+    "num_vertices": 2126,
+    "num_faces": 3908,
+    "volume_fraction": 0.500003,
+    "is_watertight": false,
+    "surface_area": 1172.566695,
+    "aspect_ratio": {
+      "min": 1.001,
+      "mean": 1.1173,
+      "max": 3.4274,
+      "std": 0.1317
+    },
+    "min_angle": {
+      "min": 13.3017,
+      "mean": 51.8235,
+      "max": 59.8934,
+      "std": 5.758
+    },
+    "scaled_jacobian": {
+      "min": 0.2657,
+      "mean": 0.9034,
+      "max": 0.9989,
+      "std": 0.0783
+    },
+    "input_shape": [
+      20,
+      20,
+      20
+    ],
+    "field_type": "density",
+    "direct_extraction": false,
+    "processing_time_s": 0.1207
+  },
+  "corner_3d_vf30_s0": {
+    "ndim": 3,
+    "num_vertices": 1931,
+    "num_faces": 3508,
+    "volume_fraction": 0.299996,
+    "is_watertight": false,
+    "surface_area": 1034.903921,
+    "aspect_ratio": {
+      "min": 1.0016,
+      "mean": 1.1561,
+      "max": 78.4747,
+      "std": 1.3952
+    },
+    "min_angle": {
+      "min": 0.5103,
+      "mean": 51.808,
+      "max": 59.8376,
+      "std": 6.5781
+    },
+    "scaled_jacobian": {
+      "min": 0.0103,
+      "mean": 0.902,
+      "max": 0.9984,
+      "std": 0.0935
+    },
+    "input_shape": [
+      20,
+      20,
+      20
+    ],
+    "field_type": "density",
+    "direct_extraction": false,
+    "processing_time_s": 0.125
+  },
+  "beam_2d_100x200_s0": {
+    "ndim": 2,
+    "num_contours": 5,
+    "total_contour_points": 356,
+    "volume_fraction": 0.237498,
+    "input_shape": [
+      100,
+      200
+    ],
+    "field_type": "density",
+    "direct_extraction": false,
+    "processing_time_s": 0.0014
+  },
+  "synthetic_sphere": {
+    "ndim": 3,
+    "num_vertices": 186,
+    "num_faces": 368,
+    "volume_fraction": 0.014786,
+    "is_watertight": true,
+    "surface_area": 136.864303,
+    "volume": -147.758412,
+    "aspect_ratio": {
+      "min": 1.0015,
+      "mean": 1.0567,
+      "max": 1.2054,
+      "std": 0.0489
+    },
+    "min_angle": {
+      "min": 44.7396,
+      "mean": 55.8012,
+      "max": 59.9086,
+      "std": 3.1831
+    },
+    "scaled_jacobian": {
+      "min": 0.8128,
+      "mean": 0.9536,
+      "max": 0.9991,
+      "std": 0.0377
+    },
+    "input_shape": [
+      30,
+      30,
+      30
+    ],
+    "field_type": "density",
+    "direct_extraction": false,
+    "processing_time_s": 0.011
+  },
+  "synthetic_sphere_sdf": {
+    "ndim": 3,
+    "num_vertices": 921,
+    "num_faces": 1838,
+    "is_watertight": true,
+    "surface_area": 652.893247,
+    "volume": 1565.785242,
+    "aspect_ratio": {
+      "min": 1.0006,
+      "mean": 1.0672,
+      "max": 1.2916,
+      "std": 0.0524
+    },
+    "min_angle": {
+      "min": 39.8466,
+      "mean": 54.6584,
+      "max": 59.9547,
+      "std": 3.473
+    },
+    "scaled_jacobian": {
+      "min": 0.7399,
+      "mean": 0.9402,
+      "max": 0.9995,
+      "std": 0.0421
+    },
+    "input_shape": [
+      30,
+      30,
+      30
+    ],
+    "field_type": "sdf",
+    "direct_extraction": true,
+    "processing_time_s": 0.0667
+  }
+}

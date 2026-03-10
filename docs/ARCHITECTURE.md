@@ -35,7 +35,7 @@ density array (numpy, [0,1])
        │  repaired mesh
        ▼
 ┌──────────────┐
-│   Remesh      │  3D: uniform resampling (via pymeshlab)
+│   Remesh      │  3D: isotropic remeshing (via gpytoolbox, Botsch & Kobbelt)
 │               │  2D: no-op
 └──────┬───────┘
        │  uniform triangle mesh
@@ -65,7 +65,7 @@ src/xeltofab/
 ├── extract.py      Mesh/contour extraction (marching cubes/squares)
 ├── smooth.py       Taubin mesh smoothing
 ├── repair.py       Watertight mesh repair (pymeshlab)
-├── remesh.py       Isotropic remeshing (pymeshlab)
+├── remesh.py       Isotropic remeshing (gpytoolbox, Botsch & Kobbelt)
 ├── quality.py      Mesh quality metrics (pyvista + trimesh)
 ├── pipeline.py     Orchestrator: process() chains preprocess → extract → smooth → repair → remesh
 ├── io.py           File I/O: multi-format load (via loaders/), save STL/OBJ
@@ -139,7 +139,7 @@ The `xtf` command (installed via `[project.scripts]`) exposes three subcommands:
 | Mesh extraction | `scikit-image` (marching_cubes) |
 | Mesh smoothing | `trimesh` (Taubin filter) |
 | Mesh repair | `pymeshlab` (optional — `uv sync --extra mesh-quality`) |
-| Isotropic remeshing | `pymeshlab` (optional — `uv sync --extra mesh-quality`) |
+| Isotropic remeshing | `gpytoolbox` (optional — `uv sync --extra mesh-quality`) |
 | Quality metrics | `pyvista` + `trimesh` |
 | Mesh I/O | `trimesh` (STL, OBJ, PLY export) |
 | MATLAB loading | `scipy.io` (loadmat) |
@@ -156,12 +156,12 @@ Tests mirror the module structure in `tests/`:
 ```
 tests/
 ├── conftest.py             Shared fixtures + Agg backend
-├── test_state.py           Model validation (11 tests)
+├── test_state.py           Model validation (13 tests)
 ├── test_preprocess.py      Preprocessing behavior (6 tests)
 ├── test_extract.py         Extraction output shapes (7 tests)
 ├── test_smooth.py          Smoothing effects + volume preservation (4 tests)
 ├── test_repair.py          Watertight mesh repair (3 tests)
-├── test_remesh.py          Isotropic remeshing (4 tests)
+├── test_remesh.py          Isotropic remeshing (5 tests)
 ├── test_quality.py         Mesh quality metrics (4 tests)
 ├── test_io.py              File round-trip (6 tests)
 ├── test_pipeline.py        End-to-end 2D + 3D (7 tests)
