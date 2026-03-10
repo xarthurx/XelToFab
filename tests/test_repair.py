@@ -30,8 +30,6 @@ def test_repair_noop_2d(processed_2d: PipelineState):
 
 def test_repair_disabled(open_mesh_state: PipelineState):
     """When repair=False, state passes through unchanged."""
-    state = open_mesh_state.model_copy(
-        update={"params": PipelineParams(repair=False)}
-    )
+    state = open_mesh_state.model_copy(update={"params": PipelineParams(repair=False)})
     result = repair(state)
     assert result.faces.shape[0] == state.faces.shape[0]

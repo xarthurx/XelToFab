@@ -34,7 +34,7 @@ def _min_angle(vertices, faces):
     return float(np.min(mesh.cell_data["CellQuality"]))
 
 
-def test_remesh_improves_quality(sphere_density: np.ndarray):
+def test_remesh_improves_quality(sphere_field: np.ndarray):
     """Remeshing should improve min angle on the synthetic sphere."""
     try:
         import pyvista as pv  # noqa: F401
@@ -45,13 +45,11 @@ def test_remesh_improves_quality(sphere_density: np.ndarray):
 
     # Build a state WITHOUT remeshing to get baseline quality
     no_remesh_params = PipelineParams(remesh=False)
-    state_before = process(PipelineState(density=sphere_density, params=no_remesh_params))
+    state_before = process(PipelineState(field=sphere_field, params=no_remesh_params))
     min_before = _min_angle(state_before.best_vertices, state_before.faces)
 
     # Now remesh that state
-    state_to_remesh = state_before.model_copy(
-        update={"params": PipelineParams(remesh=True)}
-    )
+    state_to_remesh = state_before.model_copy(update={"params": PipelineParams(remesh=True)})
     result = remesh(state_to_remesh)
     min_after = _min_angle(result.vertices, result.faces)
 
@@ -80,9 +78,7 @@ def test_remesh_noop_2d(processed_2d: PipelineState):
 
 def test_remesh_disabled(processed_3d: PipelineState):
     """When remesh=False, state passes through unchanged."""
-    state = processed_3d.model_copy(
-        update={"params": PipelineParams(remesh=False)}
-    )
+    state = processed_3d.model_copy(update={"params": PipelineParams(remesh=False)})
     original_faces = state.faces.shape[0]
     result = remesh(state)
     assert result.faces.shape[0] == original_faces

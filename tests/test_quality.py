@@ -5,9 +5,8 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from xeltofab.state import PipelineState
-
 from xeltofab.quality import compute_quality
+from xeltofab.state import PipelineState
 
 
 def test_quality_3d_basic(processed_3d: PipelineState):
@@ -22,7 +21,7 @@ def test_quality_3d_basic(processed_3d: PipelineState):
 
 def test_quality_3d_pyvista_metrics(processed_3d: PipelineState):
     """PyVista quality metrics should have min/mean/max/std."""
-    pv = pytest.importorskip("pyvista")
+    pytest.importorskip("pyvista")
     metrics = compute_quality(processed_3d)
     for metric in ("aspect_ratio", "min_angle", "scaled_jacobian"):
         assert metric in metrics, f"Missing metric: {metric}"
@@ -41,7 +40,7 @@ def test_quality_2d(processed_2d: PipelineState):
 
 def test_quality_no_mesh():
     """Quality on a state with no mesh should return minimal info."""
-    state = PipelineState(density=np.zeros((10, 10, 10)))
+    state = PipelineState(field=np.zeros((10, 10, 10)))
     metrics = compute_quality(state)
     assert metrics["ndim"] == 3
     assert "num_vertices" not in metrics
