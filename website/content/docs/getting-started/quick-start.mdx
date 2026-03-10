@@ -40,7 +40,7 @@ params = PipelineParams(
     morph_radius=2,
     taubin_iterations=30,
 )
-state = load_field("density_field.npy", params=params)
+state = load_field("field.npy", params=params)
 result = process(state)
 save_mesh(result, "output.stl")
 ```
@@ -87,13 +87,13 @@ SDF mode automatically enables direct extraction (skipping preprocessing) and se
 ### Process a field
 
 ```bash
-uv run xtf process density_field.npy -o output.stl
+uv run xtf process field.npy -o output.stl
 ```
 
 Add `--viz` to save a side-by-side comparison plot alongside the mesh:
 
 ```bash
-uv run xtf process density_field.npy -o output.stl --viz
+uv run xtf process field.npy -o output.stl --viz
 ```
 
 This saves the mesh to `output.stl` and a comparison image to `output.png`.
@@ -102,10 +102,10 @@ This saves the mesh to `output.stl` and a comparison image to `output.png`.
 
 ```bash
 # Display interactively
-uv run xtf viz density_field.npy
+uv run xtf viz field.npy
 
 # Save to file
-uv run xtf viz density_field.npy -o comparison.png
+uv run xtf viz field.npy -o comparison.png
 ```
 
 ### Common options
@@ -137,4 +137,4 @@ uv run xtf process input.npy -o output.stl \
 uv run xtf process result.mat -o mesh.stl --field-name xPhys
 ```
 
-If `--field-name` is omitted, the loader auto-detects common topology optimization variable names (`xPhys`, `densities`, `x`, `rho`, `dc`, `density`).
+If `--field-name` is omitted, the loader auto-detects common design optimization variable names (`xPhys`, `densities`, `x`, `rho`, `dc`, `density`).

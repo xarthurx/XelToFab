@@ -23,7 +23,7 @@ def plot_field(state: PipelineState) -> Figure
 
 Plot the raw input design field.
 
-**2D fields:** Renders a heatmap with the `viridis` colormap and a color bar labeled "Density". Density fields are displayed with a fixed range of \[0, 1\]; SDF fields use auto-scaled ranges.
+**2D fields:** Renders a heatmap with the `viridis` colormap and a color bar labeled "Density". Fields with `field_type="density"` are displayed with a fixed range of \[0, 1\]; SDF fields use auto-scaled ranges.
 
 **3D fields:** Renders three mid-plane slices (XY at mid-Z, XZ at mid-Y, YZ at mid-X) side by side.
 

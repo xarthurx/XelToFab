@@ -111,7 +111,7 @@ The flat data is reshaped to the specified dimensions. The total number of value
 
 Loads VTK structured grid files via PyVista. Requires the optional `vtk` extra.
 
-The loader auto-detects scalar fields by looking for cell data or point data arrays with names matching common design optimization patterns (`density`, `rho`, `xphys`, `x`), checking cell data first (since element densities are per-element). If no match is found and only one data array exists, it is used automatically.
+The loader auto-detects scalar fields by looking for cell data or point data arrays with names matching common design optimization patterns (`density`, `rho`, `xphys`, `x`), checking cell data first (since element-level fields are stored as cell data). If no match is found and only one data array exists, it is used automatically.
 
 ```python
 state = load_field("result.vtk")
