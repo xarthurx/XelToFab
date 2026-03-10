@@ -192,7 +192,7 @@ def gen_pipeline_stages() -> None:
 
 
 def gen_field_types() -> None:
-    """Image 3: Density vs SDF 2x2 comparison grid (2D fields)."""
+    """Image 3: Density vs SDF 1x2 — field heatmap with contour overlay."""
     import numpy as np
     from xeltofab.io import load_field
     from xeltofab.pipeline import process
@@ -214,43 +214,29 @@ def gen_field_types() -> None:
 
     vmax_sdf = np.abs(sdf_field).max()
 
-    fig, axes = plt.subplots(2, 2, figsize=(10, 5.5))
+    fig, (ax_den, ax_sdf) = plt.subplots(1, 2, figsize=(10, 3.2))
 
-    # Top-left: Density field heatmap
-    im0 = axes[0, 0].imshow(state_density.field, cmap="YlOrRd", origin="lower",
-                             vmin=0, vmax=1)
-    axes[0, 0].set_title("Density Field (0\u21921)", fontsize=10)
-    axes[0, 0].axis("off")
-    fig.colorbar(im0, ax=axes[0, 0], fraction=0.046, pad=0.04)
-
-    # Top-right: SDF field heatmap
-    im1 = axes[0, 1].imshow(sdf_field, cmap="RdBu", origin="lower",
-                             vmin=-vmax_sdf, vmax=vmax_sdf)
-    axes[0, 1].set_title("SDF Field (signed distance)", fontsize=10)
-    axes[0, 1].axis("off")
-    fig.colorbar(im1, ax=axes[0, 1], fraction=0.046, pad=0.04)
-
-    # Bottom-left: Same density colormap + extracted contours at threshold=0.5
-    im2 = axes[1, 0].imshow(state_density.field, cmap="YlOrRd", origin="lower",
-                             vmin=0, vmax=1)
+    # Left: Density field + extracted contours
+    im0 = ax_den.imshow(state_density.field, cmap="YlOrRd", origin="lower",
+                         vmin=0, vmax=1)
     if result_density.contours:
         for contour in result_density.contours:
-            axes[1, 0].plot(contour[:, 1], contour[:, 0], color="#1a1a1a",
-                            linewidth=2.0)
-    axes[1, 0].set_title("Extracted at threshold=0.5", fontsize=10)
-    axes[1, 0].axis("off")
-    fig.colorbar(im2, ax=axes[1, 0], fraction=0.046, pad=0.04)
+            ax_den.plot(contour[:, 1], contour[:, 0], color="#1a1a1a",
+                        linewidth=1.8)
+    ax_den.set_title("Density field — extracted at threshold = 0.5", fontsize=9.5)
+    ax_den.axis("off")
+    fig.colorbar(im0, ax=ax_den, fraction=0.046, pad=0.04)
 
-    # Bottom-right: Same SDF colormap + extracted contours at level=0
-    im3 = axes[1, 1].imshow(sdf_field, cmap="RdBu", origin="lower",
-                             vmin=-vmax_sdf, vmax=vmax_sdf)
+    # Right: SDF field + extracted contours
+    im1 = ax_sdf.imshow(sdf_field, cmap="RdBu", origin="lower",
+                         vmin=-vmax_sdf, vmax=vmax_sdf)
     if result_sdf.contours:
         for contour in result_sdf.contours:
-            axes[1, 1].plot(contour[:, 1], contour[:, 0], color="#1a1a1a",
-                            linewidth=2.0)
-    axes[1, 1].set_title("Extracted at level=0.0", fontsize=10)
-    axes[1, 1].axis("off")
-    fig.colorbar(im3, ax=axes[1, 1], fraction=0.046, pad=0.04)
+            ax_sdf.plot(contour[:, 1], contour[:, 0], color="#1a1a1a",
+                        linewidth=1.8)
+    ax_sdf.set_title("SDF field — extracted at level = 0.0", fontsize=9.5)
+    ax_sdf.axis("off")
+    fig.colorbar(im1, ax=ax_sdf, fraction=0.046, pad=0.04)
 
     fig.patch.set_facecolor(BG_COLOR)
     fig.tight_layout(pad=1.5)
@@ -260,57 +246,93 @@ def gen_field_types() -> None:
 
 
 def gen_parameter_sensitivity() -> None:
-    """Image 4: 3x3 parameter sensitivity grid."""
-    import numpy as np
+    """Image 4: Three separate 1x3 strips for threshold, sigma, and taubin."""
+    _gen_param_threshold()
+    _gen_param_sigma()
+    _gen_param_taubin()
+
+
+def _gen_param_threshold() -> None:
+    """Threshold variation: 1x3 strip showing contours at 0.3, 0.5, 0.7."""
     from xeltofab.io import load_field
     from xeltofab.preprocess import preprocess
     from xeltofab.extract import extract
-    from xeltofab.smooth import smooth
     from xeltofab.state import PipelineParams
 
-    # Load data — thermoelastic is coarser (16^3), making smoothing diffs visible
     state_2d = load_field("data/examples/beams_2d_100x200_sample0.npy")
-    state_3d = load_field("data/examples/thermoelastic_3d_16x16x16_sample0.npy")
 
-    fig, axes = plt.subplots(3, 3, figsize=(10, 7.5))
+    fig, axes = plt.subplots(1, 3, figsize=(10, 2.8))
     fig.patch.set_facecolor(BG_COLOR)
 
-    # Row 1: threshold variation (2D contours on density field)
     thresholds = [0.3, 0.5, 0.7]
     for col, thresh in enumerate(thresholds):
         params = PipelineParams(threshold=thresh)
         st = state_2d.model_copy(update={"params": params})
         st = preprocess(st)
         st = extract(st)
-        ax = axes[0, col]
-        ax.imshow(state_2d.field, cmap="gray_r", origin="lower", alpha=0.4)
+        ax = axes[col]
+        ax.imshow(state_2d.field, cmap="YlOrRd", origin="lower", vmin=0, vmax=1)
         if st.contours:
             for c in st.contours:
-                ax.plot(c[:, 1], c[:, 0], "b-", linewidth=1.2)
-        ax.set_title(f"threshold={thresh}", fontsize=9)
+                ax.plot(c[:, 1], c[:, 0], color="#1a1a1a", linewidth=1.5)
+        ax.set_title(f"threshold = {thresh}", fontsize=10)
         ax.axis("off")
-    axes[0, 0].set_ylabel("Threshold", fontsize=10, fontweight="bold")
 
-    # Row 2: sigma variation (2D — show contours after preprocess + extract)
+    fig.tight_layout(pad=1.0)
+    fig.savefig(OUTPUT_DIR / "param-threshold.png", dpi=DPI, bbox_inches="tight",
+                facecolor=BG_COLOR)
+    plt.close(fig)
+
+
+def _gen_param_sigma() -> None:
+    """Sigma variation: 1x3 strip showing contours at sigma 0, 1, 2."""
+    from xeltofab.io import load_field
+    from xeltofab.preprocess import preprocess
+    from xeltofab.extract import extract
+    from xeltofab.state import PipelineParams
+
+    state_2d = load_field("data/examples/beams_2d_100x200_sample0.npy")
+
+    fig, axes = plt.subplots(1, 3, figsize=(10, 2.8))
+    fig.patch.set_facecolor(BG_COLOR)
+
     sigmas = [0.0, 1.0, 2.0]
     for col, sigma in enumerate(sigmas):
         params = PipelineParams(smooth_sigma=sigma)
         st = state_2d.model_copy(update={"params": params})
         st = preprocess(st)
         st = extract(st)
-        ax = axes[1, col]
-        ax.imshow(state_2d.field, cmap="gray_r", origin="lower", alpha=0.4)
+        ax = axes[col]
+        ax.imshow(state_2d.field, cmap="YlOrRd", origin="lower", vmin=0, vmax=1)
         if st.contours:
             for c in st.contours:
-                ax.plot(c[:, 1], c[:, 0], "b-", linewidth=1.2)
-        ax.set_title(f"smooth_sigma={sigma}", fontsize=9)
+                ax.plot(c[:, 1], c[:, 0], color="#1a1a1a", linewidth=1.5)
+        ax.set_title(f"smooth_sigma = {sigma}", fontsize=10)
         ax.axis("off")
-    axes[1, 0].set_ylabel("Sigma", fontsize=10, fontweight="bold")
 
-    # Row 3: taubin_iterations variation (3D mesh screenshots)
-    iterations = [0, 10, 50]
+    fig.tight_layout(pad=1.0)
+    fig.savefig(OUTPUT_DIR / "param-sigma.png", dpi=DPI, bbox_inches="tight",
+                facecolor=BG_COLOR)
+    plt.close(fig)
+
+
+def _gen_param_taubin() -> None:
+    """Taubin variation: 1x3 strip showing mesh at 0, 10, 50 iterations."""
+    from xeltofab.io import load_field
+    from xeltofab.preprocess import preprocess
+    from xeltofab.extract import extract
+    from xeltofab.smooth import smooth
+    from xeltofab.state import PipelineParams
+
+    # Thermoelastic — coarser mesh makes smoothing differences visible
+    state_3d = load_field("data/examples/thermoelastic_3d_16x16x16_sample0.npy")
     state_3d_pre = preprocess(state_3d)
     state_3d_ext = extract(state_3d_pre)
+
+    fig, axes = plt.subplots(1, 3, figsize=(10, 3.5))
+    fig.patch.set_facecolor(BG_COLOR)
+
+    iterations = [0, 10, 50]
     for col, iters in enumerate(iterations):
         if iters == 0:
             verts = state_3d_ext.vertices
@@ -320,14 +342,13 @@ def gen_parameter_sensitivity() -> None:
             st = smooth(st)
             verts = st.best_vertices
         img = _pv_screenshot(verts, state_3d_ext.faces)
-        ax = axes[2, col]
+        ax = axes[col]
         ax.imshow(img)
-        ax.set_title(f"taubin_iterations={iters}", fontsize=9)
+        ax.set_title(f"taubin_iterations = {iters}", fontsize=10)
         ax.axis("off")
-    axes[2, 0].set_ylabel("Taubin", fontsize=10, fontweight="bold")
 
-    fig.tight_layout(pad=1.5)
-    fig.savefig(OUTPUT_DIR / "parameter-sensitivity.png", dpi=DPI, bbox_inches="tight",
+    fig.tight_layout(pad=1.0)
+    fig.savefig(OUTPUT_DIR / "param-taubin.png", dpi=DPI, bbox_inches="tight",
                 facecolor=BG_COLOR)
     plt.close(fig)
 
@@ -360,52 +381,71 @@ def gen_quality_metrics() -> None:
     pass_pct = _compute_pass_rate(values, metric, threshold)
 
     # Left panel: pyvista heatmap screenshot
+    # Position scalar bar below the mesh with generous spacing
     pv_mesh.cell_data[metric] = values
-    pl = pv.Plotter(off_screen=True, window_size=[800, 600])
+    pl = pv.Plotter(off_screen=True, window_size=[800, 700])
     pl.add_mesh(
         pv_mesh, scalars=metric, cmap="RdYlGn",
         show_edges=True, edge_color="black", line_width=0.3,
-        scalar_bar_args={"title": _METRIC_LABELS[metric]},
+        scalar_bar_args={
+            "title": _METRIC_LABELS[metric],
+            "title_font_size": 14,
+            "label_font_size": 12,
+            "position_x": 0.2,
+            "position_y": 0.02,
+            "width": 0.6,
+            "height": 0.06,
+            "vertical": False,
+        },
     )
     pl.camera_position = "iso"
     pl.set_background(BG_COLOR)
     heatmap_img = pl.screenshot(return_img=True)
     pl.close()
 
-    # Composite: left = heatmap image, right = histogram
-    fig, (ax_left, ax_right) = plt.subplots(1, 2, figsize=(10, 4.5),
-                                             gridspec_kw={"width_ratios": [1.2, 1]})
+    # Composite: left = heatmap, right = histogram
+    fig, (ax_left, ax_right) = plt.subplots(
+        1, 2, figsize=(11, 4.5),
+        gridspec_kw={"width_ratios": [1.2, 1], "wspace": 0.3},
+    )
 
     ax_left.imshow(heatmap_img)
-    ax_left.set_title("Per-Cell Scaled Jacobian", fontsize=10)
+    ax_left.set_title("Per-Cell Scaled Jacobian", fontsize=11, pad=10)
     ax_left.axis("off")
 
-    # Right: histogram
+    # Right: histogram with clean layout
     counts, bin_edges, patches = ax_right.hist(
-        values, bins=50, edgecolor="black", linewidth=0.5, alpha=0.8,
+        values, bins=50, edgecolor="white", linewidth=0.3, alpha=0.9,
         color="#3182BD",
     )
     ax_right.axvline(threshold, color="#D0021B", linestyle="--", linewidth=2,
                      label=f"FEA threshold ({threshold})")
 
-    # Extend y-axis to make room for annotation above bars
+    # Extend y-axis for headroom; place stats in upper-right above bars
     y_max = counts.max()
-    ax_right.set_ylim(0, y_max * 1.35)
+    ax_right.set_ylim(0, y_max * 1.4)
 
     direction = ">=" if _HIGHER_IS_BETTER[metric] else "<="
-    ax_right.annotate(
+    ax_right.text(
+        0.97, 0.96,
         f"{pass_pct:.1f}% pass ({direction} {threshold})\n"
-        f"mean={np.mean(values):.2f}, median={np.median(values):.2f}",
-        xy=(0.97, 0.97), xycoords="axes fraction", ha="right", va="top",
-        fontsize=9, bbox=dict(boxstyle="round,pad=0.3", facecolor="wheat", alpha=0.8),
+        f"mean = {np.mean(values):.2f}   median = {np.median(values):.2f}",
+        transform=ax_right.transAxes, ha="right", va="top",
+        fontsize=8.5,
+        bbox=dict(boxstyle="round,pad=0.4", facecolor="#F5F5F0",
+                  edgecolor="#CCCCCC", alpha=0.95),
     )
     ax_right.set_xlabel(_METRIC_LABELS[metric], fontsize=10)
     ax_right.set_ylabel("Number of Cells", fontsize=10)
-    ax_right.set_title("Distribution", fontsize=10)
-    ax_right.legend(loc="upper left", fontsize=8)
+    ax_right.set_title("Distribution", fontsize=11, pad=10)
+    ax_right.legend(loc="upper left", fontsize=8, framealpha=0.9)
+
+    # Light grid for readability
+    ax_right.yaxis.grid(True, alpha=0.3, linewidth=0.5)
+    ax_right.set_axisbelow(True)
 
     fig.patch.set_facecolor(BG_COLOR)
-    fig.tight_layout(pad=1.5)
+    fig.tight_layout(pad=1.0)
     fig.savefig(OUTPUT_DIR / "quality-jacobian.png", dpi=DPI, bbox_inches="tight",
                 facecolor=BG_COLOR)
     plt.close(fig)

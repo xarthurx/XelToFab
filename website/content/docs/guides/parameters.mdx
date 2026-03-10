@@ -70,17 +70,19 @@ When `field_type="sdf"` is set, certain parameters are automatically adjusted un
 
 These overrides only apply when the parameter was **not explicitly passed**. If you set `smooth_sigma=0.5` with `field_type="sdf"`, your value is preserved.
 
-<img src="/images/guides/parameter-sensitivity.png" alt="Effect of threshold, smooth_sigma, and taubin_iterations on pipeline output" width={800} />
-
 ## Parameter tuning tips
 
 ### Threshold
+
+<img src="/images/guides/param-threshold.png" alt="Effect of threshold on extracted contours: 0.3 includes more material, 0.7 excludes more" width={800} />
 
 - **Lower threshold (0.3-0.4)**: Includes more material, produces thicker features. Use when the solver was aggressive with material removal
 - **Higher threshold (0.6-0.7)**: Excludes more material, produces thinner features. Use when the solver left too much intermediate density
 - The threshold only applies when `direct_extraction=False`
 
 ### Gaussian sigma
+
+<img src="/images/guides/param-sigma.png" alt="Effect of smooth_sigma on extracted contours: higher sigma smooths features" width={800} />
 
 - **`smooth_sigma=0.0`**: No Gaussian smoothing. Use for clean or already-smoothed fields
 - **`smooth_sigma=0.5-1.0`**: Light smoothing. Good for most design optimization results
@@ -93,6 +95,8 @@ These overrides only apply when the parameter was **not explicitly passed**. If 
 - **`morph_radius=2-3`**: More aggressive cleanup. Can merge nearby features or break thin connections
 
 ### Taubin smoothing
+
+<img src="/images/guides/param-taubin.png" alt="Effect of taubin_iterations on mesh smoothing: 0 shows staircase artifacts, 50 is smooth" width={800} />
 
 - **`taubin_iterations=0`**: Disabled. Raw marching cubes output with staircase artifacts
 - **`taubin_iterations=10-20`**: Moderate smoothing. Good balance between quality and feature preservation
