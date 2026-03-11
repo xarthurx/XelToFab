@@ -170,24 +170,19 @@ def gen_pipeline_diagram() -> None:
     arrow_kw = dict(arrowstyle="-|>", color="#555555", lw=1.3)
     arrow_gap = 0.1  # clearance between arrow tip and nearest border
 
-    def _box_edge(label, is_terminal=False):
-        """Return half-extent from center to outermost border (including dashed)."""
-        hw = box_hw
-        if not is_terminal and label in optional_stages:
-            hw += dash_gap
-        return hw
+    # Uniform edge: always include dash_gap so all arrows are the same length
+    uniform_edge = box_hw + dash_gap
 
     # Field → Preprocess (vertical): more gap from Field, less from Preprocess
     ax.annotate("",
-                xy=(field_x, _box_edge("Preprocess") + arrow_gap * 0.5),
+                xy=(field_x, uniform_edge + arrow_gap * 0.5),
                 xytext=(field_x, field_y - box_hh - arrow_gap * 2),
                 arrowprops=arrow_kw)
 
-    # Horizontal arrows between stages
+    # Horizontal arrows between stages (uniform length)
     for i in range(len(stages) - 1):
-        src, dst = stages[i], stages[i + 1]
-        x_start = stage_x[i] + _box_edge(src) + arrow_gap
-        x_end = stage_x[i + 1] - _box_edge(dst) - arrow_gap
+        x_start = stage_x[i] + uniform_edge + arrow_gap
+        x_end = stage_x[i + 1] - uniform_edge - arrow_gap
         ax.annotate("", xy=(x_end, 0), xytext=(x_start, 0),
                     arrowprops=arrow_kw)
 
