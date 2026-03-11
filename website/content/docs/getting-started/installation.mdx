@@ -46,15 +46,13 @@ uv run xtf formats
 
 This prints a table showing each format, its file extensions, whether the required library is installed, and the install command if it is missing:
 
-```
-Format     Extensions           Status       Install
------------------------------------------------------------------
-numpy      .npy, .npz           available    (built-in)
-matlab     .mat                 available    (built-in, via scipy)
-csv        .csv, .txt           available    (built-in)
-vtk        .vtk, .vtr, .vti    missing      uv add --optional vtk pyvista
-hdf5       .h5, .hdf5, .xdmf   missing      uv add --optional hdf5 h5py
-```
+| Format | Extensions | Status | Install |
+|--------|-----------|--------|---------|
+| numpy | `.npy`, `.npz` | available | (built-in) |
+| matlab | `.mat` | available | (built-in, via scipy) |
+| csv | `.csv`, `.txt` | available | (built-in) |
+| vtk | `.vtk`, `.vtr`, `.vti` | missing | `uv add --optional vtk pyvista` |
+| hdf5 | `.h5`, `.hdf5`, `.xdmf` | missing | `uv add --optional hdf5 h5py` |
 
 ## Running tests
 
