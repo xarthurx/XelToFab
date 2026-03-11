@@ -110,7 +110,7 @@ The extraction level defaults to `threshold` for density fields and `0.0` for SD
 
 XelToFab provides two mesh smoothing methods, selectable via `smoothing_method`:
 
-**Taubin smoothing** (default) applies alternating shrink/inflate passes using trimesh's `filter_taubin`. This band-pass filter removes high-frequency staircase artifacts from marching cubes while preserving low-frequency shape and volume. Best for general-purpose smoothing where uniform treatment of the surface is acceptable.
+**Taubin smoothing** (default) applies alternating shrink/inflate passes using [`trimesh`](https://trimesh.org/)'s `filter_taubin`. This band-pass filter removes high-frequency staircase artifacts from marching cubes while preserving low-frequency shape and volume. Best for general-purpose smoothing where uniform treatment of the surface is acceptable.
 
 Configurable via `taubin_iterations` (default: 20) and `taubin_lambda` (default: 0.5).
 
@@ -122,13 +122,13 @@ For 2D contours, both methods are a no-op.
 
 ### Repair (`repair.py`)
 
-Fixes non-manifold edges and vertices using pymeshlab. This ensures the mesh is valid for downstream operations (remeshing, decimation, FEA simulation). Enabled by default; disable with `repair=False` or `--no-repair`.
+Fixes non-manifold edges and vertices using [`pymeshlab`](https://pymeshlab.readthedocs.io/). This ensures the mesh is valid for downstream operations (remeshing, decimation, FEA simulation). Enabled by default; disable with `repair=False` or `--no-repair`.
 
 For 2D contours, this is a no-op.
 
 ### Remesh (`remesh.py`)
 
-Isotropic remeshing via `gpytoolbox.remesh_botsch` (Botsch & Kobbelt algorithm). Replaces the marching cubes triangulation with uniform, well-shaped triangles. After remeshing, 99%+ of faces meet FEA quality targets (min angle >20°).
+Isotropic remeshing via [`gpytoolbox.remesh_botsch`](https://gpytoolbox.org/) (Botsch & Kobbelt algorithm). Replaces the marching cubes triangulation with uniform, well-shaped triangles. After remeshing, 99%+ of faces meet FEA quality targets (min angle >20°).
 
 Configurable via `target_edge_length` (default: auto from mesh bounding box) and `remesh_iterations` (default: 10). Enabled by default; disable with `remesh=False` or `--no-remesh`.
 
@@ -136,7 +136,7 @@ For 2D contours, this is a no-op.
 
 ### Decimate (`decimate.py`)
 
-QEM (Quadric Error Metrics) mesh decimation via pyfqmr. Reduces face count while minimizing geometric error through intelligent edge collapse. Runs after remeshing to optimize the uniform triangle mesh for file size and simulation efficiency.
+QEM (Quadric Error Metrics) mesh decimation via [`pyfqmr`](https://github.com/Kramer84/pyfqmr-Fast-Quadric-Mesh-Reduction). Reduces face count while minimizing geometric error through intelligent edge collapse. Runs after remeshing to optimize the uniform triangle mesh for file size and simulation efficiency.
 
 Control the target with either `target_faces` (absolute face count) or `decimate_ratio` (proportional reduction, default 0.5 = 50%). The `decimate_aggressiveness` parameter (1--10, default 7) controls error tolerance. Boundary edges are preserved to protect domain boundaries.
 
@@ -146,10 +146,10 @@ For 2D contours, this is a no-op.
 
 ## Interactive examples
 
-Here is a mesh extracted from a 3D heat conduction design optimization result:
+A mesh extracted from a 3D heat conduction topology optimization result (51×51×51 density field, processed with default pipeline parameters — 7,087 vertices, 13,910 faces):
 
-<MeshViewer src="/models/heat_cond_51_s0.stl" height={500} />
+<MeshViewer src="/models/heat_cond_51_s0.stl" height={500} cameraDistance={15} fov={35} />
 
-And a synthetic sphere for comparison:
+A synthetic sphere generated from an 80×80×80 density field (836 vertices, 1,668 faces after full pipeline processing):
 
-<MeshViewer src="/models/synthetic_sphere.stl" />
+<MeshViewer src="/models/synthetic_sphere.stl" cameraDistance={15} fov={35} />

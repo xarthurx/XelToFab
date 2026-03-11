@@ -3,7 +3,7 @@
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Center } from '@react-three/drei';
 import { memo, Suspense, useEffect, useState } from 'react';
-import type { BufferGeometry } from 'three';
+import { BackSide, type BufferGeometry } from 'three';
 import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js';
 
 function Mesh({ url }: { url: string }) {
@@ -48,10 +48,10 @@ function Mesh({ url }: { url: string }) {
   return (
     <Center>
       <mesh geometry={geometry}>
-        <meshStandardMaterial color="#4a6fa5" />
+        <meshStandardMaterial color="#6b9fd4" />
       </mesh>
       <mesh geometry={geometry}>
-        <meshBasicMaterial color="black" wireframe transparent opacity={0.1} />
+        <meshStandardMaterial color="#c4a08a" side={BackSide} />
       </mesh>
     </Center>
   );
@@ -60,18 +60,24 @@ function Mesh({ url }: { url: string }) {
 export const MeshViewer = memo(function MeshViewer({
   src,
   height = 400,
+  cameraDistance = 7,
+  fov = 50,
 }: {
   src: string;
   height?: number;
+  cameraDistance?: number;
+  fov?: number;
 }) {
+  const d = cameraDistance;
   return (
     <div
       className="my-4 overflow-hidden rounded-lg border border-fd-border"
       style={{ height }}
     >
-      <Canvas camera={{ position: [2, 2, 2], fov: 50 }}>
-        <ambientLight intensity={0.4} />
-        <directionalLight position={[5, 5, 5]} intensity={0.8} />
+      <Canvas camera={{ position: [d, d, d], fov }}>
+        <ambientLight intensity={0.6} />
+        <directionalLight position={[5, 5, 5]} intensity={1.0} />
+        <directionalLight position={[-3, -2, -4]} intensity={0.3} />
         <Suspense fallback={null}>
           <Mesh url={src} />
         </Suspense>
