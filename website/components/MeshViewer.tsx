@@ -2,9 +2,19 @@
 
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Center } from '@react-three/drei';
-import { memo, Suspense, useEffect, useState } from 'react';
+import { memo, Suspense, useEffect, useState, type ReactNode } from 'react';
 import { BackSide, type BufferGeometry } from 'three';
 import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js';
+
+function LoadingFallback(): ReactNode {
+  return (
+    <div className="flex h-full items-center justify-center">
+      <p className="font-mono text-xs tracking-wide text-fd-muted-foreground">
+        Loading model&hellip;
+      </p>
+    </div>
+  );
+}
 
 function Mesh({ url }: { url: string }) {
   const [geometry, setGeometry] = useState<BufferGeometry | null>(null);
@@ -75,18 +85,18 @@ export const MeshViewer = memo(function MeshViewer({
   const d = cameraDistance;
   return (
     <div
-      className="my-4 overflow-hidden rounded-lg border border-fd-border"
+      className="my-4 overflow-hidden rounded-lg border border-fd-border bg-fd-card/30"
       style={{ height }}
     >
-      <Canvas camera={{ position: [d, d, d], fov }}>
-        <ambientLight intensity={0.6} />
-        <directionalLight position={[5, 5, 5]} intensity={1.0} />
-        <directionalLight position={[-3, -2, -4]} intensity={0.3} />
-        <Suspense fallback={null}>
+      <Suspense fallback={<LoadingFallback />}>
+        <Canvas camera={{ position: [d, d, d], fov }}>
+          <ambientLight intensity={0.6} />
+          <directionalLight position={[5, 5, 5]} intensity={1.0} />
+          <directionalLight position={[-3, -2, -4]} intensity={0.3} />
           <Mesh url={src} />
-        </Suspense>
-        <OrbitControls />
-      </Canvas>
+          <OrbitControls />
+        </Canvas>
+      </Suspense>
     </div>
   );
 });

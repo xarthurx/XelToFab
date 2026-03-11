@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import { codeToHtml } from 'shiki';
 import { shikiThemes } from '@/lib/layout.shared';
@@ -48,7 +49,7 @@ export default async function HomePage() {
       <section className="mx-auto w-full max-w-6xl px-6 pt-32 pb-20">
         <div className="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center">
           <div>
-            <p className="mb-4 font-[family-name:var(--font-mono)] text-sm font-medium uppercase tracking-widest text-brand-500">
+            <p className="mb-4 font-mono text-sm font-medium uppercase tracking-widest text-brand-500">
               Design Field Post-Processing
             </p>
             <h1 className="mb-6 text-[clamp(2rem,5vw,3.5rem)] font-bold leading-[1.08] tracking-tight">
@@ -64,13 +65,13 @@ export default async function HomePage() {
             <div className="flex flex-wrap gap-3">
               <Link
                 href="/docs"
-                className="rounded-md bg-brand-600 px-5 py-2.5 font-[family-name:var(--font-mono)] text-sm font-medium text-white transition-colors hover:bg-brand-700 dark:bg-brand-400 dark:text-brand-900 dark:hover:bg-brand-300"
+                className="rounded-md bg-brand-600 px-5 py-2.5 font-mono text-sm font-medium text-white transition-colors hover:bg-brand-700 focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 active:scale-[0.98] dark:bg-brand-400 dark:text-brand-900 dark:hover:bg-brand-300"
               >
                 Get Started
               </Link>
               <Link
                 href="/docs/api/process"
-                className="rounded-md border border-fd-border px-5 py-2.5 font-[family-name:var(--font-mono)] text-sm font-medium transition-colors hover:bg-fd-accent"
+                className="rounded-md border border-fd-border px-5 py-2.5 font-mono text-sm font-medium transition-colors hover:bg-fd-accent focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 active:scale-[0.98]"
               >
                 API Reference
               </Link>
@@ -84,9 +85,11 @@ export default async function HomePage() {
               className="rounded-lg border border-fd-border bg-white dark:bg-fd-card/80"
             />
             {/* Field inset */}
-            <img
+            <Image
               src="/images/home/hero-field.png"
               alt="Input density field"
+              width={64}
+              height={64}
               className="absolute bottom-2 right-2 z-10 block w-16"
             />
           </div>
@@ -96,26 +99,26 @@ export default async function HomePage() {
       {/* Pipeline — numbered steps, left-aligned, vertical rhythm */}
       <section className="border-y border-fd-border bg-fd-card/50">
         <div className="mx-auto w-full max-w-6xl px-6 py-20">
-          <p className="mb-2 font-[family-name:var(--font-mono)] text-sm font-medium uppercase tracking-widest text-brand-500">
+          <p className="mb-2 font-mono text-sm font-medium uppercase tracking-widest text-brand-500">
             How it works
           </p>
           <h2 className="mb-12 text-3xl font-bold tracking-tight">
             Four stages, one function call.
           </h2>
-          <div className="grid gap-0 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-8 sm:grid-cols-2 sm:gap-0 lg:grid-cols-4">
             {pipelineSteps.map((step, i) => (
               <div
                 key={step.num}
-                className={`relative py-6 ${i < pipelineSteps.length - 1 ? 'lg:border-r lg:border-fd-border lg:pr-8' : ''} ${i > 0 ? 'lg:pl-8' : ''}`}
+                className={`relative py-6 ${i > 0 ? 'border-t border-fd-border sm:border-t-0' : ''} ${i < pipelineSteps.length - 1 ? 'lg:border-r lg:border-fd-border lg:pr-8' : ''} ${i > 0 ? 'lg:pl-8' : ''}`}
               >
-                <span className="font-[family-name:var(--font-mono)] text-4xl font-bold text-brand-200 dark:text-brand-800">
+                <span className="font-mono text-4xl font-bold text-brand-200 dark:text-brand-800">
                   {step.num}
                 </span>
                 <h3 className="mt-2 text-lg font-semibold">{step.label}</h3>
                 <p className="mt-1 text-sm text-fd-muted-foreground leading-relaxed">
                   {step.detail}
                 </p>
-                <p className="mt-3 font-[family-name:var(--font-mono)] text-xs text-fd-muted-foreground">
+                <p className="mt-3 font-mono text-xs text-fd-muted-foreground">
                   Input: {step.input}
                 </p>
               </div>
@@ -128,7 +131,7 @@ export default async function HomePage() {
       <section className="mx-auto w-full max-w-6xl px-6 py-20">
         <div className="grid items-center gap-12 lg:grid-cols-2">
           <div>
-            <p className="mb-2 font-[family-name:var(--font-mono)] text-sm font-medium uppercase tracking-widest text-brand-500">
+            <p className="mb-2 font-mono text-sm font-medium uppercase tracking-widest text-brand-500">
               Minimal API
             </p>
             <h2 className="mb-4 text-3xl font-bold tracking-tight">
@@ -139,7 +142,7 @@ export default async function HomePage() {
               pipeline, save the result. Parameters are sensible defaults you
               can override when needed.
             </p>
-            <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2 font-[family-name:var(--font-mono)] text-sm text-fd-muted-foreground">
+            <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2 font-mono text-sm text-fd-muted-foreground">
               <span>.npy</span>
               <span>.mat</span>
               <span>.vtk</span>
@@ -158,7 +161,7 @@ export default async function HomePage() {
       {/* Capabilities — alternating layout, not a card grid */}
       <section className="border-t border-fd-border bg-fd-card/50">
         <div className="mx-auto w-full max-w-6xl px-6 py-20">
-          <p className="mb-2 font-[family-name:var(--font-mono)] text-sm font-medium uppercase tracking-widest text-brand-500">
+          <p className="mb-2 font-mono text-sm font-medium uppercase tracking-widest text-brand-500">
             Capabilities
           </p>
           <h2 className="mb-16 text-3xl font-bold tracking-tight">

@@ -63,7 +63,7 @@ export function ImageCompare({
   return (
     <div
       ref={containerRef}
-      className={`relative select-none overflow-hidden ${className}`}
+      className={`relative select-none overflow-hidden focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 ${className}`}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
       role="slider"
@@ -103,26 +103,27 @@ export function ImageCompare({
 
       {/* Labels */}
       <span
-        className="absolute top-3 left-3 rounded bg-black/50 px-1.5 py-0.5 font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-widest text-white transition-opacity"
+        className="absolute top-3 left-3 rounded bg-brand-900/60 px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-widest text-white transition-opacity duration-200"
         style={{ opacity: position < 20 ? 0 : 1 }}
       >
         {beforeLabel}
       </span>
       <span
-        className="absolute top-3 right-3 rounded bg-black/50 px-1.5 py-0.5 font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-widest text-white transition-opacity"
+        className="absolute top-3 right-3 rounded bg-brand-900/60 px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-widest text-white transition-opacity duration-200"
         style={{ opacity: position > 80 ? 0 : 1 }}
       >
         {afterLabel}
       </span>
 
-      {/* Drag handle */}
+      {/* Drag handle — wide hit area, narrow visible line */}
       <div
-        className="absolute top-0 bottom-0 z-10 w-0.5 -translate-x-1/2 cursor-ew-resize bg-brand-500"
+        className="absolute top-0 bottom-0 z-10 flex w-10 -translate-x-1/2 cursor-ew-resize items-center justify-center"
         style={{ left: `${position}%` }}
         onPointerDown={onPointerDown}
       >
+        <div className="h-full w-0.5 bg-brand-500" />
         {/* Grip circle */}
-        <div className="absolute top-1/2 left-1/2 flex h-9 w-9 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-white bg-brand-600 shadow-md">
+        <div className="group absolute top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border-2 border-white bg-brand-600 shadow-md transition-transform duration-150 hover:scale-110">
           <svg
             width="16"
             height="16"

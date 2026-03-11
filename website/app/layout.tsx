@@ -10,7 +10,7 @@ const body = Source_Sans_3({
 
 const mono = JetBrains_Mono({
   subsets: ['latin'],
-  variable: '--font-mono',
+  variable: '--font-code',
 });
 
 export const metadata: Metadata = {
@@ -29,7 +29,7 @@ export default function Layout({ children }: LayoutProps<'/'>) {
       className={`${body.variable} ${mono.variable}`}
       suppressHydrationWarning
     >
-      <body className="flex flex-col min-h-screen font-[family-name:var(--font-body)]">
+      <body className="flex min-h-screen flex-col font-sans">
         <RootProvider i18n={{ locale: 'en', translations: { toc: 'Outline' } }}>
           {children}
         </RootProvider>
