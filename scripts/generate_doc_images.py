@@ -80,34 +80,42 @@ def _pv_screenshot(vertices, faces, color="#88BDE6", zoom=1.0):
 
 
 def gen_pipeline_diagram() -> None:
-    """Image 1: 3-row pipeline flow diagram with blue palette.
+    """Image 1: Snake-layout pipeline flow diagram with blue palette.
 
-    Row 1: Field terminal (top-left)
-    Row 2: 6 pipeline stages with horizontal arrows
-    Row 3: Mesh terminal (bottom-right)
-    Vertical arrows connect Field→row2 and row2→Mesh.
+    Field → [Preprocess → Extract → Smooth] (row 1, left-to-right)
+                                          ↓
+            [Decimate ← Remesh ← Repair]  (row 2, right-to-left)
+    Mesh ←
     Optional stages have a dashed outline offset around the solid box.
     """
     stages = list(STAGE_COLORS.keys())
+    row1 = stages[:3]   # Preprocess, Extract, Smooth
+    row2 = stages[3:]   # Repair, Remesh, Decimate
 
     # Layout constants
-    gap = 1.8        # horizontal gap between stage centers
-    row_gap = 2.0    # vertical gap between row centers
-    box_hw = 0.55    # half-width
-    box_hh = 0.3     # half-height
+    gap = 2.5        # horizontal gap between stage centers (wider with 3 per row)
+    row_gap = 2.2    # vertical gap between row centers
+    box_hw = 0.6     # half-width (slightly larger)
+    box_hh = 0.35    # half-height
     dash_gap = 0.12  # offset between solid box and dashed outline
+    arrow_gap = 0.12 # clearance between arrow tip and nearest border
+    uniform_edge = box_hw + dash_gap  # all arrows use same offset
 
-    # Stage positions (row 2, y=0)
-    stage_x = [i * gap for i in range(len(stages))]
-    total_w = stage_x[-1]
+    # Row positions (3 columns)
+    col_x = [i * gap for i in range(3)]
+    total_w = col_x[-1]
+
+    # Row y-centers
+    y_row1 = 0
+    y_row2 = -row_gap
 
     # Terminal positions
-    field_x, field_y = stage_x[0], row_gap * 0.8  # closer to stages
-    mesh_x, mesh_y = stage_x[-1], -row_gap
+    field_x, field_y = col_x[0], row_gap * 0.85
+    mesh_x, mesh_y = col_x[0], y_row2 - row_gap * 0.85
 
-    fig, ax = plt.subplots(figsize=(11, 4.5))
-    ax.set_xlim(-1.0, total_w + 1.3)
-    ax.set_ylim(-row_gap - 0.9, row_gap + 0.7)
+    fig, ax = plt.subplots(figsize=(9, 7))
+    ax.set_xlim(-1.2, total_w + 1.2)
+    ax.set_ylim(mesh_y - 0.8, field_y + 0.8)
     ax.set_aspect("equal")
     ax.axis("off")
     fig.patch.set_facecolor(BG_COLOR)
@@ -130,16 +138,14 @@ def gen_pipeline_diagram() -> None:
             ec = "#333333"
             tc = _STAGE_TEXT[label]
 
-        # Solid box
         ax.add_patch(matplotlib.patches.FancyBboxPatch(
             (x - box_hw, y - box_hh), box_hw * 2, box_hh * 2,
             boxstyle="round,pad=0.08",
             facecolor=fc, edgecolor=ec, linewidth=1.2,
         ))
         ax.text(x, y, label, ha="center", va="center",
-                fontsize=9 if is_terminal else 8.5, fontweight="bold", color=tc)
+                fontsize=10 if is_terminal else 9.5, fontweight="bold", color=tc)
 
-        # Dashed outline for optional stages (offset around solid box)
         if label in optional_stages:
             d = dash_gap
             ax.add_patch(matplotlib.patches.FancyBboxPatch(
@@ -150,60 +156,76 @@ def gen_pipeline_diagram() -> None:
                 linewidth=1.0, linestyle="--",
             ))
 
-    # --- Row 1: Field terminal ---
+    def _annotate(x, y, text):
+        ax.text(x, y - box_hh - dash_gap - 0.15, text,
+                ha="center", va="top", fontsize=7.5, color="#666666",
+                fontstyle="italic")
+
+    arrow_kw = dict(arrowstyle="-|>", color="#555555", lw=1.3)
+
+    def _harrow(x1, x2, y):
+        """Horizontal arrow from x1 to x2 at height y."""
+        ax.annotate("", xy=(x2, y), xytext=(x1, y), arrowprops=arrow_kw)
+
+    def _varrow(x, y1, y2):
+        """Vertical arrow from y1 (start) to y2 (end/tip)."""
+        ax.annotate("", xy=(x, y2), xytext=(x, y1), arrowprops=arrow_kw)
+
+    # === Draw boxes ===
+
+    # Field terminal
     _draw_box(field_x, field_y, "Field", is_terminal=True)
 
-    # --- Row 2: Pipeline stages ---
-    for i, label in enumerate(stages):
-        _draw_box(stage_x[i], 0, label)
-
-        # Parameter annotation below stage
+    # Row 1: Preprocess → Extract → Smooth (left to right)
+    for i, label in enumerate(row1):
+        _draw_box(col_x[i], y_row1, label)
         if label in param_annotations:
-            ax.text(stage_x[i], -box_hh - dash_gap - 0.15, param_annotations[label],
-                    ha="center", va="top", fontsize=7, color="#666666",
-                    fontstyle="italic")
+            _annotate(col_x[i], y_row1, param_annotations[label])
 
-    # --- Row 3: Mesh terminal ---
+    # Row 2: Repair → Remesh → Decimate (right to left positions)
+    # Repair at col 2, Remesh at col 1, Decimate at col 0
+    row2_x = list(reversed(col_x))  # [col_x[2], col_x[1], col_x[0]]
+    for i, label in enumerate(row2):
+        _draw_box(row2_x[i], y_row2, label)
+        if label in param_annotations:
+            _annotate(row2_x[i], y_row2, param_annotations[label])
+
+    # Mesh terminal
     _draw_box(mesh_x, mesh_y, "Mesh", is_terminal=True)
 
-    # --- Arrows ---
-    arrow_kw = dict(arrowstyle="-|>", color="#555555", lw=1.3)
-    arrow_gap = 0.1  # clearance between arrow tip and nearest border
+    # === Draw arrows ===
+    e = uniform_edge + arrow_gap
 
-    # Uniform edge: always include dash_gap so all arrows are the same length
-    uniform_edge = box_hw + dash_gap
+    # Field → Preprocess (vertical)
+    _varrow(field_x, field_y - box_hh - arrow_gap, y_row1 + e)
 
-    # Field → Preprocess (vertical): more gap from Field, less from Preprocess
-    ax.annotate("",
-                xy=(field_x, uniform_edge + arrow_gap * 0.5),
-                xytext=(field_x, field_y - box_hh - arrow_gap * 2),
-                arrowprops=arrow_kw)
+    # Row 1 horizontal: Preprocess → Extract → Smooth
+    for i in range(2):
+        _harrow(col_x[i] + e, col_x[i + 1] - e, y_row1)
 
-    # Horizontal arrows between stages (uniform length)
-    for i in range(len(stages) - 1):
-        x_start = stage_x[i] + uniform_edge + arrow_gap
-        x_end = stage_x[i + 1] - uniform_edge - arrow_gap
-        ax.annotate("", xy=(x_end, 0), xytext=(x_start, 0),
-                    arrowprops=arrow_kw)
+    # Smooth → Repair (vertical, both at col_x[2])
+    _varrow(col_x[2], y_row1 - e, y_row2 + e)
 
-    # Decimate → Mesh (straight vertical, shortened from top to clear annotation)
-    ax.annotate("",
-                xy=(mesh_x, mesh_y + box_hh + arrow_gap),
-                xytext=(mesh_x, mesh_y + box_hh + arrow_gap + 0.6),
-                arrowprops=arrow_kw)
+    # Row 2 horizontal: Repair → Remesh → Decimate (right to left)
+    # Repair at col_x[2], Remesh at col_x[1], Decimate at col_x[0]
+    for i in range(2):
+        _harrow(row2_x[i] - e, row2_x[i + 1] + e, y_row2)
 
-    # --- Legend (bottom-left, aligned with Preprocess dashed outline) ---
-    leg_w = (box_hw + dash_gap) * 2  # same width as dashed outline on stages
-    leg_h = (box_hh + dash_gap) * 2  # same height as dashed outline on stages
-    leg_x = stage_x[0] - box_hw - dash_gap  # left-aligned with Preprocess outline
-    leg_y = mesh_y - box_hh  # bottom-aligned with Mesh box bottom
+    # Decimate → Mesh (vertical, both at col_x[0])
+    _varrow(col_x[0], y_row2 - e, mesh_y + box_hh + arrow_gap)
+
+    # === Legend (small dashed rectangle, bottom-right) ===
+    leg_w = 0.5
+    leg_h = 0.35
+    leg_x = total_w - leg_w + 0.3
+    leg_y = mesh_y - box_hh + (box_hh * 2 - leg_h) / 2  # vertically centered with Mesh
     ax.add_patch(matplotlib.patches.FancyBboxPatch(
         (leg_x, leg_y), leg_w, leg_h,
-        boxstyle="round,pad=0.08",
+        boxstyle="round,pad=0.05",
         facecolor="none", edgecolor="#888888", linewidth=1.0, linestyle="--",
     ))
-    ax.text(leg_x + leg_w + 0.15, leg_y + leg_h / 2, "= optional stage",
-            ha="left", va="center", fontsize=7, color="#666666")
+    ax.text(leg_x + leg_w + 0.12, leg_y + leg_h / 2, "= optional stage",
+            ha="left", va="center", fontsize=7.5, color="#666666")
 
     fig.savefig(OUTPUT_DIR / "pipeline-flow.png", dpi=DPI, bbox_inches="tight",
                 facecolor=BG_COLOR, pad_inches=0.3)
