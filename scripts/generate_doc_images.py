@@ -181,10 +181,39 @@ def gen_pipeline_diagram() -> None:
                     xytext=(stage_x[i] + edge, 0),
                     arrowprops=arrow_kw)
 
-    # Decimate → Mesh (vertical)
+    # Decimate → Mesh (route from right edge to avoid annotation overlap)
     ax.annotate("", xy=(mesh_x, mesh_y + box_hh + 0.05),
-                xytext=(mesh_x, -edge),
-                arrowprops=arrow_kw)
+                xytext=(mesh_x + edge, 0),
+                arrowprops=dict(arrowstyle="-|>", color="#555555", lw=1.3,
+                                connectionstyle="angle,angleA=0,angleB=90"))
+
+    # --- Legend ---
+    leg_x = -0.5
+    leg_y = -row_gap + 0.1
+    # Required stage sample
+    ax.add_patch(matplotlib.patches.FancyBboxPatch(
+        (leg_x, leg_y), 0.6, 0.35,
+        boxstyle="round,pad=0.05",
+        facecolor="#3182BD", edgecolor="#333333", linewidth=1.0,
+    ))
+    ax.text(leg_x + 0.75, leg_y + 0.175, "Required", ha="left", va="center",
+            fontsize=7, color="#444444")
+
+    # Optional stage sample (solid box + dashed outline)
+    opt_y = leg_y - 0.55
+    ax.add_patch(matplotlib.patches.FancyBboxPatch(
+        (leg_x, opt_y), 0.6, 0.35,
+        boxstyle="round,pad=0.05",
+        facecolor="#9ECAE1", edgecolor="#333333", linewidth=1.0,
+    ))
+    d = dash_gap
+    ax.add_patch(matplotlib.patches.FancyBboxPatch(
+        (leg_x - d, opt_y - d), 0.6 + d * 2, 0.35 + d * 2,
+        boxstyle="round,pad=0.05",
+        facecolor="none", edgecolor="#888888", linewidth=1.0, linestyle="--",
+    ))
+    ax.text(leg_x + 0.75, opt_y + 0.175, "Optional", ha="left", va="center",
+            fontsize=7, color="#444444")
 
     fig.savefig(OUTPUT_DIR / "pipeline-flow.png", dpi=DPI, bbox_inches="tight",
                 facecolor=BG_COLOR)
