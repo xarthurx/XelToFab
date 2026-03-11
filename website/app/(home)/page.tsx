@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { codeToHtml } from 'shiki';
+import { shikiThemes } from '@/lib/layout.shared';
 
 const codeExample = `from xeltofab.io import load_field, save_mesh
 from xeltofab.pipeline import process
@@ -37,7 +38,7 @@ const pipelineSteps = [
 export default async function HomePage() {
   const highlighted = await codeToHtml(codeExample, {
     lang: 'python',
-    themes: { light: 'catppuccin-latte', dark: 'github-dark' },
+    themes: shikiThemes,
     defaultColor: false,
   });
   return (
@@ -212,26 +213,6 @@ export default async function HomePage() {
               </div>
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className="mx-auto w-full max-w-6xl px-6 py-24">
-        <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2 className="text-2xl font-bold tracking-tight">
-              Ready to process your first field?
-            </h2>
-            <p className="mt-1 text-fd-muted-foreground">
-              Install with pip or uv and run in under a minute.
-            </p>
-          </div>
-          <Link
-            href="/docs/getting-started/installation"
-            className="shrink-0 rounded-md bg-brand-600 px-5 py-2.5 font-[family-name:var(--font-mono)] text-sm font-medium text-white transition-colors hover:bg-brand-700 dark:bg-brand-400 dark:text-brand-900 dark:hover:bg-brand-300"
-          >
-            Installation Guide
-          </Link>
         </div>
       </section>
     </main>

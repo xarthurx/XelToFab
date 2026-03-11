@@ -1,4 +1,5 @@
 {
   "title": "Guides",
+  "defaultOpen": true,
   "pages": ["pipeline-overview", "field-types", "input-formats", "parameters", "quality-metrics"]
 }

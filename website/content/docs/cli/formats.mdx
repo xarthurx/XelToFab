@@ -15,6 +15,10 @@ This command takes no arguments or options.
 
 ## Example output
 
+```bash
+uv run xtf formats
+```
+
 ```
 Format     Extensions           Status       Install
 -----------------------------------------------------------------
@@ -30,7 +34,7 @@ hdf5       .h5, .hdf5, .xdmf   missing      uv add --optional hdf5 h5py
 | Format | Extensions | Dependency | Notes |
 |--------|-----------|------------|-------|
 | NumPy | `.npy`, `.npz` | None (built-in) | For `.npz` archives, use `-f` / `--field-name` to select the array |
-| MATLAB | `.mat` | None (built-in, via scipy) | Use `-f` / `--field-name` to select a variable |
+| MATLAB | `.mat` | None (built-in) | Use `-f` / `--field-name` to select a variable |
 | CSV | `.csv`, `.txt` | None (built-in) | Flat data; use `--shape` to reshape (e.g., `--shape 100x200`) |
 | VTK | `.vtk`, `.vtr`, `.vti` | `pyvista` | Install with `uv add --optional vtk pyvista` |
 | HDF5 | `.h5`, `.hdf5`, `.xdmf` | `h5py` | Install with `uv add --optional hdf5 h5py` |

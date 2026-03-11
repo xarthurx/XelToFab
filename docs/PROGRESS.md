@@ -231,3 +231,15 @@ Images embedded in MDX pages via `<img>` tags. Supports `--only NAME` for select
 Images output to `website/public/images/getting-started/` and embedded in MDX pages. Installation page skipped (purely textual content).
 
 **Prevention:** When placing centered labels between matplotlib subplots, `fig.text(0.5, 0.5, ...)` in figure coordinates requires visual tuning after `tight_layout()` — the exact center depends on colorbar presence and axis padding. Always generate and inspect before committing.
+
+---
+
+### 2026-03-11 — Duplicated Shiki Theme Config in Website
+
+**Problem:** Changed the code block Shiki theme in `source.config.ts` (fumadocs global config), but the homepage still showed the old theme. This happened twice (first with the original setup, then again when switching to `ayu-light`).
+
+**Root cause:** The homepage (`app/(home)/page.tsx`) uses a standalone `codeToHtml()` call with its own hardcoded `themes: { light: ..., dark: ... }` object, completely independent of the fumadocs `rehypeCodeOptions` in `source.config.ts`. Two sources of truth for the same setting.
+
+**Resolution:** Updated both locations to use `ayu-light`. Files: `website/source.config.ts` (line 23) and `website/app/(home)/page.tsx` (line 40).
+
+**Prevention:** When changing site-wide visual settings (themes, fonts, colors), grep for all occurrences of the current value across the website directory — don't assume a single config file controls everything. Fumadocs' `rehypeCodeOptions` only applies to MDX content, not standalone `codeToHtml()` calls in page components.

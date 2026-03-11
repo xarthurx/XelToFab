@@ -1,5 +1,10 @@
 import type { BaseLayoutProps } from 'fumadocs-ui/layouts/shared';
 
+export const shikiThemes = {
+  light: 'ayu-light',
+  dark: 'ayu-dark',
+} as const;
+
 export const gitConfig = {
   user: 'xarthurx',
   repo: 'XelToFab',
@@ -12,12 +17,5 @@ export function baseOptions(): BaseLayoutProps {
       title: 'XelToFab',
     },
     githubUrl: `https://github.com/${gitConfig.user}/${gitConfig.repo}`,
-    links: [
-      {
-        text: 'Docs',
-        url: '/docs',
-        active: 'nested-url',
-      },
-    ],
   };
 }

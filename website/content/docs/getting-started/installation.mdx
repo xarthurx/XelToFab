@@ -22,7 +22,13 @@ This installs all core dependencies: `numpy`, `scipy`, `scikit-image`, `trimesh`
 
 ## Optional format support
 
-Some input formats require additional libraries. Install them with extras:
+Some input formats require additional libraries. Install everything at once:
+
+```bash
+uv sync --all-extras
+```
+
+Or install individual extras selectively:
 
 | Extra | Command | Adds support for |
 |-------|---------|------------------|
@@ -44,15 +50,7 @@ List all supported input formats and their availability status:
 uv run xtf formats
 ```
 
-This prints a table showing each format, its file extensions, whether the required library is installed, and the install command if it is missing:
-
-| Format | Extensions | Status | Install |
-|--------|-----------|--------|---------|
-| numpy | `.npy`, `.npz` | available | (built-in) |
-| matlab | `.mat` | available | (built-in, via scipy) |
-| csv | `.csv`, `.txt` | available | (built-in) |
-| vtk | `.vtk`, `.vtr`, `.vti` | missing | `uv add --optional vtk pyvista` |
-| hdf5 | `.h5`, `.hdf5`, `.xdmf` | missing | `uv add --optional hdf5 h5py` |
+See [xtf formats](/docs/cli/formats) for the full list of supported formats and their dependencies.
 
 ## Running tests
 

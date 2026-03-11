@@ -91,7 +91,7 @@ def gen_pipeline_diagram() -> None:
     stages = list(STAGE_COLORS.keys())
 
     # Layout constants
-    gap = 1.8        # horizontal gap between stage centers
+    gap = 2.0        # horizontal gap between stage centers
     row_gap = 2.0    # vertical gap between row centers
     box_hw = 0.55    # half-width
     box_hh = 0.3     # half-height
@@ -107,9 +107,9 @@ def gen_pipeline_diagram() -> None:
     field_x, field_y = stage_x[0], row_gap * 0.8
     mesh_x, mesh_y = stage_x[-1], -row_gap
 
-    fig, ax = plt.subplots(figsize=(11, 4.5))
-    ax.set_xlim(-1.0, total_w + 1.3)
-    ax.set_ylim(-row_gap - 0.9, row_gap + 0.7)
+    fig, ax = plt.subplots(figsize=(12, 4.5))
+    ax.set_xlim(-1.0, total_w + 1)
+    ax.set_ylim(-row_gap - 0.5, row_gap + 0.3)
     ax.set_aspect("equal")
     ax.axis("off")
     fig.patch.set_facecolor(BG_COLOR)
@@ -198,7 +198,7 @@ def gen_pipeline_diagram() -> None:
             ha="left", va="center", fontsize=7, color="#666666")
 
     fig.savefig(OUTPUT_DIR / "pipeline-flow.png", dpi=DPI, bbox_inches="tight",
-                facecolor=BG_COLOR, pad_inches=0.15)
+                facecolor=BG_COLOR, pad_inches=0.05)
     plt.close(fig)
 
 

@@ -30,7 +30,9 @@ export default function Layout({ children }: LayoutProps<'/'>) {
       suppressHydrationWarning
     >
       <body className="flex flex-col min-h-screen font-[family-name:var(--font-body)]">
-        <RootProvider>{children}</RootProvider>
+        <RootProvider i18n={{ translations: { toc: 'Outline' } }}>
+          {children}
+        </RootProvider>
       </body>
     </html>
   );
