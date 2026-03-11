@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { codeToHtml } from 'shiki';
 import { shikiThemes } from '@/lib/layout.shared';
+import { ImageCompare } from '@/components/ImageCompare';
 
 const codeExample = `from xeltofab.io import load_field, save_mesh
 from xeltofab.pipeline import process
@@ -45,32 +46,50 @@ export default async function HomePage() {
     <main className="flex flex-1 flex-col">
       {/* Hero — left-aligned, asymmetric */}
       <section className="mx-auto w-full max-w-6xl px-6 pt-32 pb-20">
-        <p className="mb-4 font-[family-name:var(--font-mono)] text-sm font-medium uppercase tracking-widest text-brand-500">
-          Design Field Post-Processing
-        </p>
-        <h1 className="mb-6 text-[clamp(2.5rem,6vw,4.5rem)] font-bold leading-[1.05] tracking-tight">
-          Design fields to
-          <br />
-          fabrication-ready geometry.
-        </h1>
-        <p className="mb-10 max-w-lg text-lg text-fd-muted-foreground leading-relaxed">
-          <strong className="font-semibold text-fd-foreground">XelToFab</strong> handles the full pipeline — preprocessing, extraction,
-          smoothing, repair, and quality analysis — so your optimization and
-          neural field results are ready for simulation or fabrication.
-        </p>
-        <div className="flex flex-wrap gap-3">
-          <Link
-            href="/docs"
-            className="rounded-md bg-brand-600 px-5 py-2.5 font-[family-name:var(--font-mono)] text-sm font-medium text-white transition-colors hover:bg-brand-700 dark:bg-brand-400 dark:text-brand-900 dark:hover:bg-brand-300"
-          >
-            Get Started
-          </Link>
-          <Link
-            href="/docs/api/process"
-            className="rounded-md border border-fd-border px-5 py-2.5 font-[family-name:var(--font-mono)] text-sm font-medium transition-colors hover:bg-fd-accent"
-          >
-            API Reference
-          </Link>
+        <div className="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center">
+          <div>
+            <p className="mb-4 font-[family-name:var(--font-mono)] text-sm font-medium uppercase tracking-widest text-brand-500">
+              Design Field Post-Processing
+            </p>
+            <h1 className="mb-6 text-[clamp(2rem,5vw,3.5rem)] font-bold leading-[1.08] tracking-tight">
+              Design fields to
+              <br />
+              fabrication-ready geometry.
+            </h1>
+            <p className="mb-10 max-w-lg text-lg text-fd-muted-foreground leading-relaxed">
+              <strong className="font-semibold text-fd-foreground">XelToFab</strong> handles the full pipeline — preprocessing, extraction,
+              smoothing, repair, and quality analysis — so your optimization and
+              neural field results are ready for simulation or fabrication.
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <Link
+                href="/docs"
+                className="rounded-md bg-brand-600 px-5 py-2.5 font-[family-name:var(--font-mono)] text-sm font-medium text-white transition-colors hover:bg-brand-700 dark:bg-brand-400 dark:text-brand-900 dark:hover:bg-brand-300"
+              >
+                Get Started
+              </Link>
+              <Link
+                href="/docs/api/process"
+                className="rounded-md border border-fd-border px-5 py-2.5 font-[family-name:var(--font-mono)] text-sm font-medium transition-colors hover:bg-fd-accent"
+              >
+                API Reference
+              </Link>
+            </div>
+          </div>
+          <div className="relative mt-8 max-w-sm justify-self-center lg:mt-0 lg:justify-self-end">
+            {/* Comparison slider */}
+            <ImageCompare
+              beforeSrc="/images/home/hero-before.png"
+              afterSrc="/images/home/hero-after.png"
+              className="rounded-lg border border-fd-border bg-white dark:bg-fd-card/80"
+            />
+            {/* Field inset */}
+            <img
+              src="/images/home/hero-field.png"
+              alt="Input density field"
+              className="absolute bottom-2 right-2 z-10 block w-16"
+            />
+          </div>
         </div>
       </section>
 

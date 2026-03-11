@@ -5,7 +5,7 @@ Usage:
 
 Valid --only values: pipeline_diagram, pipeline_stages, field_types,
     parameter_sensitivity, quality_metrics, hero_overview,
-    quickstart_2d, quickstart_smoothing
+    quickstart_2d, quickstart_smoothing, hero_compare
 """
 
 from __future__ import annotations
@@ -21,6 +21,7 @@ import matplotlib.pyplot as plt
 # Shared constants
 OUTPUT_DIR = Path("website/public/images/guides")
 OUTPUT_DIR_GS = Path("website/public/images/getting-started")
+OUTPUT_DIR_HOME = Path("website/public/images/home")
 DPI = 150
 BG_COLOR = "white"
 
@@ -48,6 +49,7 @@ _STAGE_TEXT = {
 def _ensure_output_dir() -> None:
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     OUTPUT_DIR_GS.mkdir(parents=True, exist_ok=True)
+    OUTPUT_DIR_HOME.mkdir(parents=True, exist_ok=True)
 
 
 # ---------------------------------------------------------------------------
@@ -55,21 +57,22 @@ def _ensure_output_dir() -> None:
 # ---------------------------------------------------------------------------
 
 
-def _pv_screenshot(vertices, faces, color="#88BDE6", zoom=1.0):
+def _pv_screenshot(vertices, faces, color="#88BDE6", zoom=1.0, window_size=None, transparent_bg=False):
     """Render a mesh off-screen and return the image as a numpy array."""
     import numpy as np
     import pyvista as pv
 
+    ws = window_size or [512, 512]
     faces_pv = np.column_stack([np.full(len(faces), 3), faces]).ravel()
     pv_mesh = pv.PolyData(vertices.astype(np.float64), faces_pv)
 
-    pl = pv.Plotter(off_screen=True, window_size=[512, 512])
+    pl = pv.Plotter(off_screen=True, window_size=ws)
     pl.add_mesh(pv_mesh, color=color, show_edges=True, edge_color="black", line_width=0.3)
     pl.camera_position = "iso"
     if zoom != 1.0:
         pl.camera.zoom(zoom)
     pl.set_background(BG_COLOR)
-    img = pl.screenshot(return_img=True)
+    img = pl.screenshot(return_img=True, transparent_background=transparent_bg)
     pl.close()
     return img
 
@@ -665,6 +668,51 @@ def gen_quickstart_smoothing() -> None:
     plt.close(fig)
 
 
+def gen_hero_compare() -> None:
+    """Hero comparison slider images: before mesh, after mesh, input field."""
+    from PIL import Image
+    from xeltofab.io import load_field
+    from xeltofab.preprocess import preprocess
+    from xeltofab.extract import extract
+    from xeltofab.smooth import smooth
+    from xeltofab.state import PipelineParams
+
+    # Use corner model — staircase artifacts are most dramatic
+    state = load_field("data/examples/corner_3d_20x20x20_vf50_sample0.npy")
+    state_pre = preprocess(state)
+    state_ext = extract(state_pre)
+
+    # Before: raw marching cubes mesh
+    img_before = _pv_screenshot(
+        state_ext.vertices, state_ext.faces,
+        window_size=[800, 800], transparent_bg=True,
+    )
+
+    # After: Taubin-smoothed mesh (same camera = iso default)
+    params = PipelineParams(taubin_iterations=30)
+    st_smooth = state_ext.model_copy(update={"params": params})
+    st_smooth = smooth(st_smooth)
+    img_after = _pv_screenshot(
+        st_smooth.best_vertices, st_smooth.faces,
+        window_size=[800, 800], transparent_bg=True,
+    )
+
+    # Save mesh images as RGBA PNG (transparent background)
+    Image.fromarray(img_before).save(OUTPUT_DIR_HOME / "hero-before.png")
+    Image.fromarray(img_after).save(OUTPUT_DIR_HOME / "hero-after.png")
+
+    # Input field: center slice of raw density field
+    field = state.field
+    mid = field.shape[0] // 2
+    fig, ax = plt.subplots(figsize=(4, 4))
+    ax.imshow(field[mid], cmap="viridis", origin="lower")
+    ax.axis("off")
+    fig.patch.set_facecolor(BG_COLOR)
+    fig.savefig(OUTPUT_DIR_HOME / "hero-field.png", dpi=100, bbox_inches="tight",
+                facecolor=BG_COLOR, pad_inches=0.05)
+    plt.close(fig)
+
+
 # ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
@@ -678,6 +726,7 @@ GENERATORS = {
     "hero_overview": gen_hero_overview,
     "quickstart_2d": gen_quickstart_2d,
     "quickstart_smoothing": gen_quickstart_smoothing,
+    "hero_compare": gen_hero_compare,
 }
 
 
