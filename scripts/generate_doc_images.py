@@ -168,52 +168,45 @@ def gen_pipeline_diagram() -> None:
 
     # --- Arrows ---
     arrow_kw = dict(arrowstyle="-|>", color="#555555", lw=1.3)
-    edge = box_hw + dash_gap + 0.05  # clear the dashed outline
+    arrow_gap = 0.1  # clearance between arrow tip and nearest border
+
+    def _box_edge(label, is_terminal=False):
+        """Return half-extent from center to outermost border (including dashed)."""
+        hw = box_hw
+        if not is_terminal and label in optional_stages:
+            hw += dash_gap
+        return hw
 
     # Field → Preprocess (vertical)
-    ax.annotate("", xy=(field_x, edge),
-                xytext=(field_x, field_y - box_hh - 0.05),
+    ax.annotate("",
+                xy=(field_x, _box_edge("Preprocess") + arrow_gap),
+                xytext=(field_x, field_y - box_hh - arrow_gap),
                 arrowprops=arrow_kw)
 
     # Horizontal arrows between stages
     for i in range(len(stages) - 1):
-        ax.annotate("", xy=(stage_x[i + 1] - edge, 0),
-                    xytext=(stage_x[i] + edge, 0),
+        src, dst = stages[i], stages[i + 1]
+        x_start = stage_x[i] + _box_edge(src) + arrow_gap
+        x_end = stage_x[i + 1] - _box_edge(dst) - arrow_gap
+        ax.annotate("", xy=(x_end, 0), xytext=(x_start, 0),
                     arrowprops=arrow_kw)
 
-    # Decimate → Mesh (route from right edge to avoid annotation overlap)
-    ax.annotate("", xy=(mesh_x, mesh_y + box_hh + 0.05),
-                xytext=(mesh_x + edge, 0),
-                arrowprops=dict(arrowstyle="-|>", color="#555555", lw=1.3,
-                                connectionstyle="angle,angleA=0,angleB=90"))
+    # Decimate → Mesh (straight vertical)
+    ax.annotate("",
+                xy=(mesh_x, mesh_y + box_hh + arrow_gap),
+                xytext=(mesh_x, -(_box_edge("Decimate") + arrow_gap)),
+                arrowprops=arrow_kw)
 
-    # --- Legend ---
+    # --- Legend (bottom-left) ---
     leg_x = -0.5
-    leg_y = -row_gap + 0.1
-    # Required stage sample
+    leg_y = -row_gap - 0.1
     ax.add_patch(matplotlib.patches.FancyBboxPatch(
-        (leg_x, leg_y), 0.6, 0.35,
-        boxstyle="round,pad=0.05",
-        facecolor="#3182BD", edgecolor="#333333", linewidth=1.0,
-    ))
-    ax.text(leg_x + 0.75, leg_y + 0.175, "Required", ha="left", va="center",
-            fontsize=7, color="#444444")
-
-    # Optional stage sample (solid box + dashed outline)
-    opt_y = leg_y - 0.55
-    ax.add_patch(matplotlib.patches.FancyBboxPatch(
-        (leg_x, opt_y), 0.6, 0.35,
-        boxstyle="round,pad=0.05",
-        facecolor="#9ECAE1", edgecolor="#333333", linewidth=1.0,
-    ))
-    d = dash_gap
-    ax.add_patch(matplotlib.patches.FancyBboxPatch(
-        (leg_x - d, opt_y - d), 0.6 + d * 2, 0.35 + d * 2,
+        (leg_x, leg_y), 0.7, 0.35,
         boxstyle="round,pad=0.05",
         facecolor="none", edgecolor="#888888", linewidth=1.0, linestyle="--",
     ))
-    ax.text(leg_x + 0.75, opt_y + 0.175, "Optional", ha="left", va="center",
-            fontsize=7, color="#444444")
+    ax.text(leg_x + 0.85, leg_y + 0.175, "= optional stage",
+            ha="left", va="center", fontsize=7, color="#666666")
 
     fig.savefig(OUTPUT_DIR / "pipeline-flow.png", dpi=DPI, bbox_inches="tight",
                 facecolor=BG_COLOR)
