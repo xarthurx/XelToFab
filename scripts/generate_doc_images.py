@@ -55,7 +55,7 @@ def _ensure_output_dir() -> None:
 # ---------------------------------------------------------------------------
 
 
-def _pv_screenshot(vertices, faces, color="#88BDE6"):
+def _pv_screenshot(vertices, faces, color="#88BDE6", zoom=1.0):
     """Render a mesh off-screen and return the image as a numpy array."""
     import numpy as np
     import pyvista as pv
@@ -66,6 +66,8 @@ def _pv_screenshot(vertices, faces, color="#88BDE6"):
     pl = pv.Plotter(off_screen=True, window_size=[512, 512])
     pl.add_mesh(pv_mesh, color=color, show_edges=True, edge_color="black", line_width=0.3)
     pl.camera_position = "iso"
+    if zoom != 1.0:
+        pl.camera.zoom(zoom)
     pl.set_background(BG_COLOR)
     img = pl.screenshot(return_img=True)
     pl.close()
@@ -493,7 +495,7 @@ def gen_hero_overview() -> None:
     mid = field.shape[0] // 2
 
     # Right: final smoothed mesh via pyvista
-    mesh_img = _pv_screenshot(result.best_vertices, result.faces)
+    mesh_img = _pv_screenshot(result.best_vertices, result.faces, zoom=1.4)
 
     # Use gridspec: left panel, center arrow gap, right panel
     fig = plt.figure(figsize=(10, 3.5))
