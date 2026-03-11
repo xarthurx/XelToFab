@@ -30,8 +30,7 @@
       51
     ],
     "field_type": "density",
-    "direct_extraction": false,
-    "processing_time_s": 0.3946
+    "direct_extraction": false
   },
   "heat_cond_51_s1": {
     "ndim": 3,
@@ -64,8 +63,7 @@
       51
     ],
     "field_type": "density",
-    "direct_extraction": false,
-    "processing_time_s": 0.7265
+    "direct_extraction": false
   },
   "thermoelastic_16_s0": {
     "ndim": 3,
@@ -98,8 +96,7 @@
       16
     ],
     "field_type": "density",
-    "direct_extraction": false,
-    "processing_time_s": 0.0768
+    "direct_extraction": false
   },
   "corner_3d_vf50_s0": {
     "ndim": 3,
@@ -132,8 +129,7 @@
       20
     ],
     "field_type": "density",
-    "direct_extraction": false,
-    "processing_time_s": 0.1207
+    "direct_extraction": false
   },
   "corner_3d_vf30_s0": {
     "ndim": 3,
@@ -166,8 +162,7 @@
       20
     ],
     "field_type": "density",
-    "direct_extraction": false,
-    "processing_time_s": 0.125
+    "direct_extraction": false
   },
   "beam_2d_100x200_s0": {
     "ndim": 2,
@@ -179,8 +174,7 @@
       200
     ],
     "field_type": "density",
-    "direct_extraction": false,
-    "processing_time_s": 0.0014
+    "direct_extraction": false
   },
   "synthetic_sphere": {
     "ndim": 3,
@@ -214,8 +208,7 @@
       30
     ],
     "field_type": "density",
-    "direct_extraction": false,
-    "processing_time_s": 0.011
+    "direct_extraction": false
   },
   "synthetic_sphere_sdf": {
     "ndim": 3,
@@ -248,7 +241,6 @@
       30
     ],
     "field_type": "sdf",
-    "direct_extraction": true,
-    "processing_time_s": 0.0667
+    "direct_extraction": true
   }
 }

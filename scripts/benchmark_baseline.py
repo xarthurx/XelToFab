@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
@@ -87,13 +86,12 @@ def _to_pyvista(state: PipelineState):
         return None
 
 
-def compute_metrics(state: PipelineState, elapsed: float, pv_mesh=None) -> dict:
+def compute_metrics(state: PipelineState, pv_mesh=None) -> dict:
     """Compute mesh quality metrics from a processed pipeline state."""
     metrics = compute_quality(state)
     metrics["input_shape"] = list(state.field.shape)
     metrics["field_type"] = state.params.field_type
     metrics["direct_extraction"] = state.params.direct_extraction
-    metrics["processing_time_s"] = round(elapsed, 4)
     return metrics
 
 
@@ -162,8 +160,8 @@ def write_summary(all_metrics: dict, output_dir: Path) -> None:
         "",
         "## 3D Models",
         "",
-        "| Model | Verts | Faces | Watertight | Volume | AR (mean) | Angle (min) | Jac (min) | Time |",
-        "|-------|-------|-------|------------|--------|-----------|-------------|-----------|------|",
+        "| Model | Verts | Faces | Watertight | Volume | AR (mean) | Angle (min) | Jac (min) |",
+        "|-------|-------|-------|------------|--------|-----------|-------------|-----------|",
     ]
 
     for name, m in all_metrics.items():
@@ -176,15 +174,14 @@ def write_summary(all_metrics: dict, output_dir: Path) -> None:
         ar = f"{m['aspect_ratio']['mean']:.2f}" if "aspect_ratio" in m else "—"
         ma = f"{m['min_angle']['min']:.1f} deg" if "min_angle" in m else "—"
         sj = f"{m['scaled_jacobian']['min']:.3f}" if "scaled_jacobian" in m else "—"
-        t = f"{m['processing_time_s']:.3f}"
-        lines.append(f"| {name} | {verts} | {faces} | {watertight} | {volume} | {ar} | {ma} | {sj} | {t} |")
+        lines.append(f"| {name} | {verts} | {faces} | {watertight} | {volume} | {ar} | {ma} | {sj} |")
 
     lines += [
         "",
         "## 2D Models",
         "",
-        "| Model | Contours | Total Points | Volume Fraction | Time (s) |",
-        "|-------|----------|--------------|-----------------|----------|",
+        "| Model | Contours | Total Points | Volume Fraction |",
+        "|-------|----------|--------------|-----------------|",
     ]
 
     for name, m in all_metrics.items():
@@ -193,8 +190,7 @@ def write_summary(all_metrics: dict, output_dir: Path) -> None:
         nc = m.get("num_contours", "—")
         tp = m.get("total_contour_points", "—")
         vf = f"{m['volume_fraction']:.4f}" if "volume_fraction" in m else "—"
-        t = f"{m['processing_time_s']:.3f}"
-        lines.append(f"| {name} | {nc} | {tp} | {vf} | {t} |")
+        lines.append(f"| {name} | {nc} | {tp} | {vf} |")
 
     lines.append("")
     (output_dir / "summary.md").write_text("\n".join(lines))
@@ -230,16 +226,13 @@ def main() -> None:
         print(f"  Input shape: {state.field.shape}, field_type: {model.field_type}")
 
         # Process
-        t0 = time.perf_counter()
         result = process(state)
-        elapsed = time.perf_counter() - t0
-        print(f"  Processed in {elapsed:.3f}s")
 
         # Build pyvista mesh once (reused for metrics + render)
         pv_mesh = _to_pyvista(result) if result.ndim == 3 else None
 
         # Metrics
-        metrics = compute_metrics(result, elapsed, pv_mesh=pv_mesh)
+        metrics = compute_metrics(result, pv_mesh=pv_mesh)
         all_metrics[model.name] = metrics
         if "num_vertices" in metrics:
             print(f"  Mesh: {metrics['num_vertices']} verts, {metrics['num_faces']} faces")

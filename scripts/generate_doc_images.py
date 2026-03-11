@@ -108,6 +108,8 @@ def gen_pipeline_diagram() -> None:
         "Decimate": "decimate_ratio\ndecimate_aggressiveness",
     }
 
+    optional_stages = {"Preprocess", "Repair", "Remesh", "Decimate"}
+
     for label, x in zip(all_labels, all_x, strict=True):
         is_terminal = label in ("Field", "Mesh")
         if is_terminal:
@@ -117,10 +119,11 @@ def gen_pipeline_diagram() -> None:
             ec = "#333333"
             tc = _STAGE_TEXT[label]
 
+        ls = "--" if label in optional_stages else "-"
         ax.add_patch(matplotlib.patches.FancyBboxPatch(
             (x - box_hw, -box_hh), box_hw * 2, box_hh * 2,
             boxstyle="round,pad=0.08",
-            facecolor=fc, edgecolor=ec, linewidth=1.2,
+            facecolor=fc, edgecolor=ec, linewidth=1.2, linestyle=ls,
         ))
         ax.text(x, 0.0, label, ha="center", va="center",
                 fontsize=9 if is_terminal else 8.5, fontweight="bold", color=tc)
@@ -128,7 +131,7 @@ def gen_pipeline_diagram() -> None:
         # Parameter annotation below stage boxes
         if label in param_annotations:
             ax.text(x, -box_hh - 0.35, param_annotations[label],
-                    ha="center", va="top", fontsize=5.5, color="#666666",
+                    ha="center", va="top", fontsize=7, color="#666666",
                     fontstyle="italic")
 
     # Arrows
