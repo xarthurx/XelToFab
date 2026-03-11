@@ -216,3 +216,18 @@ mesh quality, distinguish boundary vs interior faces.
 Images embedded in MDX pages via `<img>` tags. Supports `--only NAME` for selective regeneration.
 
 **Prevention:** For matplotlib figure layout, always use `fig.text()` with explicit coordinates for multi-panel titles instead of `ax.set_title()` — the latter positions relative to each subplot's bounding box, which varies between image types (imshow vs screenshot), causing misalignment.
+
+---
+
+### 2026-03-11 — Website Documentation Illustrations (Tier 2)
+
+**Problem:** Getting Started pages (index, quick-start) had no visual content, making it hard for new users to understand what the tool produces before running code.
+
+**Resolution:** Extended `scripts/generate_doc_images.py` with 3 new generators for the Getting Started section:
+- Hero overview (index): density field → XelToFab → triangle mesh side-by-side
+- 2D comparison (quick-start): input field vs extracted contours
+- Smoothing comparison (quick-start): Taubin vs bilateral on corner model
+
+Images output to `website/public/images/getting-started/` and embedded in MDX pages. Installation page skipped (purely textual content).
+
+**Prevention:** When placing centered labels between matplotlib subplots, `fig.text(0.5, 0.5, ...)` in figure coordinates requires visual tuning after `tight_layout()` — the exact center depends on colorbar presence and axis padding. Always generate and inspect before committing.
