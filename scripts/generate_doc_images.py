@@ -514,7 +514,7 @@ def gen_hero_overview() -> None:
     ax_arrow.set_xlim(0, 1)
     ax_arrow.set_ylim(0, 1)
     ax_arrow.axis("off")
-    ax_arrow.text(0.5, 0.55, "XelToFab", ha="center", va="bottom",
+    ax_arrow.text(0.6, 0.55, "XelToFab", ha="center", va="bottom",
                   fontsize=9, fontweight="bold", color="#1B3A5C",
                   fontstyle="italic")
     ax_arrow.annotate(
