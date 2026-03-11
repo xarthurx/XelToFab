@@ -102,7 +102,7 @@ def gen_pipeline_diagram() -> None:
     total_w = stage_x[-1]
 
     # Terminal positions
-    field_x, field_y = stage_x[0], row_gap
+    field_x, field_y = stage_x[0], row_gap * 0.8  # closer to stages
     mesh_x, mesh_y = stage_x[-1], -row_gap
 
     fig, ax = plt.subplots(figsize=(11, 4.5))
@@ -177,10 +177,10 @@ def gen_pipeline_diagram() -> None:
             hw += dash_gap
         return hw
 
-    # Field → Preprocess (vertical)
+    # Field → Preprocess (vertical): more gap from Field, less from Preprocess
     ax.annotate("",
-                xy=(field_x, _box_edge("Preprocess") + arrow_gap),
-                xytext=(field_x, field_y - box_hh - arrow_gap),
+                xy=(field_x, _box_edge("Preprocess") + arrow_gap * 0.5),
+                xytext=(field_x, field_y - box_hh - arrow_gap * 2),
                 arrowprops=arrow_kw)
 
     # Horizontal arrows between stages
@@ -191,10 +191,10 @@ def gen_pipeline_diagram() -> None:
         ax.annotate("", xy=(x_end, 0), xytext=(x_start, 0),
                     arrowprops=arrow_kw)
 
-    # Decimate → Mesh (straight vertical)
+    # Decimate → Mesh (straight vertical, shortened from top to clear annotation)
     ax.annotate("",
                 xy=(mesh_x, mesh_y + box_hh + arrow_gap),
-                xytext=(mesh_x, -(_box_edge("Decimate") + arrow_gap)),
+                xytext=(mesh_x, mesh_y + box_hh + arrow_gap + 0.6),
                 arrowprops=arrow_kw)
 
     # --- Legend (bottom-left) ---
