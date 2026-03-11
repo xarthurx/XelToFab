@@ -103,13 +103,13 @@ export function ImageCompare({
 
       {/* Labels */}
       <span
-        className="absolute top-3 left-3 rounded bg-black/50 px-2 py-0.5 font-[family-name:var(--font-mono)] text-xs uppercase tracking-widest text-white transition-opacity"
+        className="absolute top-3 left-3 rounded bg-black/50 px-1.5 py-0.5 font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-widest text-white transition-opacity"
         style={{ opacity: position < 20 ? 0 : 1 }}
       >
         {beforeLabel}
       </span>
       <span
-        className="absolute top-3 right-3 rounded bg-black/50 px-2 py-0.5 font-[family-name:var(--font-mono)] text-xs uppercase tracking-widest text-white transition-opacity"
+        className="absolute top-3 right-3 rounded bg-black/50 px-1.5 py-0.5 font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-widest text-white transition-opacity"
         style={{ opacity: position > 80 ? 0 : 1 }}
       >
         {afterLabel}
