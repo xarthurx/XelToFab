@@ -214,3 +214,5 @@ __marimo__/
 website/.next/
 website/node_modules/
 website/.source/
+.vercel
+.env*.local
