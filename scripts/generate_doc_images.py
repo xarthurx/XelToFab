@@ -197,19 +197,21 @@ def gen_pipeline_diagram() -> None:
                 xytext=(mesh_x, mesh_y + box_hh + arrow_gap + 0.6),
                 arrowprops=arrow_kw)
 
-    # --- Legend (bottom-left) ---
-    leg_x = -0.5
-    leg_y = -row_gap - 0.1
+    # --- Legend (bottom-left, aligned with Preprocess dashed outline) ---
+    leg_w = (box_hw + dash_gap) * 2  # same width as dashed outline on stages
+    leg_h = (box_hh + dash_gap) * 2  # same height as dashed outline on stages
+    leg_x = stage_x[0] - box_hw - dash_gap  # left-aligned with Preprocess outline
+    leg_y = mesh_y - box_hh  # bottom-aligned with Mesh box bottom
     ax.add_patch(matplotlib.patches.FancyBboxPatch(
-        (leg_x, leg_y), 0.7, 0.35,
-        boxstyle="round,pad=0.05",
+        (leg_x, leg_y), leg_w, leg_h,
+        boxstyle="round,pad=0.08",
         facecolor="none", edgecolor="#888888", linewidth=1.0, linestyle="--",
     ))
-    ax.text(leg_x + 0.85, leg_y + 0.175, "= optional stage",
+    ax.text(leg_x + leg_w + 0.15, leg_y + leg_h / 2, "= optional stage",
             ha="left", va="center", fontsize=7, color="#666666")
 
     fig.savefig(OUTPUT_DIR / "pipeline-flow.png", dpi=DPI, bbox_inches="tight",
-                facecolor=BG_COLOR)
+                facecolor=BG_COLOR, pad_inches=0.3)
     plt.close(fig)
 
 
