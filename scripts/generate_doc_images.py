@@ -518,9 +518,10 @@ def gen_hero_overview() -> None:
                   fontsize=9, fontweight="bold", color="#1B3A5C",
                   fontstyle="italic")
     ax_arrow.annotate(
-        "", xy=(1.0, 0.46), xytext=(0.0, 0.46),
+        "", xy=(1.1, 0.46), xytext=(0.1, 0.46),
         arrowprops=dict(arrowstyle="-|>", color="#1B3A5C", lw=1.6,
                         mutation_scale=13),
+        annotation_clip=False,
     )
 
     # Right panel: final mesh
