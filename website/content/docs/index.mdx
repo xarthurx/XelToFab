@@ -11,12 +11,12 @@ XelToFab converts scalar design fields into clean, fabrication-ready triangle me
 
 Given a scalar field (a numpy array) from a topology optimization solver, neural network, or other computational design tool, XelToFab:
 
-1. **Preprocesses** the field — Gaussian smoothing, thresholding, morphological cleanup
+1. **Preprocesses** the field *(optional)* — Gaussian smoothing, thresholding, morphological cleanup
 2. **Extracts** geometry — marching cubes (3D → triangle mesh) or marching squares (2D → contours)
 3. **Smooths** the result — Taubin or bilateral filtering to remove staircase artifacts
-4. **Repairs** the mesh — non-manifold fixing for watertight geometry
-5. **Remeshes** for quality — isotropic remeshing for FEA-ready elements
-6. **Decimates** to target — quadric edge collapse to reduce face count
+4. **Repairs** the mesh *(optional)* — non-manifold fixing for watertight geometry
+5. **Remeshes** for quality *(optional)* — isotropic remeshing for FEA-ready elements
+6. **Decimates** to target *(optional)* — quadric edge collapse to reduce face count
 
 <img src="/images/guides/pipeline-flow.png" alt="XelToFab 6-stage pipeline: Preprocess → Extract → Smooth → Repair → Remesh → Decimate" width={800} />
 
