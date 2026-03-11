@@ -53,6 +53,10 @@ function Mesh({ url }: { url: string }) {
       <mesh geometry={geometry}>
         <meshStandardMaterial color="#c4a08a" side={BackSide} />
       </mesh>
+      <lineSegments>
+        <edgesGeometry args={[geometry]} />
+        <lineBasicMaterial color="#2a4060" />
+      </lineSegments>
     </Center>
   );
 }
