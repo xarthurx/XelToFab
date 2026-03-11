@@ -25,9 +25,9 @@
 ## Website Illustrations
 
 - [x] Tier 1 — Guide page illustrations (pipeline diagram, stages, field types, parameters, quality metrics)
-- [x] Tier 2 — Getting Started page illustrations (index, quick-start, installation)
-- [ ] Tier 3 — API + CLI reference page illustrations (example outputs, data flow diagrams)
-- [ ] SVG animation versions of pipeline diagrams (for interactive web experience)
+- [x] Tier 2 — Getting Started page illustrations (index, quick-start)
+- ~~Tier 3 — API + CLI reference page illustrations~~ (dropped — reference pages are inherently textual)
+- [ ] SVG animation versions of pipeline diagrams (nice-to-have, for interactive web experience)
 
 ## Visualization Upgrades
 
