@@ -15,6 +15,8 @@ Given a scalar field (a numpy array) from a topology optimization solver, neural
 2. **Extracts** geometry — marching cubes (3D → triangle mesh) or marching squares (2D → contours)
 3. **Smooths** the result — Taubin filtering to remove staircase artifacts
 
+<img src="/images/guides/pipeline-flow.png" alt="XelToFab 6-stage pipeline: Preprocess → Extract → Smooth → Repair → Remesh → Decimate" width={800} />
+
 ## Key features
 
 - **Multi-format input** — NumPy, MATLAB, VTK, HDF5, CSV

@@ -80,38 +80,49 @@ def _pv_screenshot(vertices, faces, color="#88BDE6", zoom=1.0):
 
 
 def gen_pipeline_diagram() -> None:
-    """Image 1: Horizontal pipeline flow diagram with even spacing and blue palette."""
-    stages = list(STAGE_COLORS.keys())
-    n_stages = len(stages)
-    # Even spacing: 8 elements (Field + 6 stages + Mesh), gap=1.5 between centers
-    gap = 1.5
-    all_labels = ["Field"] + stages + ["Mesh"]
-    all_x = [i * gap for i in range(len(all_labels))]
-    total_w = all_x[-1]
+    """Image 1: 3-row pipeline flow diagram with blue palette.
 
-    fig, ax = plt.subplots(figsize=(12, 2.5))
-    ax.set_xlim(-0.8, total_w + 0.8)
-    ax.set_ylim(-1.2, 1.3)
+    Row 1: Field terminal (top-left)
+    Row 2: 6 pipeline stages with horizontal arrows
+    Row 3: Mesh terminal (bottom-right)
+    Vertical arrows connect Field→row2 and row2→Mesh.
+    Optional stages have a dashed outline offset around the solid box.
+    """
+    stages = list(STAGE_COLORS.keys())
+
+    # Layout constants
+    gap = 1.8        # horizontal gap between stage centers
+    row_gap = 2.0    # vertical gap between row centers
+    box_hw = 0.55    # half-width
+    box_hh = 0.3     # half-height
+    dash_gap = 0.12  # offset between solid box and dashed outline
+
+    # Stage positions (row 2, y=0)
+    stage_x = [i * gap for i in range(len(stages))]
+    total_w = stage_x[-1]
+
+    # Terminal positions
+    field_x, field_y = stage_x[0], row_gap
+    mesh_x, mesh_y = stage_x[-1], -row_gap
+
+    fig, ax = plt.subplots(figsize=(11, 4.5))
+    ax.set_xlim(-1.0, total_w + 1.3)
+    ax.set_ylim(-row_gap - 0.9, row_gap + 0.7)
     ax.set_aspect("equal")
     ax.axis("off")
     fig.patch.set_facecolor(BG_COLOR)
-
-    box_hw = 0.55  # half-width
-    box_hh = 0.3   # half-height
 
     param_annotations = {
         "Preprocess": "threshold\nsmooth_sigma",
         "Extract": "extraction_level",
         "Smooth": "taubin_iterations\nsmoothing_method",
         "Repair": "repair",
-        "Remesh": "target_edge_length\nremesh_iterations",
-        "Decimate": "decimate_ratio\ndecimate_aggressiveness",
+        "Remesh": "edge_length\nremesh_iterations",
+        "Decimate": "decimate_ratio\naggressiveness",
     }
-
     optional_stages = {"Preprocess", "Repair", "Remesh", "Decimate"}
 
-    for label, x in zip(all_labels, all_x, strict=True):
-        is_terminal = label in ("Field", "Mesh")
+    def _draw_box(x, y, label, is_terminal=False):
         if is_terminal:
             fc, ec, tc = "#E8E8E8", "#999999", "#333333"
         else:
@@ -119,28 +130,61 @@ def gen_pipeline_diagram() -> None:
             ec = "#333333"
             tc = _STAGE_TEXT[label]
 
-        ls = "--" if label in optional_stages else "-"
+        # Solid box
         ax.add_patch(matplotlib.patches.FancyBboxPatch(
-            (x - box_hw, -box_hh), box_hw * 2, box_hh * 2,
+            (x - box_hw, y - box_hh), box_hw * 2, box_hh * 2,
             boxstyle="round,pad=0.08",
-            facecolor=fc, edgecolor=ec, linewidth=1.2, linestyle=ls,
+            facecolor=fc, edgecolor=ec, linewidth=1.2,
         ))
-        ax.text(x, 0.0, label, ha="center", va="center",
+        ax.text(x, y, label, ha="center", va="center",
                 fontsize=9 if is_terminal else 8.5, fontweight="bold", color=tc)
 
-        # Parameter annotation below stage boxes
+        # Dashed outline for optional stages (offset around solid box)
+        if label in optional_stages:
+            d = dash_gap
+            ax.add_patch(matplotlib.patches.FancyBboxPatch(
+                (x - box_hw - d, y - box_hh - d),
+                (box_hw + d) * 2, (box_hh + d) * 2,
+                boxstyle="round,pad=0.08",
+                facecolor="none", edgecolor="#888888",
+                linewidth=1.0, linestyle="--",
+            ))
+
+    # --- Row 1: Field terminal ---
+    _draw_box(field_x, field_y, "Field", is_terminal=True)
+
+    # --- Row 2: Pipeline stages ---
+    for i, label in enumerate(stages):
+        _draw_box(stage_x[i], 0, label)
+
+        # Parameter annotation below stage
         if label in param_annotations:
-            ax.text(x, -box_hh - 0.35, param_annotations[label],
+            ax.text(stage_x[i], -box_hh - dash_gap - 0.15, param_annotations[label],
                     ha="center", va="top", fontsize=7, color="#666666",
                     fontstyle="italic")
 
-    # Arrows
-    for i in range(len(all_x) - 1):
-        ax.annotate(
-            "", xy=(all_x[i + 1] - box_hw - 0.05, 0.0),
-            xytext=(all_x[i] + box_hw + 0.05, 0.0),
-            arrowprops=dict(arrowstyle="-|>", color="#555555", lw=1.3),
-        )
+    # --- Row 3: Mesh terminal ---
+    _draw_box(mesh_x, mesh_y, "Mesh", is_terminal=True)
+
+    # --- Arrows ---
+    arrow_kw = dict(arrowstyle="-|>", color="#555555", lw=1.3)
+    edge = box_hw + dash_gap + 0.05  # clear the dashed outline
+
+    # Field → Preprocess (vertical)
+    ax.annotate("", xy=(field_x, edge),
+                xytext=(field_x, field_y - box_hh - 0.05),
+                arrowprops=arrow_kw)
+
+    # Horizontal arrows between stages
+    for i in range(len(stages) - 1):
+        ax.annotate("", xy=(stage_x[i + 1] - edge, 0),
+                    xytext=(stage_x[i] + edge, 0),
+                    arrowprops=arrow_kw)
+
+    # Decimate → Mesh (vertical)
+    ax.annotate("", xy=(mesh_x, mesh_y + box_hh + 0.05),
+                xytext=(mesh_x, -edge),
+                arrowprops=arrow_kw)
 
     fig.savefig(OUTPUT_DIR / "pipeline-flow.png", dpi=DPI, bbox_inches="tight",
                 facecolor=BG_COLOR)
