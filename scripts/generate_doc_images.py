@@ -779,7 +779,7 @@ def gen_extraction_comparison() -> None:
         ax.set_zlim(*zlim)
         ax.set_box_aspect(box_aspect)
     fig.subplots_adjust(left=0.0, right=1.0, bottom=-0.12, top=0.88, wspace=-0.1)
-    fig.savefig(OUTPUT_DIR / "extraction-comparison.png", dpi=DPI, bbox_inches="tight", facecolor=BG_COLOR)
+    fig.savefig(OUTPUT_DIR / "extraction-comparison.png", dpi=DPI, bbox_inches="tight", pad_inches=0.3, facecolor=BG_COLOR)
     plt.close(fig)
 
 
