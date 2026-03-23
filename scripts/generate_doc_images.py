@@ -715,25 +715,48 @@ def gen_hero_compare() -> None:
 # ---------------------------------------------------------------------------
 # CLI
 def _make_bunny_sdf() -> "np.ndarray":
-    """Generate a voxelized SDF of the Stanford bunny via pyvista + distance transform."""
+    """Generate a true signed distance field of the Stanford bunny.
+
+    Uses pyvista's compute_implicit_distance (VTK C++) for accurate signed
+    distance, producing clean gradients that DC's QEF solver needs.
+    Falls back to /tmp/bunny_sdf_true.npy cache if available.
+    """
     import numpy as np
+
+    cache = Path("/tmp/bunny_sdf_true.npy")
+    if cache.exists():
+        return np.load(cache)
+
     import pyvista as pv
     import trimesh as tm
-    from scipy.ndimage import distance_transform_edt
 
     bunny = pv.examples.download_bunny()
     verts = np.asarray(bunny.points)
     faces = np.asarray(bunny.regular_faces)
     center = verts.mean(axis=0)
     extent = verts.max() - verts.min()
-    mesh = tm.Trimesh(vertices=(verts - center) / extent, faces=faces, process=True)
-    # Pad the binary volume so boundary voxels are fully surrounded by exterior,
-    # preventing back-face artifacts at extremities (legs, tail, ears).
-    raw = mesh.voxelized(pitch=1.0 / 120).matrix.astype(float)
-    binary = np.pad(raw, pad_width=3, mode="constant", constant_values=0.0)
-    interior = distance_transform_edt(binary)
-    exterior = distance_transform_edt(1.0 - binary)
-    return exterior - interior
+    verts_norm = (verts - center) / extent
+    mesh = tm.Trimesh(vertices=verts_norm, faces=faces, process=True)
+
+    # Voxelize for grid structure, pad to avoid boundary clipping
+    vox = mesh.voxelized(pitch=1.0 / 120)
+    origin = vox.transform[:3, 3]
+    pitch_val = 1.0 / 120
+    pad = 3
+    shape = tuple(np.array(vox.matrix.shape) + 2 * pad)
+
+    # Build query grid in mesh coordinate space
+    gi, gj, gk = np.mgrid[0 : shape[0], 0 : shape[1], 0 : shape[2]]
+    pts_mesh = (np.stack([gi, gj, gk], axis=-1).reshape(-1, 3).astype(np.float64) - pad) * pitch_val + origin
+
+    # VTK implicit distance (fast C++ signed distance)
+    query = pv.PolyData(pts_mesh)
+    bunny_pv = pv.PolyData(verts_norm, np.column_stack([np.full(len(faces), 3), faces]))
+    query = query.compute_implicit_distance(bunny_pv)
+    sdf = np.asarray(query["implicit_distance"]).reshape(shape)
+
+    np.save(cache, sdf)
+    return sdf
 
 
 def gen_extraction_comparison() -> None:

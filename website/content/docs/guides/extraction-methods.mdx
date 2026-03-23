@@ -39,6 +39,19 @@ All defaults are overridable by explicitly setting the parameter.
 
 The smoothing reduction for DC/SurfNets (bilateral, 5 iterations instead of taubin, 20) prevents post-extraction smoothing from eroding the sharp features that DC recovered.
 
+### Gradient quality matters
+
+DC's QEF solver relies on SDF gradients to determine vertex placement. **The quality of DC output is directly proportional to the quality of the input gradients.** With a proper SDF (e.g., from a neural model or `compute_implicit_distance`), gradients are smooth and consistent, producing clean DC meshes. With a noisy or approximate SDF (e.g., binary voxelization followed by distance transform), gradients are noisy and DC can produce rougher surfaces than MC.
+
+| SDF source | Gradient quality | DC result |
+|---|---|---|
+| Neural SDF (DeepSDF, NITO) | Smooth (learned) | Excellent — DC > MC |
+| Analytic SDF (sphere, box) | Exact | Excellent — DC preserves sharp features |
+| Mesh → signed distance (VTK) | Good | Good — DC ≈ MC |
+| Binary voxelization → EDT | Poor (staircase) | Poor — DC < MC |
+
+**Recommendation:** If your SDF comes from a binary voxelization or distance transform, use `surfnets` (robust averaging) or `mc` instead of `dc`.
+
 ## GPU acceleration
 
 DC extraction supports GPU acceleration via the [isoext](https://github.com/GuangyanCai/isoext) backend, which is auto-detected when available. The GPU path uses the same QEF-based Dual Contouring algorithm but runs the grid intersection and vertex placement on the GPU via CUDA.
@@ -96,11 +109,11 @@ Stanford bunny extracted with Marching Cubes (left) vs Dual Contouring (right). 
 
 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 my-6">
   <div>
-    <p className="text-center font-semibold mb-2">Marching Cubes (30K verts)</p>
+    <p className="text-center font-semibold mb-2">Marching Cubes (15.5K verts)</p>
     <MeshViewer src="/models/bunny_mc.stl" height={400} cameraDistance={55} fov={35} />
   </div>
   <div>
-    <p className="text-center font-semibold mb-2">Dual Contouring (28K verts)</p>
+    <p className="text-center font-semibold mb-2">Dual Contouring (15.4K verts)</p>
     <MeshViewer src="/models/bunny_dc.stl" height={400} cameraDistance={55} fov={35} />
   </div>
 </div>
