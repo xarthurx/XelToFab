@@ -1,0 +1,144 @@
+---
+title: Extraction Methods
+description: Choosing between Marching Cubes, Dual Contouring, Surface Nets, and manifold3d
+---
+
+## Overview
+
+XelToFab supports four mesh extraction methods, each with different trade-offs for sharp feature preservation, manifold guarantees, and performance:
+
+| Method | Backend | Sharp Features | Manifold | GPU | Best For |
+|--------|---------|---------------|----------|-----|----------|
+| `mc` | scikit-image | No | Generally yes | No | Density fields, general use |
+| `dc` | sdftoolbox (CPU) / isoext (GPU) | Yes (QEF) | No | Yes | SDF fields with sharp features |
+| `surfnets` | sdftoolbox | No (smoother) | No | No | SDF fields, smooth output |
+| `manifold` | manifold3d | No | Watertight by design | No | FEA/CAD workflows, neural SDFs |
+
+## Smart defaults
+
+The pipeline auto-selects extraction methods based on field type:
+
+- **SDF fields** (`field_type="sdf"`) auto-select `dc` (Dual Contouring) to leverage gradient information
+- **Density fields** (`field_type="density"`) keep `mc` (Marching Cubes) as the default
+
+When DC or Surface Nets are selected, the smoothing parameters are also adjusted:
+- `smoothing_method` switches to `bilateral` (feature-preserving)
+- `taubin_iterations` reduces to `5` (from 20 for MC)
+
+All defaults are overridable by explicitly setting the parameter.
+
+## Dual Contouring and sharp features
+
+<img src="/images/guides/extraction-comparison.png" alt="Comparison: Marching Cubes rounds corners, Dual Contouring preserves sharp edges, Surface Nets produces smooth output" width={800} />
+
+**Marching Cubes** places vertices on voxel edges via linear interpolation. This means sharp corners and edges are always rounded — MC cannot represent features sharper than a voxel.
+
+**Dual Contouring** places one vertex per active voxel using a QEF (Quadric Error Function) solver. The QEF finds the point where tangent planes (derived from the SDF gradient) intersect, allowing DC to reconstruct sharp corners and edges that MC misses. This is why DC is the default for SDF fields.
+
+**Surface Nets** places vertices at the centroid of edge crossings per voxel. This produces smoother results than MC's staircase pattern, but doesn't preserve sharp features like DC.
+
+The smoothing reduction for DC/SurfNets (bilateral, 5 iterations instead of taubin, 20) prevents post-extraction smoothing from eroding the sharp features that DC recovered.
+
+## GPU acceleration
+
+DC extraction supports GPU acceleration via the [isoext](https://github.com/GuangyanCai/isoext) backend, which is auto-detected when available.
+
+**Benchmark** (measured on NVIDIA RTX 5080 — results will vary by GPU):
+
+| Grid | GPU | CPU | Speedup |
+|------|-----|-----|---------|
+| 100^3 | 0.021s | 0.380s | 18x |
+| 500^3 | 1.36s | 38.68s | 28x |
+
+Install the GPU backend:
+
+```bash
+uv sync --extra cuda  # requires CUDA toolkit + PyTorch
+```
+
+If the GPU is unavailable, DC automatically falls back to the CPU implementation with a warning:
+
+```
+UserWarning: GPU DC unavailable (...), falling back to CPU
+```
+
+## manifold3d
+
+The `manifold` method uses [manifold3d](https://github.com/elalish/manifold)'s marching tetrahedra on a body-centered cubic grid. Its output is watertight by design, so the pipeline auto-skips the repair stage.
+
+**Trade-offs:**
+- Slower for pre-computed grid data (8-88x vs MC) due to Python callback overhead
+- No sharp feature preservation (vertices placed on tetrahedra edges)
+- Excellent for callable neural SDF functions (no callback overhead)
+
+Install:
+
+```bash
+uv sync --extra manifold
+```
+
+## When to use each method
+
+- **Density field from a TO solver** → `mc` (default, no action needed)
+- **SDF with sharp edges/corners** → `dc` (auto-selected for SDF fields)
+- **SDF wanting smooth output** → `surfnets`
+- **Need guaranteed watertight mesh for FEA** → `manifold`
+- **Large grid + GPU available** → `dc` (auto-uses GPU when isoext is installed)
+
+## Interactive comparison
+
+Cube extracted with Marching Cubes (left) vs Dual Contouring (right). Notice how DC preserves the sharp edges and corners:
+
+<div className="grid grid-cols-1 md:grid-cols-2 gap-4 my-6">
+  <div>
+    <p className="text-center font-semibold mb-2">Marching Cubes</p>
+    <MeshViewer src="/models/cube_mc.stl" height={350} cameraDistance={40} fov={35} />
+  </div>
+  <div>
+    <p className="text-center font-semibold mb-2">Dual Contouring</p>
+    <MeshViewer src="/models/cube_dc.stl" height={350} cameraDistance={40} fov={35} />
+  </div>
+</div>
+
+## Examples
+
+### Python API
+
+```python
+from xeltofab.state import PipelineParams, PipelineState
+from xeltofab.pipeline import process
+
+# SDF field → auto-selects DC with bilateral smoothing
+params = PipelineParams(field_type="sdf")
+state = PipelineState(field=sdf_array, params=params)
+result = process(state)
+
+# Explicit Surface Nets
+params = PipelineParams(extraction_method="surfnets")
+
+# Guaranteed watertight output
+params = PipelineParams(extraction_method="manifold")
+
+# Override DC smoothing defaults
+params = PipelineParams(
+    field_type="sdf",
+    taubin_iterations=20,       # back to full smoothing
+    smoothing_method="taubin",  # override bilateral
+)
+```
+
+### CLI
+
+```bash
+# SDF field → auto DC
+xtf process neural_sdf.npy -o mesh.stl --field-type sdf
+
+# Explicit extraction method
+xtf process field.npy -o mesh.stl --extraction-method dc
+
+# Manifold output
+xtf process sdf.npy -o mesh.stl --extraction-method manifold --field-type sdf
+
+# Surface Nets
+xtf process sdf.npy -o mesh.stl --extraction-method surfnets --field-type sdf
+```
