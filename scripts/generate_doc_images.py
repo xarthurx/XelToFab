@@ -755,20 +755,21 @@ def gen_extraction_comparison() -> None:
         ("Dual Contouring", dc_v, dc_f),
         ("Surface Nets", sn_v, sn_f),
     ]
-    # Tight per-axis bounds with small padding
+    # Tight bounds — zoom in by reducing padding
     all_v = np.vstack([mc_v, dc_v, sn_v])
-    pad = 1
     # After Y↔Z swap: plot X=axis0 (length), Y=axis2 (width), Z=axis1 (height)
-    xlim = (all_v[:, 0].min() - pad, all_v[:, 0].max() + pad)
-    ylim = (all_v[:, 2].min() - pad, all_v[:, 2].max() + pad)
-    zlim = (all_v[:, 1].min() - pad, all_v[:, 1].max() + pad)
+    xlim = (all_v[:, 0].min(), all_v[:, 0].max())
+    ylim = (all_v[:, 2].min(), all_v[:, 2].max())
+    zlim = (all_v[:, 1].min(), all_v[:, 1].max())
     ranges = np.array([xlim[1] - xlim[0], ylim[1] - ylim[0], zlim[1] - zlim[0]])
     box_aspect = ranges / ranges.max()
     for i, (name, v, f) in enumerate(methods):
         ax = fig.add_subplot(1, 3, i + 1, projection="3d")
         # Swap Y↔Z so bunny height (axis 1) maps to matplotlib's vertical (Z)
+        # Lighter face color + darker edges for better mesh detail visibility
         ax.plot_trisurf(
-            v[:, 0], v[:, 2], v[:, 1], triangles=f, color="#3182BD", edgecolor="#1a1a1a", linewidth=0.02, alpha=0.95
+            v[:, 0], v[:, 2], v[:, 1], triangles=f,
+            color="#6BAED6", edgecolor="#2a2a2a", linewidth=0.03, alpha=0.95,
         )
         ax.set_title(f"{name}\n({v.shape[0]:,} verts, {f.shape[0]:,} faces)", fontsize=12, fontweight="bold")
         ax.view_init(elev=30, azim=-60)
@@ -777,7 +778,7 @@ def gen_extraction_comparison() -> None:
         ax.set_ylim(*ylim)
         ax.set_zlim(*zlim)
         ax.set_box_aspect(box_aspect)
-    fig.subplots_adjust(left=0.0, right=1.0, bottom=-0.05, top=0.82, wspace=-0.1)
+    fig.subplots_adjust(left=0.0, right=1.0, bottom=-0.12, top=0.88, wspace=-0.1)
     fig.savefig(OUTPUT_DIR / "extraction-comparison.png", dpi=DPI, bbox_inches="tight", facecolor=BG_COLOR)
     plt.close(fig)
 
