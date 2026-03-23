@@ -727,8 +727,10 @@ def _make_bunny_sdf() -> "np.ndarray":
     center = verts.mean(axis=0)
     extent = verts.max() - verts.min()
     mesh = tm.Trimesh(vertices=(verts - center) / extent, faces=faces, process=True)
-    # pitch=1.0/150 gives enough margin around the bunny to avoid boundary clipping
-    binary = mesh.voxelized(pitch=1.0 / 150).matrix.astype(float)
+    # Pad the binary volume so boundary voxels are fully surrounded by exterior,
+    # preventing back-face artifacts at extremities (legs, tail, ears).
+    raw = mesh.voxelized(pitch=1.0 / 120).matrix.astype(float)
+    binary = np.pad(raw, pad_width=3, mode="constant", constant_values=0.0)
     interior = distance_transform_edt(binary)
     exterior = distance_transform_edt(1.0 - binary)
     return exterior - interior
