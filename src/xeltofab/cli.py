@@ -107,8 +107,6 @@ def process_cmd(
     except (ValueError, KeyError, ImportError) as e:
         raise click.ClickException(str(e)) from None
 
-    import matplotlib.pyplot as plt
-
     state = process(state)
     try:
         save_mesh(state, output_path)
@@ -117,6 +115,8 @@ def process_cmd(
     click.echo(f"Saved mesh to {output_path}")
 
     if viz:
+        import matplotlib.pyplot as plt
+
         fig = plot_comparison(state)
         viz_path = output_path.with_suffix(".png")
         fig.savefig(viz_path, dpi=150)

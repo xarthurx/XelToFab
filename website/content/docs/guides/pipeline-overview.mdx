@@ -139,7 +139,7 @@ For 2D contours, this is a no-op.
 
 ### Remesh (`remesh.py`)
 
-Isotropic remeshing via [`gpytoolbox.remesh_botsch`](https://gpytoolbox.org/) (Botsch & Kobbelt algorithm). Replaces the marching cubes triangulation with uniform, well-shaped triangles. After remeshing, 99%+ of faces meet FEA quality targets (min angle >20°).
+Isotropic remeshing via [`gpytoolbox.remesh_botsch`](https://gpytoolbox.org/) (Botsch & Kobbelt algorithm). Replaces the extraction triangulation with uniform, well-shaped triangles. After remeshing, 99%+ of faces meet FEA quality targets (min angle >20°).
 
 Configurable via `target_edge_length` (default: auto from mesh bounding box) and `remesh_iterations` (default: 10). Enabled by default; disable with `remesh=False` or `--no-remesh`.
 

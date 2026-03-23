@@ -27,6 +27,7 @@ class PipelineParams(BaseModel):
     extraction_level: float | None = None
 
     # Mesh repair (3D only, requires pymeshlab)
+    # Manifold extraction guarantees watertight output — repair is auto-skipped.
     repair: bool = True
 
     # Isotropic remeshing (3D only, requires gpytoolbox)
@@ -64,6 +65,11 @@ class PipelineParams(BaseModel):
             if "smoothing_method" not in explicitly_set:
                 self.smoothing_method = "bilateral"
         return self
+
+    @property
+    def needs_repair(self) -> bool:
+        """Whether the extraction method requires post-extraction repair."""
+        return self.repair and self.extraction_method not in ("manifold",)
 
     @property
     def effective_extraction_level(self) -> float:

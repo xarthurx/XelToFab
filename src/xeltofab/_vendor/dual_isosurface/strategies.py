@@ -81,8 +81,8 @@ class DualContouringVertexStrategy(DualVertexStrategy):
         # Interpolate gradients at edge intersection points
         normals = self._interpolate_gradients(points, gradients, grid)  # (M, 12, 3)
 
-        # Compute bias vertices (naive surface net solution)
-        bias_verts = NaiveSurfaceNetVertexStrategy().find_vertex_locations(active_voxels, edge_coords, gradients, grid)
+        # Bias toward centroid of edge intersections (same as surface nets, no recomputation)
+        bias_verts = np.nanmean(points, axis=1)  # (M, 3)
 
         verts = []
         for off, p, n, bias in zip(sijk, points, normals, bias_verts, strict=False):

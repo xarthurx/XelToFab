@@ -22,8 +22,7 @@ def process(state: PipelineState) -> PipelineState:
         state = preprocess(state)
     state = extract(state)
     state = smooth(state)
-    # manifold3d output is guaranteed watertight — skip repair to avoid degradation
-    if state.params.extraction_method != "manifold":
+    if state.params.needs_repair:
         state = repair(state)
     state = remesh(state)
     state = decimate(state)

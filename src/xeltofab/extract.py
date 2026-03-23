@@ -13,6 +13,9 @@ from skimage.measure import find_contours, marching_cubes
 
 from xeltofab.state import PipelineState
 
+# Cached GPU availability — avoids repeated torch import on CPU-only machines
+_gpu_dc_available: bool | None = None
+
 
 def extract(state: PipelineState) -> PipelineState:
     """Extract mesh (3D) or contours (2D).
@@ -54,16 +57,18 @@ def extract(state: PipelineState) -> PipelineState:
     return result
 
 
-def _require_repair_for_non_manifold(state: PipelineState) -> None:
-    """Require pymeshlab for DC/surfnets (can produce non-manifold output)."""
+def _warn_repair_recommended(state: PipelineState) -> None:
+    """Warn if DC/surfnets is used with repair disabled and pymeshlab unavailable."""
+    if not state.params.needs_repair:
+        return
     try:
         import pymeshlab  # noqa: F401
     except ImportError:
-        raise ImportError(
-            f"pymeshlab is required for extraction_method='{state.params.extraction_method}' "
-            "(DC/surfnets can produce non-manifold output that needs repair). "
-            "Install with: uv sync --extra mesh-quality"
-        ) from None
+        warnings.warn(
+            f"pymeshlab not installed — extraction_method='{state.params.extraction_method}' "
+            "can produce non-manifold output. Install with: uv sync --extra mesh-quality",
+            stacklevel=3,
+        )
 
 
 def _extract_2d(state: PipelineState, field: np.ndarray, level: float) -> PipelineState:
@@ -84,16 +89,20 @@ def _extract_3d_dc(state: PipelineState, field: np.ndarray, level: float) -> Pip
     Tries GPU-accelerated isoext if available, falls back to vendored CPU implementation.
     Requires pymeshlab for repair of non-manifold output.
     """
-    _require_repair_for_non_manifold(state)
-    shifted = field - level  # shift so isosurface is at zero
+    _warn_repair_recommended(state)
+    shifted = field - level
 
-    try:
-        return _extract_3d_dc_gpu(state, shifted)
-    except (ImportError, RuntimeError) as e:
-        warnings.warn(
-            f"GPU DC unavailable ({e!r}), falling back to CPU",
-            stacklevel=2,
-        )
+    global _gpu_dc_available  # noqa: PLW0603
+    if _gpu_dc_available is not False:
+        try:
+            result = _extract_3d_dc_gpu(state, shifted)
+            _gpu_dc_available = True
+            return result
+        except ImportError as e:
+            _gpu_dc_available = False
+            warnings.warn(f"GPU DC unavailable ({e!r}), falling back to CPU", stacklevel=2)
+        except RuntimeError as e:
+            warnings.warn(f"GPU DC failed ({e!r}), falling back to CPU", stacklevel=2)
 
     from xeltofab._vendor.dual_isosurface import dual_isosurface
 
@@ -124,6 +133,7 @@ def _extract_3d_dc_gpu(state: PipelineState, shifted_field: np.ndarray) -> Pipel
     its = isoext.get_intersection(grid, level=0.0)
     verts_t, faces_t = isoext.dual_contouring(grid, its, level=0.0)
     if verts_t is None or (hasattr(verts_t, "shape") and verts_t.shape[0] == 0):
+        # Return empty arrays — the caller's empty-mesh guard will raise
         return state.model_copy(
             update={"vertices": np.empty((0, 3), dtype=np.float64), "faces": np.empty((0, 3), dtype=np.int64)}
         )
@@ -134,7 +144,7 @@ def _extract_3d_dc_gpu(state: PipelineState, shifted_field: np.ndarray) -> Pipel
 
 def _extract_3d_surfnets(state: PipelineState, field: np.ndarray, level: float) -> PipelineState:
     """Extract triangle mesh using Naive Surface Nets (centroid vertex placement)."""
-    _require_repair_for_non_manifold(state)
+    _warn_repair_recommended(state)
     shifted = field - level
 
     from xeltofab._vendor.dual_isosurface import dual_isosurface

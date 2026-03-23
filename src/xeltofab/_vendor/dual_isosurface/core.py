@@ -71,13 +71,13 @@ def dual_isosurface(
     sijk = grid.get_all_source_vertices()
     si, sj, sk = sijk.T
     sdf_src = padded_sdf[si, sj, sk]
+    src_sign = np.sign(sdf_src)
 
     for aidx, off in enumerate(np.eye(3, dtype=np.int32)):
         tijk = sijk + off[None, :]
         ti, tj, tk = tijk.T
         sdf_dst = padded_sdf[ti, tj, tk]
 
-        src_sign = np.sign(sdf_src)
         dst_sign = np.sign(sdf_dst)
         active = (src_sign != dst_sign) & np.isfinite(sdf_dst)
 
