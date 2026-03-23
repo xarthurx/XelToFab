@@ -179,7 +179,7 @@ def _extract_3d_manifold(state: PipelineState, field: np.ndarray, level: float) 
     # For density fields (values 0-1, level=0.5): inside = field > level → (field - level) > 0
     # So for density: no negation needed. For SDF (negative inside): negate.
     is_sdf = state.params.field_type == "sdf"
-    _pt = np.zeros((1, 3))
+    _pt = np.zeros((1, 3))  # pre-allocated scratch — manifold3d calls sdf_func serially
 
     def sdf_func(x_val: float, y_val: float, z_val: float) -> float:
         _pt[0] = (z_val, y_val, x_val)  # manifold3d passes (x,y,z), our grid is (z,y,x)

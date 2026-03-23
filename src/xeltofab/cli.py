@@ -36,14 +36,19 @@ def _build_params(
     This preserves PipelineParams smart defaults (e.g., SDF auto-enables
     direct extraction and disables Gaussian smoothing, SDF auto-selects DC).
     """
-    kwargs: dict = {"threshold": threshold, "field_type": field_type, "smoothing_method": smoothing}
+    kwargs: dict = {"field_type": field_type}
     source = click.core.ParameterSource.COMMANDLINE
+    # Only pass values explicitly set on CLI — preserve PipelineParams smart defaults
+    if ctx.get_parameter_source("threshold") == source:
+        kwargs["threshold"] = threshold
     if ctx.get_parameter_source("sigma") == source:
         kwargs["smooth_sigma"] = sigma
     if ctx.get_parameter_source("direct") == source:
         kwargs["direct_extraction"] = direct
     if ctx.get_parameter_source("extraction_method") == source:
         kwargs["extraction_method"] = extraction_method
+    if ctx.get_parameter_source("smoothing") == source:
+        kwargs["smoothing_method"] = smoothing
     if no_repair:
         kwargs["repair"] = False
     if no_remesh:

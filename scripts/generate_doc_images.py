@@ -713,13 +713,29 @@ def gen_hero_compare() -> None:
 
 
 # ---------------------------------------------------------------------------
-# CLI
+
+
+def _shrink_bounds(vals: "np.ndarray", shrink: float = 0.08) -> tuple[float, float]:
+    """Shrink axis limits inward to crop empty space around geometry."""
+    span = vals.max() - vals.min()
+    return (vals.min() + span * shrink, vals.max() - span * shrink)
+
+
+# ---------------------------------------------------------------------------
+# Bunny SDF generators — cached to avoid recomputation when running multiple generators
+
+_bunny_sdf_edt_cache: "np.ndarray | None" = None
+
+
 def _make_bunny_sdf_edt() -> "np.ndarray":
     """Generate a bunny SDF via binary voxelization + EDT (noisy gradients).
 
     This produces noisy gradients that degrade DC quality — useful for showing
-    the visual difference between extraction methods.
+    the visual difference between extraction methods. Cached within a session.
     """
+    global _bunny_sdf_edt_cache  # noqa: PLW0603
+    if _bunny_sdf_edt_cache is not None:
+        return _bunny_sdf_edt_cache
     import numpy as np
     import pyvista as pv
     import trimesh as tm
@@ -733,7 +749,8 @@ def _make_bunny_sdf_edt() -> "np.ndarray":
     mesh = tm.Trimesh(vertices=(verts - center) / extent, faces=faces, process=True)
     raw = mesh.voxelized(pitch=1.0 / 120).matrix.astype(float)
     binary = np.pad(raw, pad_width=3, mode="constant", constant_values=0.0)
-    return distance_transform_edt(1.0 - binary) - distance_transform_edt(binary)
+    _bunny_sdf_edt_cache = distance_transform_edt(1.0 - binary) - distance_transform_edt(binary)
+    return _bunny_sdf_edt_cache
 
 
 def _make_bunny_sdf_true() -> "np.ndarray":
@@ -773,16 +790,9 @@ def gen_extraction_comparison() -> None:
         ("Dual Contouring", dc_v, dc_f),
         ("Surface Nets", sn_v, sn_f),
     ]
-    # Zoom: shrink axis limits inward to crop empty space around the bunny
     all_v = np.vstack([mc_v, dc_v, sn_v])
-    # After Y↔Z swap: plot X=axis0 (length), Y=axis2 (width), Z=axis1 (height)
-    shrink = 0.08  # fraction to crop from each side
-    def _tight(vals: "np.ndarray") -> tuple[float, float]:
-        span = vals.max() - vals.min()
-        return (vals.min() + span * shrink, vals.max() - span * shrink)
-
-    xlim = _tight(all_v[:, 0])
-    ylim = _tight(all_v[:, 2])
+    xlim = _shrink_bounds(all_v[:, 0])
+    ylim = _shrink_bounds(all_v[:, 2])
     zlim = _tight(all_v[:, 1])
     ranges = np.array([xlim[1] - xlim[0], ylim[1] - ylim[0], zlim[1] - zlim[0]])
     box_aspect = ranges / ranges.max()
@@ -855,15 +865,9 @@ def gen_extraction_gradient_quality() -> None:
 
     fig = plt.figure(figsize=(10, 7), facecolor=BG_COLOR)
     all_v = np.vstack([dc_edt_v, dc_true_v])
-    shrink = 0.08
-
-    def _tight(vals: "np.ndarray") -> tuple[float, float]:
-        span = vals.max() - vals.min()
-        return (vals.min() + span * shrink, vals.max() - span * shrink)
-
-    xlim = _tight(all_v[:, 0])
-    ylim = _tight(all_v[:, 2])
-    zlim = _tight(all_v[:, 1])
+    xlim = _shrink_bounds(all_v[:, 0])
+    ylim = _shrink_bounds(all_v[:, 2])
+    zlim = _shrink_bounds(all_v[:, 1])
     ranges = np.array([xlim[1] - xlim[0], ylim[1] - ylim[0], zlim[1] - zlim[0]])
     box_aspect = ranges / ranges.max()
 

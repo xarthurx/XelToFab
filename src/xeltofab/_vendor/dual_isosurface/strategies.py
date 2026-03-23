@@ -62,6 +62,8 @@ class DualContouringVertexStrategy(DualVertexStrategy):
     def __init__(self, bias_strength: float = 1e-5):
         self.bias_strength = bias_strength
         self.sqrt_bias_strength = np.sqrt(self.bias_strength)
+        # Precompute bias regularization matrix (reused per voxel in _solve_lst)
+        self._bias_C = np.eye(3, dtype=float_dtype) * self.sqrt_bias_strength
 
     def find_vertex_locations(
         self,
@@ -150,9 +152,8 @@ class DualContouringVertexStrategy(DualVertexStrategy):
         b = (q[:, None, :] @ n[..., None]).reshape(-1)
 
         if self.bias_strength > 0.0:
-            C = np.eye(3, dtype=A.dtype) * self.sqrt_bias_strength
             d = bias * self.sqrt_bias_strength
-            A = np.concatenate((A, C), 0)
+            A = np.concatenate((A, self._bias_C), 0)
             b = np.concatenate((b, d), 0)
 
         x, _, _, _ = np.linalg.lstsq(A.astype(float), b.astype(float), rcond=None)
