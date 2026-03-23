@@ -606,11 +606,10 @@ def gen_quickstart_2d() -> None:
     fig, (ax_in, ax_out) = plt.subplots(1, 2, figsize=(10, 3.2))
     fig.patch.set_facecolor(BG_COLOR)
 
-    # Left: raw input field
-    im = ax_in.imshow(state.field, cmap="YlOrRd", origin="lower", vmin=0, vmax=1)
+    # Left: raw input field (no colorbar — keeps both panels equal size)
+    ax_in.imshow(state.field, cmap="YlOrRd", origin="lower", vmin=0, vmax=1)
     ax_in.set_title("Input Field", fontsize=11, fontweight="bold")
     ax_in.axis("off")
-    fig.colorbar(im, ax=ax_in, fraction=0.046, pad=0.04)
 
     # Right: field with extracted contours overlaid
     ax_out.imshow(state.field, cmap="YlOrRd", origin="lower", vmin=0, vmax=1)
@@ -747,26 +746,34 @@ def gen_extraction_comparison() -> None:
     dc_v, dc_f = dual_isosurface(sdf, vertex_strategy="dc")
     sn_v, sn_f = dual_isosurface(sdf, vertex_strategy="surfnets")
 
-    fig = plt.figure(figsize=(16, 5.5), facecolor=BG_COLOR)
+    fig = plt.figure(figsize=(15, 7), facecolor=BG_COLOR)
     methods = [
         ("Marching Cubes", mc_v, mc_f),
         ("Dual Contouring", dc_v, dc_f),
         ("Surface Nets", sn_v, sn_f),
     ]
+    # Tight per-axis bounds with small padding
     all_v = np.vstack([mc_v, dc_v, sn_v])
-    margin = 2
+    pad = 1
+    xlim = (all_v[:, 0].min() - pad, all_v[:, 0].max() + pad)
+    ylim = (all_v[:, 1].min() - pad, all_v[:, 1].max() + pad)
+    zlim = (all_v[:, 2].min() - pad, all_v[:, 2].max() + pad)
+    # Compute box aspect from actual data ranges
+    ranges = np.array([xlim[1] - xlim[0], ylim[1] - ylim[0], zlim[1] - zlim[0]])
+    box_aspect = ranges / ranges.max()
     for i, (name, v, f) in enumerate(methods):
         ax = fig.add_subplot(1, 3, i + 1, projection="3d")
         ax.plot_trisurf(
-            v[:, 2], v[:, 0], v[:, 1], triangles=f, color="#3182BD", edgecolor="#1a1a1a", linewidth=0.02, alpha=0.95
+            v[:, 0], v[:, 1], v[:, 2], triangles=f, color="#3182BD", edgecolor="#1a1a1a", linewidth=0.02, alpha=0.95
         )
         ax.set_title(f"{name}\n({v.shape[0]:,} verts, {f.shape[0]:,} faces)", fontsize=12, fontweight="bold")
-        ax.view_init(elev=20, azim=-45)
+        ax.view_init(elev=25, azim=-70)
         ax.set_axis_off()
-        ax.set_xlim(all_v[:, 2].min() - margin, all_v[:, 2].max() + margin)
-        ax.set_ylim(all_v[:, 0].min() - margin, all_v[:, 0].max() + margin)
-        ax.set_zlim(all_v[:, 1].min() - margin, all_v[:, 1].max() + margin)
-    fig.tight_layout(pad=1.0)
+        ax.set_xlim(*xlim)
+        ax.set_ylim(*ylim)
+        ax.set_zlim(*zlim)
+        ax.set_box_aspect(box_aspect)
+    fig.subplots_adjust(left=0.0, right=1.0, bottom=-0.05, top=0.88, wspace=-0.1)
     fig.savefig(OUTPUT_DIR / "extraction-comparison.png", dpi=DPI, bbox_inches="tight", facecolor=BG_COLOR)
     plt.close(fig)
 
