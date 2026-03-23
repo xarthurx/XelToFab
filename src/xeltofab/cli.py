@@ -29,11 +29,12 @@ def _build_params(
     no_remesh: bool,
     no_decimate: bool,
     smoothing: str,
+    extraction_method: str,
 ) -> PipelineParams:
     """Build PipelineParams, only passing values explicitly set by the user.
 
     This preserves PipelineParams smart defaults (e.g., SDF auto-enables
-    direct extraction and disables Gaussian smoothing).
+    direct extraction and disables Gaussian smoothing, SDF auto-selects DC).
     """
     kwargs: dict = {"threshold": threshold, "field_type": field_type, "smoothing_method": smoothing}
     source = click.core.ParameterSource.COMMANDLINE
@@ -41,6 +42,8 @@ def _build_params(
         kwargs["smooth_sigma"] = sigma
     if ctx.get_parameter_source("direct") == source:
         kwargs["direct_extraction"] = direct
+    if ctx.get_parameter_source("extraction_method") == source:
+        kwargs["extraction_method"] = extraction_method
     if no_repair:
         kwargs["repair"] = False
     if no_remesh:
@@ -68,6 +71,8 @@ def main() -> None:
 @click.option("--no-remesh", is_flag=True, help="Disable isotropic remeshing")
 @click.option("--no-decimate", is_flag=True, help="Disable QEM mesh decimation")
 @click.option("--smoothing", type=click.Choice(["taubin", "bilateral"]), default="taubin", help="Mesh smoothing method")
+@click.option("--extraction-method", type=click.Choice(["mc", "dc", "surfnets", "manifold"]), default="mc",
+              help="Mesh extraction algorithm (mc=marching cubes, dc=dual contouring, surfnets=surface nets, manifold=manifold3d)")
 @click.option("--viz", is_flag=True, help="Save a comparison visualization alongside the mesh")
 @click.pass_context
 def process_cmd(
@@ -84,10 +89,11 @@ def process_cmd(
     no_remesh: bool,
     no_decimate: bool,
     smoothing: str,
+    extraction_method: str,
     viz: bool,
 ) -> None:
     """Process a scalar field into a mesh."""
-    params = _build_params(ctx, threshold, sigma, field_type, direct, no_repair, no_remesh, no_decimate, smoothing)
+    params = _build_params(ctx, threshold, sigma, field_type, direct, no_repair, no_remesh, no_decimate, smoothing, extraction_method)
     shape = _parse_shape(shape_str) if shape_str else None
 
     try:
@@ -125,6 +131,8 @@ def process_cmd(
 @click.option("--no-remesh", is_flag=True, help="Disable isotropic remeshing")
 @click.option("--no-decimate", is_flag=True, help="Disable QEM mesh decimation")
 @click.option("--smoothing", type=click.Choice(["taubin", "bilateral"]), default="taubin", help="Mesh smoothing method")
+@click.option("--extraction-method", type=click.Choice(["mc", "dc", "surfnets", "manifold"]), default="mc",
+              help="Mesh extraction algorithm (mc=marching cubes, dc=dual contouring, surfnets=surface nets, manifold=manifold3d)")
 @click.pass_context
 def viz(
     ctx: click.Context,
@@ -140,9 +148,10 @@ def viz(
     no_remesh: bool,
     no_decimate: bool,
     smoothing: str,
+    extraction_method: str,
 ) -> None:
     """Visualize a scalar field and its extraction result."""
-    params = _build_params(ctx, threshold, sigma, field_type, direct, no_repair, no_remesh, no_decimate, smoothing)
+    params = _build_params(ctx, threshold, sigma, field_type, direct, no_repair, no_remesh, no_decimate, smoothing, extraction_method)
     shape = _parse_shape(shape_str) if shape_str else None
 
     try:
