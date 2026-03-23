@@ -119,7 +119,7 @@ def gen_pipeline_diagram() -> None:
 
     param_annotations = {
         "Preprocess": "threshold\nsmooth_sigma",
-        "Extract": "extraction_level",
+        "Extract": "extraction_method\nextraction_level",
         "Smooth": "taubin_iterations\nsmoothing_method",
         "Repair": "repair",
         "Remesh": "edge_length\nremesh_iterations",
@@ -715,6 +715,65 @@ def gen_hero_compare() -> None:
 
 # ---------------------------------------------------------------------------
 # CLI
+def gen_extraction_comparison() -> None:
+    """3-panel comparison: MC vs DC vs SurfNets on a box SDF (sharp corners)."""
+    _ensure_output_dir()
+    import numpy as np
+    from skimage.measure import marching_cubes
+
+    from xeltofab._vendor.dual_isosurface import dual_isosurface
+
+    z, y, x = np.mgrid[-1:1:50j, -1:1:50j, -1:1:50j]
+    sdf = np.maximum(np.maximum(np.abs(x), np.abs(y)), np.abs(z)) - 0.5
+
+    mc_v, mc_f, _, _ = marching_cubes(sdf, level=0.0)
+    dc_v, dc_f = dual_isosurface(sdf, vertex_strategy="dc")
+    sn_v, sn_f = dual_isosurface(sdf, vertex_strategy="surfnets")
+
+    fig = plt.figure(figsize=(15, 5), facecolor=BG_COLOR)
+    methods = [
+        ("Marching Cubes", mc_v, mc_f),
+        ("Dual Contouring", dc_v, dc_f),
+        ("Surface Nets", sn_v, sn_f),
+    ]
+    for i, (name, v, f) in enumerate(methods):
+        ax = fig.add_subplot(1, 3, i + 1, projection="3d")
+        ax.plot_trisurf(
+            v[:, 0], v[:, 1], v[:, 2], triangles=f, color="#3182BD", edgecolor="#1a1a1a", linewidth=0.1, alpha=0.9
+        )
+        ax.set_title(name, fontsize=14, fontweight="bold")
+        ax.set_xlim(v.min(), v.max())
+        ax.set_ylim(v.min(), v.max())
+        ax.set_zlim(v.min(), v.max())
+        ax.set_axis_off()
+    fig.tight_layout()
+    fig.savefig(OUTPUT_DIR / "extraction-comparison.png", dpi=DPI, bbox_inches="tight", facecolor=BG_COLOR)
+    plt.close(fig)
+
+
+def gen_extraction_models() -> None:
+    """Pre-generate STL models for interactive MeshViewer comparison on website."""
+    import numpy as np
+    import trimesh
+    from skimage.measure import marching_cubes
+
+    from xeltofab._vendor.dual_isosurface import dual_isosurface
+
+    models_dir = Path("website/public/models")
+    models_dir.mkdir(parents=True, exist_ok=True)
+
+    z, y, x = np.mgrid[-1:1:50j, -1:1:50j, -1:1:50j]
+    sdf = np.maximum(np.maximum(np.abs(x), np.abs(y)), np.abs(z)) - 0.5
+
+    mc_v, mc_f, _, _ = marching_cubes(sdf, level=0.0)
+    trimesh.Trimesh(vertices=mc_v, faces=mc_f, process=False).export(models_dir / "cube_mc.stl")
+    print("  cube_mc.stl")
+
+    dc_v, dc_f = dual_isosurface(sdf, vertex_strategy="dc")
+    trimesh.Trimesh(vertices=dc_v, faces=dc_f, process=False).export(models_dir / "cube_dc.stl")
+    print("  cube_dc.stl")
+
+
 # ---------------------------------------------------------------------------
 
 GENERATORS = {
@@ -727,6 +786,8 @@ GENERATORS = {
     "quickstart_2d": gen_quickstart_2d,
     "quickstart_smoothing": gen_quickstart_smoothing,
     "hero_compare": gen_hero_compare,
+    "extraction_comparison": gen_extraction_comparison,
+    "extraction_models": gen_extraction_models,
 }
 
 
