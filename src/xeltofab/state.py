@@ -22,6 +22,7 @@ class PipelineParams(BaseModel):
     bilateral_sigma_n: float = Field(default=0.35, gt=0.0)  # normal similarity threshold (radians)
 
     field_type: Literal["density", "sdf"] = "density"
+    extraction_method: Literal["mc", "dc", "surfnets", "manifold"] = "mc"
     direct_extraction: bool = False
     extraction_level: float | None = None
 
@@ -41,18 +42,27 @@ class PipelineParams(BaseModel):
 
     @model_validator(mode="after")
     def apply_field_type_defaults(self) -> PipelineParams:
-        """Apply smart defaults based on field_type.
+        """Apply smart defaults based on field_type and extraction_method.
 
         Only override values that were not explicitly set by the user.
-        SDF defaults: direct_extraction=True, smooth_sigma=0.0 (Gaussian preprocessing only;
-        Taubin mesh smoothing still runs since marching cubes produces staircase artifacts).
+        SDF defaults: direct_extraction=True, smooth_sigma=0.0, extraction_method=dc.
+        DC/surfnets smoothing defaults: taubin_iterations=5, smoothing_method=bilateral
+        (reduced smoothing to preserve sharp features from dual methods).
         """
+        explicitly_set = self.model_fields_set
         if self.field_type == "sdf":
-            explicitly_set = self.model_fields_set
             if "direct_extraction" not in explicitly_set:
                 self.direct_extraction = True
             if "smooth_sigma" not in explicitly_set:
                 self.smooth_sigma = 0.0
+            if "extraction_method" not in explicitly_set:
+                self.extraction_method = "dc"
+        # DC/surfnets: reduce smoothing to preserve sharp features
+        if self.extraction_method in ("dc", "surfnets"):
+            if "taubin_iterations" not in explicitly_set:
+                self.taubin_iterations = 5
+            if "smoothing_method" not in explicitly_set:
+                self.smoothing_method = "bilateral"
         return self
 
     @property
