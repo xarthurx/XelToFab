@@ -758,19 +758,20 @@ def gen_extraction_comparison() -> None:
     # Tight per-axis bounds with small padding
     all_v = np.vstack([mc_v, dc_v, sn_v])
     pad = 1
+    # After Y↔Z swap: plot X=axis0 (length), Y=axis2 (width), Z=axis1 (height)
     xlim = (all_v[:, 0].min() - pad, all_v[:, 0].max() + pad)
-    ylim = (all_v[:, 1].min() - pad, all_v[:, 1].max() + pad)
-    zlim = (all_v[:, 2].min() - pad, all_v[:, 2].max() + pad)
-    # Compute box aspect from actual data ranges
+    ylim = (all_v[:, 2].min() - pad, all_v[:, 2].max() + pad)
+    zlim = (all_v[:, 1].min() - pad, all_v[:, 1].max() + pad)
     ranges = np.array([xlim[1] - xlim[0], ylim[1] - ylim[0], zlim[1] - zlim[0]])
     box_aspect = ranges / ranges.max()
     for i, (name, v, f) in enumerate(methods):
         ax = fig.add_subplot(1, 3, i + 1, projection="3d")
+        # Swap Y↔Z so bunny height (axis 1) maps to matplotlib's vertical (Z)
         ax.plot_trisurf(
-            v[:, 0], v[:, 1], v[:, 2], triangles=f, color="#3182BD", edgecolor="#1a1a1a", linewidth=0.02, alpha=0.95
+            v[:, 0], v[:, 2], v[:, 1], triangles=f, color="#3182BD", edgecolor="#1a1a1a", linewidth=0.02, alpha=0.95
         )
         ax.set_title(f"{name}\n({v.shape[0]:,} verts, {f.shape[0]:,} faces)", fontsize=12, fontweight="bold")
-        ax.view_init(elev=30, azim=-60)  # matplotlib default-like 3/4 view
+        ax.view_init(elev=30, azim=-60)
         ax.set_axis_off()
         ax.set_xlim(*xlim)
         ax.set_ylim(*ylim)
