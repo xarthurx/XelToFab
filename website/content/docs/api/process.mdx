@@ -32,8 +32,11 @@ Returns a new `PipelineState` with all pipeline stages applied. The returned sta
 `process` chains the three core pipeline stages in order:
 
 1. **Preprocess** — Gaussian smoothing, Heaviside thresholding, and morphological cleanup. Produces the `binary` field on the state.
-2. **Extract** — Marching cubes (3D) or marching squares (2D) to extract geometry from the field. Produces `vertices`/`faces` or `contours`.
-3. **Smooth** — Taubin filtering on the extracted mesh to remove staircase artifacts. Produces `smoothed_vertices`.
+2. **Extract** — Dispatch to configured extraction method (MC, DC, SurfNets, or manifold for 3D; marching squares for 2D). Produces `vertices`/`faces` or `contours`.
+3. **Smooth** — Taubin or bilateral filtering on the extracted mesh. DC/SurfNets auto-select bilateral with 5 iterations. Produces `smoothed_vertices`.
+4. **Repair** — Non-manifold fixing (skipped for manifold extraction).
+5. **Remesh** — Isotropic remeshing for FEA-quality elements.
+6. **Decimate** — QEM edge collapse to reduce face count.
 
 ### When preprocessing is skipped
 

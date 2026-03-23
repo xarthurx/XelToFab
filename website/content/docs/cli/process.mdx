@@ -32,6 +32,7 @@ Process a scalar field into a mesh. The input field is loaded, run through the f
 | `--no-remesh` | flag | `False` | Disable isotropic remeshing |
 | `--no-decimate` | flag | `False` | Disable QEM mesh decimation |
 | `--smoothing` | `taubin\|bilateral` | `taubin` | Mesh smoothing algorithm. Use `bilateral` for feature-preserving smoothing |
+| `--extraction-method` | `mc\|dc\|surfnets\|manifold` | `mc` | Extraction algorithm. With `--field-type sdf`, smart default switches to `dc` unless explicitly overridden |
 | `--viz` | flag | `False` | Save a comparison visualization (PNG) alongside the mesh |
 
 ### Smart defaults with `--field-type sdf`
@@ -40,6 +41,8 @@ When `--field-type sdf` is used, the following defaults change automatically unl
 
 - `--direct` is enabled (preprocessing is skipped)
 - `--sigma` is set to `0.0` (no Gaussian smoothing)
+- `--extraction-method` is set to `dc` (dual contouring for sharp features)
+- `--smoothing` is set to `bilateral` with 5 iterations (reduced to preserve DC sharp features)
 
 You can still override these by explicitly passing `--sigma 1.0` or omitting `--direct`.
 
@@ -104,7 +107,23 @@ Bilateral filtering preserves sharp structural features (corners, ridges) while 
 xtf process field.npy -o mesh.stl --no-decimate
 ```
 
-### Skip all post-processing (raw marching cubes output)
+### Dual contouring on SDF field
+
+```bash
+xtf process neural_sdf.npy -o mesh.stl --field-type sdf
+```
+
+Auto-selects DC extraction with bilateral smoothing (5 iterations) for sharp feature preservation.
+
+### Explicit manifold extraction
+
+```bash
+xtf process sdf_field.npy -o mesh.stl --extraction-method manifold --field-type sdf
+```
+
+Watertight output by design — repair stage is automatically skipped.
+
+### Skip all post-processing (raw extraction output)
 
 ```bash
 xtf process field.npy -o mesh.stl --no-repair --no-remesh --no-decimate
