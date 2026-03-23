@@ -41,22 +41,27 @@ The smoothing reduction for DC/SurfNets (bilateral, 5 iterations instead of taub
 
 ## GPU acceleration
 
-DC extraction supports GPU acceleration via the [isoext](https://github.com/GuangyanCai/isoext) backend, which is auto-detected when available.
+DC extraction supports GPU acceleration via the [isoext](https://github.com/GuangyanCai/isoext) backend, which is auto-detected when available. The GPU path uses the same QEF-based Dual Contouring algorithm but runs the grid intersection and vertex placement on the GPU via CUDA.
 
-**Benchmark** (measured on NVIDIA RTX 5080 — results will vary by GPU):
+**Benchmark: Sphere SDF extraction** (NVIDIA RTX 5080, 16 GB VRAM — results vary by GPU):
 
-| Grid | GPU | CPU | Speedup |
-|------|-----|-----|---------|
-| 100^3 | 0.021s | 0.380s | 18x |
-| 500^3 | 1.36s | 38.68s | 28x |
+| Grid | Voxels | GPU (isoext) | CPU (vendored) | Speedup | Output |
+|------|--------|-------------|----------------|---------|--------|
+| 100^3 | 1M | 0.02s* | 0.38s | — | 11.5K verts |
+| 256^3 | 16.8M | 0.08s | 4.68s | **61x** | 76.8K verts |
+| 500^3 | 125M | 0.52s | 35.6s | **68x** | 293K verts |
+
+<small>*At 100^3, GPU overhead (kernel launch, data transfer) exceeds the computation — CPU is faster for small grids. First GPU call includes ~1.5s CUDA context initialization (not shown). Grids above 500^3 may exceed GPU VRAM depending on available memory.</small>
+
+**When to use GPU:** Grids ≥ 200^3 where DC extraction takes multiple seconds on CPU. Below that, the CPU path is fast enough.
 
 Install the GPU backend:
 
 ```bash
-uv sync --extra cuda  # requires CUDA toolkit + PyTorch
+uv sync --extra cuda  # requires CUDA toolkit + PyTorch with matching CUDA version
 ```
 
-If the GPU is unavailable, DC automatically falls back to the CPU implementation with a warning:
+If the GPU is unavailable (no CUDA, no isoext, or insufficient VRAM), DC automatically falls back to the CPU implementation with a logged warning:
 
 ```
 UserWarning: GPU DC unavailable (...), falling back to CPU

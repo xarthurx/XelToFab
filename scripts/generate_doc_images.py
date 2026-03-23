@@ -767,7 +767,7 @@ def gen_extraction_comparison() -> None:
             v[:, 0], v[:, 1], v[:, 2], triangles=f, color="#3182BD", edgecolor="#1a1a1a", linewidth=0.02, alpha=0.95
         )
         ax.set_title(f"{name}\n({v.shape[0]:,} verts, {f.shape[0]:,} faces)", fontsize=12, fontweight="bold")
-        ax.view_init(elev=25, azim=-70)
+        ax.view_init(elev=20, azim=150)  # classic bunny side profile
         ax.set_axis_off()
         ax.set_xlim(*xlim)
         ax.set_ylim(*ylim)
