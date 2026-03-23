@@ -42,7 +42,7 @@ params = PipelineParams(
 | `bilateral_sigma_n` | `float` | `0.35` | > 0.0 | Normal similarity threshold (radians). Smaller values preserve sharper features |
 | `field_type` | `"density" \| "sdf"` | `"density"` | -- | Type of input field. Affects default values for other parameters |
 | `direct_extraction` | `bool` | `False` | -- | Skip preprocessing and extract directly from the continuous input field |
-| `extraction_method` | `Literal["mc","dc","surfnets","manifold"]` | `"mc"` | `--extraction-method` | Extraction algorithm. SDF smart default: `"dc"`. DC/surfnets auto-set bilateral smoothing with 5 iterations |
+| `extraction_method` | `"mc"` \| `"dc"` \| `"surfnets"` \| `"manifold"` | `"mc"` | `--extraction-method` | Extraction algorithm. SDF smart default: `"dc"`. DC/surfnets auto-set bilateral smoothing with 5 iterations |
 | `extraction_level` | `float \| None` | `None` | -- | Explicit isovalue for extraction. When `None`, defaults to `threshold` for density or `0.0` for SDF |
 | `repair` | `bool` | `True` | -- | Enable watertight mesh repair (3D only, requires pymeshlab) |
 | `remesh` | `bool` | `True` | -- | Enable isotropic remeshing (3D only, requires gpytoolbox) |

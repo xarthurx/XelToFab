@@ -715,44 +715,64 @@ def gen_hero_compare() -> None:
 
 # ---------------------------------------------------------------------------
 # CLI
+def _make_bunny_sdf() -> "np.ndarray":
+    """Generate a voxelized SDF of the Stanford bunny via pyvista + distance transform."""
+    import numpy as np
+    import pyvista as pv
+    import trimesh as tm
+    from scipy.ndimage import distance_transform_edt
+
+    bunny = pv.examples.download_bunny()
+    verts = np.asarray(bunny.points)
+    faces = np.asarray(bunny.regular_faces)
+    center = verts.mean(axis=0)
+    extent = verts.max() - verts.min()
+    mesh = tm.Trimesh(vertices=(verts - center) / extent, faces=faces, process=True)
+    binary = mesh.voxelized(pitch=0.8 / 150).matrix.astype(float)
+    interior = distance_transform_edt(binary)
+    exterior = distance_transform_edt(1.0 - binary)
+    return exterior - interior
+
+
 def gen_extraction_comparison() -> None:
-    """3-panel comparison: MC vs DC vs SurfNets on a box SDF (sharp corners)."""
+    """3-panel comparison: MC vs DC vs SurfNets on Stanford bunny SDF."""
     _ensure_output_dir()
     import numpy as np
     from skimage.measure import marching_cubes
 
     from xeltofab._vendor.dual_isosurface import dual_isosurface
 
-    z, y, x = np.mgrid[-1:1:50j, -1:1:50j, -1:1:50j]
-    sdf = np.maximum(np.maximum(np.abs(x), np.abs(y)), np.abs(z)) - 0.5
-
+    sdf = _make_bunny_sdf()
     mc_v, mc_f, _, _ = marching_cubes(sdf, level=0.0)
     dc_v, dc_f = dual_isosurface(sdf, vertex_strategy="dc")
     sn_v, sn_f = dual_isosurface(sdf, vertex_strategy="surfnets")
 
-    fig = plt.figure(figsize=(15, 5), facecolor=BG_COLOR)
+    fig = plt.figure(figsize=(16, 5.5), facecolor=BG_COLOR)
     methods = [
         ("Marching Cubes", mc_v, mc_f),
         ("Dual Contouring", dc_v, dc_f),
         ("Surface Nets", sn_v, sn_f),
     ]
+    all_v = np.vstack([mc_v, dc_v, sn_v])
+    margin = 2
     for i, (name, v, f) in enumerate(methods):
         ax = fig.add_subplot(1, 3, i + 1, projection="3d")
         ax.plot_trisurf(
-            v[:, 0], v[:, 1], v[:, 2], triangles=f, color="#3182BD", edgecolor="#1a1a1a", linewidth=0.1, alpha=0.9
+            v[:, 2], v[:, 0], v[:, 1], triangles=f, color="#3182BD", edgecolor="#1a1a1a", linewidth=0.02, alpha=0.95
         )
-        ax.set_title(name, fontsize=14, fontweight="bold")
-        ax.set_xlim(v.min(), v.max())
-        ax.set_ylim(v.min(), v.max())
-        ax.set_zlim(v.min(), v.max())
+        ax.set_title(f"{name}\n({v.shape[0]:,} verts, {f.shape[0]:,} faces)", fontsize=12, fontweight="bold")
+        ax.view_init(elev=20, azim=-45)
         ax.set_axis_off()
-    fig.tight_layout()
+        ax.set_xlim(all_v[:, 2].min() - margin, all_v[:, 2].max() + margin)
+        ax.set_ylim(all_v[:, 0].min() - margin, all_v[:, 0].max() + margin)
+        ax.set_zlim(all_v[:, 1].min() - margin, all_v[:, 1].max() + margin)
+    fig.tight_layout(pad=1.0)
     fig.savefig(OUTPUT_DIR / "extraction-comparison.png", dpi=DPI, bbox_inches="tight", facecolor=BG_COLOR)
     plt.close(fig)
 
 
 def gen_extraction_models() -> None:
-    """Pre-generate STL models for interactive MeshViewer comparison on website."""
+    """Pre-generate STL models for interactive MeshViewer comparison (Stanford bunny)."""
     import numpy as np
     import trimesh
     from skimage.measure import marching_cubes
@@ -762,16 +782,14 @@ def gen_extraction_models() -> None:
     models_dir = Path("website/public/models")
     models_dir.mkdir(parents=True, exist_ok=True)
 
-    z, y, x = np.mgrid[-1:1:50j, -1:1:50j, -1:1:50j]
-    sdf = np.maximum(np.maximum(np.abs(x), np.abs(y)), np.abs(z)) - 0.5
-
+    sdf = _make_bunny_sdf()
     mc_v, mc_f, _, _ = marching_cubes(sdf, level=0.0)
-    trimesh.Trimesh(vertices=mc_v, faces=mc_f, process=False).export(models_dir / "cube_mc.stl")
-    print("  cube_mc.stl")
+    trimesh.Trimesh(vertices=mc_v, faces=mc_f, process=False).export(models_dir / "bunny_mc.stl")
+    print("  bunny_mc.stl")
 
     dc_v, dc_f = dual_isosurface(sdf, vertex_strategy="dc")
-    trimesh.Trimesh(vertices=dc_v, faces=dc_f, process=False).export(models_dir / "cube_dc.stl")
-    print("  cube_dc.stl")
+    trimesh.Trimesh(vertices=dc_v, faces=dc_f, process=False).export(models_dir / "bunny_dc.stl")
+    print("  bunny_dc.stl")
 
 
 # ---------------------------------------------------------------------------

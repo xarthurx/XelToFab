@@ -87,16 +87,16 @@ uv sync --extra manifold
 
 ## Interactive comparison
 
-Cube extracted with Marching Cubes (left) vs Dual Contouring (right). Notice how DC preserves the sharp edges and corners:
+Stanford bunny extracted with Marching Cubes (left) vs Dual Contouring (right). Rotate and zoom to compare surface quality:
 
 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 my-6">
   <div>
-    <p className="text-center font-semibold mb-2">Marching Cubes</p>
-    <MeshViewer src="/models/cube_mc.stl" height={350} cameraDistance={40} fov={35} />
+    <p className="text-center font-semibold mb-2">Marching Cubes (72K verts)</p>
+    <MeshViewer src="/models/bunny_mc.stl" height={400} cameraDistance={80} fov={35} />
   </div>
   <div>
-    <p className="text-center font-semibold mb-2">Dual Contouring</p>
-    <MeshViewer src="/models/cube_dc.stl" height={350} cameraDistance={40} fov={35} />
+    <p className="text-center font-semibold mb-2">Dual Contouring (69K verts)</p>
+    <MeshViewer src="/models/bunny_dc.stl" height={400} cameraDistance={80} fov={35} />
   </div>
 </div>
 

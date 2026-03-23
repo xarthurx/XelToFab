@@ -29,7 +29,7 @@ from xeltofab.state import PipelineParams
 | `bilateral_sigma_s` | `float \| None` | `None` | `> 0.0` | Spatial weight reach (auto from edge length when `None`) |
 | `bilateral_sigma_n` | `float` | `0.35` | `> 0.0` | Normal similarity threshold in radians |
 | `field_type` | `Literal["density", "sdf"]` | `"density"` | — | Input field type |
-| `extraction_method` | `Literal["mc", "dc", "surfnets", "manifold"]` | `"mc"` | — | Extraction algorithm: `mc` (Marching Cubes), `dc` (Dual Contouring), `surfnets` (Surface Nets), `manifold` (manifold3d) |
+| `extraction_method` | `"mc"` \| `"dc"` \| `"surfnets"` \| `"manifold"` | `"mc"` | — | Extraction algorithm: `mc` (Marching Cubes), `dc` (Dual Contouring), `surfnets` (Surface Nets), `manifold` (manifold3d) |
 | `direct_extraction` | `bool` | `False` | — | Skip preprocessing and extract directly from the continuous field |
 | `extraction_level` | `float \| None` | `None` | — | Explicit iso-level for extraction (MC, DC, SurfNets, or manifold) |
 | `repair` | `bool` | `True` | — | Enable watertight mesh repair (3D only) |
