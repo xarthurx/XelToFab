@@ -50,6 +50,10 @@ DC's QEF solver relies on SDF gradients to determine vertex placement. **The qua
 | Mesh → signed distance (VTK) | Good | Good — DC ≈ MC |
 | Binary voxelization → EDT | Poor (staircase) | Poor — DC < MC |
 
+The same Dual Contouring algorithm on the same Stanford bunny, with the only difference being SDF quality:
+
+<img src="/images/guides/extraction-gradient-quality.png" alt="DC with noisy EDT SDF (left, rough surface) vs DC with true signed distance (right, clean surface)" width={800} />
+
 **Recommendation:** If your SDF comes from a binary voxelization or distance transform, use `surfnets` (robust averaging) or `mc` instead of `dc`.
 
 ## GPU acceleration

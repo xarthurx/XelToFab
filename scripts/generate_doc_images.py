@@ -714,12 +714,33 @@ def gen_hero_compare() -> None:
 
 # ---------------------------------------------------------------------------
 # CLI
-def _make_bunny_sdf() -> "np.ndarray":
+def _make_bunny_sdf_edt() -> "np.ndarray":
+    """Generate a bunny SDF via binary voxelization + EDT (noisy gradients).
+
+    This produces noisy gradients that degrade DC quality — useful for showing
+    the visual difference between extraction methods.
+    """
+    import numpy as np
+    import pyvista as pv
+    import trimesh as tm
+    from scipy.ndimage import distance_transform_edt
+
+    bunny = pv.examples.download_bunny()
+    verts = np.asarray(bunny.points)
+    faces = np.asarray(bunny.regular_faces)
+    center = verts.mean(axis=0)
+    extent = verts.max() - verts.min()
+    mesh = tm.Trimesh(vertices=(verts - center) / extent, faces=faces, process=True)
+    raw = mesh.voxelized(pitch=1.0 / 120).matrix.astype(float)
+    binary = np.pad(raw, pad_width=3, mode="constant", constant_values=0.0)
+    return distance_transform_edt(1.0 - binary) - distance_transform_edt(binary)
+
+
+def _make_bunny_sdf_true() -> "np.ndarray":
     """Generate a true signed distance field of the Stanford bunny.
 
     Uses pyvista's compute_implicit_distance (VTK C++) for accurate signed
-    distance, producing clean gradients that DC's QEF solver needs.
-    Falls back to /tmp/bunny_sdf_true.npy cache if available.
+    distance with clean gradients. Falls back to /tmp/bunny_sdf_true.npy cache.
     """
     import numpy as np
 
@@ -727,36 +748,9 @@ def _make_bunny_sdf() -> "np.ndarray":
     if cache.exists():
         return np.load(cache)
 
-    import pyvista as pv
-    import trimesh as tm
-
-    bunny = pv.examples.download_bunny()
-    verts = np.asarray(bunny.points)
-    faces = np.asarray(bunny.regular_faces)
-    center = verts.mean(axis=0)
-    extent = verts.max() - verts.min()
-    verts_norm = (verts - center) / extent
-    mesh = tm.Trimesh(vertices=verts_norm, faces=faces, process=True)
-
-    # Voxelize for grid structure, pad to avoid boundary clipping
-    vox = mesh.voxelized(pitch=1.0 / 120)
-    origin = vox.transform[:3, 3]
-    pitch_val = 1.0 / 120
-    pad = 3
-    shape = tuple(np.array(vox.matrix.shape) + 2 * pad)
-
-    # Build query grid in mesh coordinate space
-    gi, gj, gk = np.mgrid[0 : shape[0], 0 : shape[1], 0 : shape[2]]
-    pts_mesh = (np.stack([gi, gj, gk], axis=-1).reshape(-1, 3).astype(np.float64) - pad) * pitch_val + origin
-
-    # VTK implicit distance (fast C++ signed distance)
-    query = pv.PolyData(pts_mesh)
-    bunny_pv = pv.PolyData(verts_norm, np.column_stack([np.full(len(faces), 3), faces]))
-    query = query.compute_implicit_distance(bunny_pv)
-    sdf = np.asarray(query["implicit_distance"]).reshape(shape)
-
-    np.save(cache, sdf)
-    return sdf
+    raise FileNotFoundError(
+        "True bunny SDF cache not found. Run: uv run python scripts/generate_bunny_sdf.py"
+    )
 
 
 def gen_extraction_comparison() -> None:
@@ -767,7 +761,8 @@ def gen_extraction_comparison() -> None:
 
     from xeltofab._vendor.dual_isosurface import dual_isosurface
 
-    sdf = _make_bunny_sdf()
+    # Use EDT SDF — noisy gradients make method differences visible
+    sdf = _make_bunny_sdf_edt()
     mc_v, mc_f, _, _ = marching_cubes(sdf, level=0.0)
     dc_v, dc_f = dual_isosurface(sdf, vertex_strategy="dc")
     sn_v, sn_f = dual_isosurface(sdf, vertex_strategy="surfnets")
@@ -793,19 +788,10 @@ def gen_extraction_comparison() -> None:
     box_aspect = ranges / ranges.max()
     for i, (name, v, f) in enumerate(methods):
         ax = fig.add_subplot(1, 3, i + 1, projection="3d")
-        # Swap Y↔Z so bunny height (axis 1) maps to matplotlib's vertical (Z)
-        # Lighter face color + darker edges for better mesh detail visibility
-        ax.plot_trisurf(
-            v[:, 0], v[:, 2], v[:, 1], triangles=f,
-            color="#6BAED6", edgecolor="#2a2a2a", linewidth=0.03, alpha=0.95,
+        _plot_bunny_panel(
+            ax, v, f, f"{name}\n({v.shape[0]:,} verts, {f.shape[0]:,} faces)",
+            xlim, ylim, zlim, box_aspect,
         )
-        ax.set_title(f"{name}\n({v.shape[0]:,} verts, {f.shape[0]:,} faces)", fontsize=12, fontweight="bold")
-        ax.view_init(elev=30, azim=-60)
-        ax.set_axis_off()
-        ax.set_xlim(*xlim)
-        ax.set_ylim(*ylim)
-        ax.set_zlim(*zlim)
-        ax.set_box_aspect(box_aspect)
     fig.subplots_adjust(left=0.0, right=1.0, bottom=-0.12, top=0.88, wspace=-0.1)
     fig.savefig(OUTPUT_DIR / "extraction-comparison.png", dpi=DPI, bbox_inches="tight", pad_inches=0.15, facecolor=BG_COLOR)
     plt.close(fig)
@@ -822,7 +808,8 @@ def gen_extraction_models() -> None:
     models_dir = Path("website/public/models")
     models_dir.mkdir(parents=True, exist_ok=True)
 
-    sdf = _make_bunny_sdf()
+    # Use true SDF — clean DC output for interactive comparison
+    sdf = _make_bunny_sdf_true()
     mc_v, mc_f, _, _ = marching_cubes(sdf, level=0.0)
     trimesh.Trimesh(vertices=mc_v, faces=mc_f, process=False).export(models_dir / "bunny_mc.stl")
     print("  bunny_mc.stl")
@@ -830,6 +817,71 @@ def gen_extraction_models() -> None:
     dc_v, dc_f = dual_isosurface(sdf, vertex_strategy="dc")
     trimesh.Trimesh(vertices=dc_v, faces=dc_f, process=False).export(models_dir / "bunny_dc.stl")
     print("  bunny_dc.stl")
+
+
+def _plot_bunny_panel(ax: plt.Axes, v: "np.ndarray", f: "np.ndarray", title: str, xlim, ylim, zlim, box_aspect) -> None:
+    """Render a bunny mesh into a 3D axis with consistent view settings."""
+    ax.plot_trisurf(
+        v[:, 0], v[:, 2], v[:, 1], triangles=f,
+        color="#6BAED6", edgecolor="#2a2a2a", linewidth=0.03, alpha=0.95,
+    )
+    ax.set_title(title, fontsize=11, fontweight="bold")
+    ax.view_init(elev=30, azim=-60)
+    ax.set_axis_off()
+    ax.set_xlim(*xlim)
+    ax.set_ylim(*ylim)
+    ax.set_zlim(*zlim)
+    ax.set_box_aspect(box_aspect)
+
+
+def gen_extraction_gradient_quality() -> None:
+    """2-panel comparison: DC with noisy EDT SDF vs DC with true SDF.
+
+    Demonstrates that DC quality depends entirely on gradient quality.
+    """
+    _ensure_output_dir()
+    import numpy as np
+
+    from xeltofab._vendor.dual_isosurface import dual_isosurface
+
+    sdf_edt = _make_bunny_sdf_edt()
+    sdf_true = _make_bunny_sdf_true()
+
+    dc_edt_v, dc_edt_f = dual_isosurface(sdf_edt, vertex_strategy="dc")
+    dc_true_v, dc_true_f = dual_isosurface(sdf_true, vertex_strategy="dc")
+
+    fig = plt.figure(figsize=(10, 7), facecolor=BG_COLOR)
+    all_v = np.vstack([dc_edt_v, dc_true_v])
+    shrink = 0.08
+
+    def _tight(vals: "np.ndarray") -> tuple[float, float]:
+        span = vals.max() - vals.min()
+        return (vals.min() + span * shrink, vals.max() - span * shrink)
+
+    xlim = _tight(all_v[:, 0])
+    ylim = _tight(all_v[:, 2])
+    zlim = _tight(all_v[:, 1])
+    ranges = np.array([xlim[1] - xlim[0], ylim[1] - ylim[0], zlim[1] - zlim[0]])
+    box_aspect = ranges / ranges.max()
+
+    ax1 = fig.add_subplot(1, 2, 1, projection="3d")
+    _plot_bunny_panel(
+        ax1, dc_edt_v, dc_edt_f,
+        f"DC — Noisy SDF (binary + EDT)\n({dc_edt_v.shape[0]:,} verts)",
+        xlim, ylim, zlim, box_aspect,
+    )
+    ax2 = fig.add_subplot(1, 2, 2, projection="3d")
+    _plot_bunny_panel(
+        ax2, dc_true_v, dc_true_f,
+        f"DC — True SDF (VTK implicit distance)\n({dc_true_v.shape[0]:,} verts)",
+        xlim, ylim, zlim, box_aspect,
+    )
+    fig.subplots_adjust(left=0.0, right=1.0, bottom=-0.12, top=0.88, wspace=-0.05)
+    fig.savefig(
+        OUTPUT_DIR / "extraction-gradient-quality.png",
+        dpi=DPI, bbox_inches="tight", pad_inches=0.15, facecolor=BG_COLOR,
+    )
+    plt.close(fig)
 
 
 # ---------------------------------------------------------------------------
@@ -845,6 +897,7 @@ GENERATORS = {
     "quickstart_smoothing": gen_quickstart_smoothing,
     "hero_compare": gen_hero_compare,
     "extraction_comparison": gen_extraction_comparison,
+    "extraction_gradient_quality": gen_extraction_gradient_quality,
     "extraction_models": gen_extraction_models,
 }
 
