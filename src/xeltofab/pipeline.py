@@ -22,7 +22,8 @@ def process(state: PipelineState) -> PipelineState:
         state = preprocess(state)
     state = extract(state)
     state = smooth(state)
-    state = repair(state)
+    if state.params.needs_repair:
+        state = repair(state)
     state = remesh(state)
     state = decimate(state)
     return state

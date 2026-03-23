@@ -20,7 +20,7 @@ const pipelineSteps = [
   {
     num: '02',
     label: 'Extract',
-    detail: 'Marching cubes (3D) or marching squares (2D)',
+    detail: 'MC / DC / Surface Nets / manifold3d (3D), marching squares (2D)',
     input: 'binary volume',
   },
   {
@@ -228,8 +228,9 @@ export default async function HomePage() {
                   Automatic Pipeline
                 </h3>
                 <p className="mt-2 text-sm text-fd-muted-foreground leading-relaxed">
-                  Gaussian smoothing, thresholding, marching cubes, and Taubin
-                  mesh smoothing — all configured with sensible defaults and
+                  Gaussian smoothing, thresholding, multi-method extraction
+                  (MC, DC, Surface Nets, manifold3d), and adaptive mesh
+                  smoothing — all configured with sensible defaults and
                   overridable per-stage.
                 </p>
               </div>

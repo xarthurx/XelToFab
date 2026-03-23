@@ -21,8 +21,10 @@ dependencies = [
 vtk = ["pyvista>=0.43"]
 hdf5 = ["h5py>=3.10"]
 mesh-quality = ["pymeshlab>=2023.12", "gpytoolbox>=0.3.0"]
+manifold = ["manifold3d>=3.0"]
+cuda = ["isoext>=0.5"]
 all-formats = ["pyvista>=0.43", "h5py>=3.10"]
-all = ["pyvista>=0.43", "h5py>=3.10", "pymeshlab>=2023.12", "gpytoolbox>=0.3.0"]
+all = ["pyvista>=0.43", "h5py>=3.10", "pymeshlab>=2023.12", "gpytoolbox>=0.3.0", "manifold3d>=3.0"]
 
 [project.scripts]
 xtf = "xeltofab.cli:main"

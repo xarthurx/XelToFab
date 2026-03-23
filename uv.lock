@@ -318,6 +318,12 @@ wheels = [
 ]
 
 [[package]]
+name = "isoext"
+version = "0.5.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/8b/6d/769c07dcfa1905a70136f75910ce63eca77dcae7a2a09126b3d8ac058ede/isoext-0.5.1.tar.gz", hash = "sha256:29f18a7184bd6d7c984f898fdcd4b952edddd33fb65b14204fd899d159353638", size = 34585, upload-time = "2025-11-25T16:32:18.678Z" }
+
+[[package]]
 name = "itsdangerous"
 version = "2.2.0"
 source = { registry = "https://pypi.org/simple" }
@@ -459,6 +465,23 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/41/30/c640ccd3e570b08770a9f459decc2d8e7ceefdc34ac28a745418fb9cb5ba/loro-1.10.3-cp314-cp314t-musllinux_1_2_armv7l.whl", hash = "sha256:86d4f0c631ca274ad2fa2c0bdb8e1e141882d94339b7284a8bef5bf73fa6957d", size = 3599851, upload-time = "2025-12-09T10:12:31.759Z" },
     { url = "https://files.pythonhosted.org/packages/59/8f/062ea50554c47ae30e98b1f0442a458c0edecc6d4edc7fcfc4d901734dd0/loro-1.10.3-cp314-cp314t-musllinux_1_2_i686.whl", hash = "sha256:15e03084ff1b472e14623183ed6e1e43e0f717c2112697beda5e69b5bd0ff236", size = 3655558, upload-time = "2025-12-09T10:13:06.529Z" },
     { url = "https://files.pythonhosted.org/packages/f3/f5/c7dd8cdbd57454b23d89799c22cd42b6d2dda283cd87d7b198dc424a462c/loro-1.10.3-cp314-cp314t-musllinux_1_2_x86_64.whl", hash = "sha256:42d6a5ce5bc518eaa682413e82d597299650eeb03e8bc39341752d6e0d22503e", size = 3541282, upload-time = "2025-12-09T10:13:42.189Z" },
+]
+
+[[package]]
+name = "manifold3d"
+version = "3.4.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/8e/9e/9702035bf5bfcd16933b4ab1cbd7a56750c13e22a06a96e83139ad2b3cf9/manifold3d-3.4.0.tar.gz", hash = "sha256:4e082bdac4b842ec8c009adac38f502f2a8e1527643b239a725987fcf595b3c2", size = 271054, upload-time = "2026-02-27T10:40:58.262Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e9/12/0a188a94834bf381992432f0d731f36490a7934a7e1d06c3361f9b382c2d/manifold3d-3.4.0-cp313-cp313-macosx_10_14_universal2.whl", hash = "sha256:9914a35ffb5c86c0b5ea763e29129d6ab3786c7fda578bbde71052fbc1c819d9", size = 1779739, upload-time = "2026-02-27T10:40:29.783Z" },
+    { url = "https://files.pythonhosted.org/packages/68/d0/b1b5a1dc4db9e4ce844d025a72777a5a2251a33c5a84cff7e64ed9425373/manifold3d-3.4.0-cp313-cp313-macosx_10_14_x86_64.whl", hash = "sha256:f2e122d5b19f206c53f867c859889a028c5158c17e8ebbb84b0894fd796ea4c6", size = 973958, upload-time = "2026-02-27T10:40:32.663Z" },
+    { url = "https://files.pythonhosted.org/packages/f2/b3/47473d3f3bda127569e9615416ff24b1049b74cc08540572a9747e00bbe0/manifold3d-3.4.0-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:aec501843d32c3d752d0f6cb46957ce034099dcf91a112d6fed6328536d30a48", size = 854064, upload-time = "2026-02-27T10:40:34.31Z" },
+    { url = "https://files.pythonhosted.org/packages/cc/ba/54b4270d0b3deefaca0d04842e50a0fc567643f0b91a0dde4f18beab9ab9/manifold3d-3.4.0-cp313-cp313-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:358ff55c81bd1e0b01d8ec72c4912f362273ada10432b7329e823b1b63a008e1", size = 1221675, upload-time = "2026-02-27T10:40:35.656Z" },
+    { url = "https://files.pythonhosted.org/packages/44/29/c89ab58a20965d630df347999b55306b146473cadd0fb8b7879c85ca7a54/manifold3d-3.4.0-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:ecedb5cba8a604869451730ea9c4f933d477a3deaed8267093bd3294fc320772", size = 1393418, upload-time = "2026-02-27T10:40:37.133Z" },
+    { url = "https://files.pythonhosted.org/packages/7f/8e/13e4564898f15d16a4081aba6397597de319f993ed43181aa5e324bf05db/manifold3d-3.4.0-cp313-cp313-win_amd64.whl", hash = "sha256:fb530756a54a0a19ff732f35df130ec304db233dbc8d2fcef5a4818fa657b0a6", size = 992597, upload-time = "2026-02-27T10:40:38.507Z" },
 ]
 
 [[package]]
@@ -1386,6 +1409,7 @@ dependencies = [
 all = [
     { name = "gpytoolbox" },
     { name = "h5py" },
+    { name = "manifold3d" },
     { name = "pymeshlab" },
     { name = "pyvista" },
 ]
@@ -1393,8 +1417,14 @@ all-formats = [
     { name = "h5py" },
     { name = "pyvista" },
 ]
+cuda = [
+    { name = "isoext" },
+]
 hdf5 = [
     { name = "h5py" },
+]
+manifold = [
+    { name = "manifold3d" },
 ]
 mesh-quality = [
     { name = "gpytoolbox" },
@@ -1419,6 +1449,9 @@ requires-dist = [
     { name = "h5py", marker = "extra == 'all'", specifier = ">=3.10" },
     { name = "h5py", marker = "extra == 'all-formats'", specifier = ">=3.10" },
     { name = "h5py", marker = "extra == 'hdf5'", specifier = ">=3.10" },
+    { name = "isoext", marker = "extra == 'cuda'", specifier = ">=0.5" },
+    { name = "manifold3d", marker = "extra == 'all'", specifier = ">=3.0" },
+    { name = "manifold3d", marker = "extra == 'manifold'", specifier = ">=3.0" },
     { name = "marimo", specifier = ">=0.20.4" },
     { name = "matplotlib", specifier = ">=3.10.8" },
     { name = "numpy" },
@@ -1434,7 +1467,7 @@ requires-dist = [
     { name = "scipy" },
     { name = "trimesh" },
 ]
-provides-extras = ["vtk", "hdf5", "mesh-quality", "all-formats", "all"]
+provides-extras = ["vtk", "hdf5", "mesh-quality", "manifold", "cuda", "all-formats", "all"]
 
 [package.metadata.requires-dev]
 dev = [

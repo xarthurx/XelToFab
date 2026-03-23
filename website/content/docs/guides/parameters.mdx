@@ -42,7 +42,8 @@ params = PipelineParams(
 | `bilateral_sigma_n` | `float` | `0.35` | > 0.0 | Normal similarity threshold (radians). Smaller values preserve sharper features |
 | `field_type` | `"density" \| "sdf"` | `"density"` | -- | Type of input field. Affects default values for other parameters |
 | `direct_extraction` | `bool` | `False` | -- | Skip preprocessing and extract directly from the continuous input field |
-| `extraction_level` | `float \| None` | `None` | -- | Explicit isovalue for marching cubes/squares. When `None`, defaults to `threshold` for density or `0.0` for SDF |
+| `extraction_method` | `"mc"` \| `"dc"` \| `"surfnets"` \| `"manifold"` | `"mc"` | `--extraction-method` | Extraction algorithm. SDF smart default: `"dc"`. DC/surfnets auto-set bilateral smoothing with 5 iterations |
+| `extraction_level` | `float \| None` | `None` | -- | Explicit isovalue for extraction. When `None`, defaults to `threshold` for density or `0.0` for SDF |
 | `repair` | `bool` | `True` | -- | Enable watertight mesh repair (3D only, requires pymeshlab) |
 | `remesh` | `bool` | `True` | -- | Enable isotropic remeshing (3D only, requires gpytoolbox) |
 | `target_edge_length` | `float \| None` | `None` | > 0.0 | Target edge length for remeshing. When `None`, auto-computed from mesh bounding box |
@@ -98,7 +99,7 @@ These overrides only apply when the parameter was **not explicitly passed**. If 
 
 <img src="/images/guides/param-taubin.png" alt="Effect of taubin_iterations on mesh smoothing: 0 shows staircase artifacts, 50 is smooth" width={800} />
 
-- **`taubin_iterations=0`**: Disabled. Raw marching cubes output with staircase artifacts
+- **`taubin_iterations=0`**: Disabled. Raw extraction output (staircase artifacts for MC, sharper for DC)
 - **`taubin_iterations=10-20`**: Moderate smoothing. Good balance between quality and feature preservation
 - **`taubin_iterations=50+`**: Heavy smoothing. Produces very smooth surfaces but may lose sharp features
 - **`taubin_lambda`**: Controls smoothing strength per iteration. The default of 0.5 works well for most cases. Lower values (0.1-0.3) produce gentler smoothing

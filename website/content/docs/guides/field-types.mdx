@@ -29,7 +29,7 @@ params = PipelineParams(field_type="density")  # this is the default
 - **Preprocessing is enabled** -- The field is Gaussian-smoothed, thresholded to binary, and cleaned with morphological operations
 - **`smooth_sigma = 1.0`** -- Gaussian smoothing helps reduce noise in the scalar field before binarization
 - **`direct_extraction = False`** -- Extraction operates on the preprocessed binary field
-- **Extraction level = `threshold`** (default 0.5) -- The marching cubes/squares isovalue
+- **Extraction level = `threshold`** (default 0.5) -- The extraction isovalue
 
 This pipeline works well for raw design optimization output where density values may be noisy or have intermediate values that need cleanup.
 
@@ -50,7 +50,8 @@ When `field_type="sdf"` is set, the pipeline automatically adjusts defaults (unl
 - **`direct_extraction = True`** -- Preprocessing is skipped. SDF fields are typically clean continuous outputs that do not benefit from thresholding or morphological operations
 - **`smooth_sigma = 0.0`** -- Gaussian preprocessing is disabled. The field is already smooth
 - **Extraction level = 0.0** -- The zero level set, which is the surface boundary in an SDF
-- **Taubin smoothing still runs** -- Even with clean SDF input, marching cubes produces staircase artifacts on the mesh that benefit from Taubin smoothing
+- **`extraction_method = "dc"`** -- Dual contouring leverages SDF gradients for sharp feature preservation
+- **`smoothing_method = "bilateral"`**, **`taubin_iterations = 5`** -- Reduced smoothing for DC to preserve sharp features (vs taubin/20 for MC)
 
 ### Overriding SDF defaults
 
@@ -66,7 +67,7 @@ params = PipelineParams(field_type="sdf", direct_extraction=False)
 
 ## Extraction level
 
-The extraction level is the isovalue passed to marching cubes (3D) or `find_contours` (2D). It determines which isosurface in the field becomes the mesh boundary.
+The extraction level is the isovalue passed to the extraction method (MC, DC, SurfNets, or manifold for 3D) or `find_contours` (2D). It determines which isosurface in the field becomes the mesh boundary.
 
 The default depends on field type:
 

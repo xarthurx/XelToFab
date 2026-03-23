@@ -9,7 +9,7 @@ XelToFab processes design optimization output through six stages:
 
 <img src="/images/guides/pipeline-flow.png" alt="XelToFab 6-stage pipeline: Preprocess → Extract → Smooth → Repair → Remesh → Decimate" width={800} />
 
-<img src="/images/guides/pipeline-stages.png" alt="Pipeline progression: raw field → binary threshold → marching cubes mesh → smoothed mesh" width={800} />
+<img src="/images/guides/pipeline-stages.png" alt="Pipeline progression: raw field → binary threshold → extracted mesh → smoothed mesh" width={800} />
 
 The orchestrator in `pipeline.py` chains these stages:
 
@@ -99,18 +99,29 @@ Sets `state.binary` and `state.volume_fraction`.
 
 ### Extract (`extract.py`)
 
-- **3D**: `skimage.measure.marching_cubes` at the effective extraction level
-- **2D**: `skimage.measure.find_contours` at the effective extraction level
+Dispatches to the configured `extraction_method`:
+
+| Method | Backend | Best for |
+|--------|---------|----------|
+| `mc` (default for density) | scikit-image marching cubes | Density fields, general use |
+| `dc` (default for SDF) | Vendored sdftoolbox (CPU) or isoext (GPU) | SDF fields with sharp features |
+| `surfnets` | Vendored sdftoolbox | SDF fields, smooth output |
+| `manifold` | manifold3d | Watertight output for FEA/CAD |
+
+- **2D**: Always uses `skimage.measure.find_contours` regardless of `extraction_method`
+- Extraction level defaults to `threshold` for density and `0.0` for SDF, overridable with `extraction_level`
 
 In preprocessed mode, extraction operates on the binary field. In direct mode, it operates on the original continuous scalar field.
 
-The extraction level defaults to `threshold` for density fields and `0.0` for SDF fields, but can be overridden with `extraction_level`.
+See the [Extraction Methods](/docs/guides/extraction-methods) guide for details, GPU benchmarks, and examples.
 
 ### Smooth (`smooth.py`)
 
 XelToFab provides two mesh smoothing methods, selectable via `smoothing_method`:
 
-**Taubin smoothing** (default) applies alternating shrink/inflate passes using [`trimesh`](https://trimesh.org/)'s `filter_taubin`. This band-pass filter removes high-frequency staircase artifacts from marching cubes while preserving low-frequency shape and volume. Best for general-purpose smoothing where uniform treatment of the surface is acceptable.
+**Taubin smoothing** (default for MC) applies alternating shrink/inflate passes using [`trimesh`](https://trimesh.org/)'s `filter_taubin`. This band-pass filter removes high-frequency extraction artifacts while preserving low-frequency shape and volume. Best for general-purpose smoothing where uniform treatment of the surface is acceptable.
+
+**Smart smoothing defaults:** When `extraction_method` is `dc` or `surfnets`, the pipeline auto-selects bilateral smoothing with 5 iterations (vs 20 for MC) to preserve sharp features. Override with explicit `smoothing_method` and `taubin_iterations`.
 
 Configurable via `taubin_iterations` (default: 20) and `taubin_lambda` (default: 0.5).
 
@@ -128,7 +139,7 @@ For 2D contours, this is a no-op.
 
 ### Remesh (`remesh.py`)
 
-Isotropic remeshing via [`gpytoolbox.remesh_botsch`](https://gpytoolbox.org/) (Botsch & Kobbelt algorithm). Replaces the marching cubes triangulation with uniform, well-shaped triangles. After remeshing, 99%+ of faces meet FEA quality targets (min angle >20°).
+Isotropic remeshing via [`gpytoolbox.remesh_botsch`](https://gpytoolbox.org/) (Botsch & Kobbelt algorithm). Replaces the extraction triangulation with uniform, well-shaped triangles. After remeshing, 99%+ of faces meet FEA quality targets (min angle >20°).
 
 Configurable via `target_edge_length` (default: auto from mesh bounding box) and `remesh_iterations` (default: 10). Enabled by default; disable with `remesh=False` or `--no-remesh`.
 

@@ -29,8 +29,9 @@ from xeltofab.state import PipelineParams
 | `bilateral_sigma_s` | `float \| None` | `None` | `> 0.0` | Spatial weight reach (auto from edge length when `None`) |
 | `bilateral_sigma_n` | `float` | `0.35` | `> 0.0` | Normal similarity threshold in radians |
 | `field_type` | `Literal["density", "sdf"]` | `"density"` | — | Input field type |
+| `extraction_method` | `"mc"` \| `"dc"` \| `"surfnets"` \| `"manifold"` | `"mc"` | — | Extraction algorithm: `mc` (Marching Cubes), `dc` (Dual Contouring), `surfnets` (Surface Nets), `manifold` (manifold3d) |
 | `direct_extraction` | `bool` | `False` | — | Skip preprocessing and extract directly from the continuous field |
-| `extraction_level` | `float \| None` | `None` | — | Explicit iso-level for marching cubes/squares extraction |
+| `extraction_level` | `float \| None` | `None` | — | Explicit iso-level for extraction (MC, DC, SurfNets, or manifold) |
 | `repair` | `bool` | `True` | — | Enable watertight mesh repair (3D only) |
 | `remesh` | `bool` | `True` | — | Enable isotropic remeshing (3D only) |
 | `target_edge_length` | `float \| None` | `None` | `> 0.0` | Target edge length for remeshing (auto from bounding box when `None`) |
@@ -45,7 +46,9 @@ from xeltofab.state import PipelineParams
 When `field_type` is set to `"sdf"`, `PipelineParams` automatically adjusts defaults for values **not explicitly set** by the user:
 
 - `direct_extraction` becomes `True` (SDF fields are already continuous — no binarization needed)
-- `smooth_sigma` becomes `0.0` (Gaussian preprocessing is skipped, though Taubin mesh smoothing still runs to remove staircase artifacts from marching cubes)
+- `smooth_sigma` becomes `0.0` (Gaussian preprocessing is skipped)
+- `extraction_method` becomes `"dc"` (Dual Contouring leverages SDF gradients for sharp features)
+- `smoothing_method` becomes `"bilateral"` and `taubin_iterations` becomes `5` (reduced smoothing to preserve DC sharp features)
 
 If you explicitly pass `direct_extraction=False` or `smooth_sigma=2.0` with an SDF field, your values take precedence over the smart defaults.
 
@@ -54,6 +57,9 @@ If you explicitly pass `direct_extraction=False` or `smooth_sigma=2.0` with an S
 sdf_params = PipelineParams(field_type="sdf")
 assert sdf_params.direct_extraction is True
 assert sdf_params.smooth_sigma == 0.0
+assert sdf_params.extraction_method == "dc"
+assert sdf_params.smoothing_method == "bilateral"
+assert sdf_params.taubin_iterations == 5
 
 # Explicit values override smart defaults
 sdf_params = PipelineParams(field_type="sdf", smooth_sigma=0.5)

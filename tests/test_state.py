@@ -89,3 +89,66 @@ def test_pipeline_params_effective_extraction_level():
 def test_pipeline_params_custom_remesh_iterations():
     params = PipelineParams(remesh_iterations=20)
     assert params.remesh_iterations == 20
+
+
+# --- Extraction method tests ---
+
+
+def test_extraction_method_default_density():
+    """Density fields default to marching cubes extraction."""
+    params = PipelineParams(field_type="density")
+    assert params.extraction_method == "mc"
+
+
+def test_extraction_method_default_sdf():
+    """SDF fields default to dual contouring extraction."""
+    params = PipelineParams(field_type="sdf")
+    assert params.extraction_method == "dc"
+
+
+def test_extraction_method_explicit_override():
+    """Explicit extraction_method is not overridden by smart defaults."""
+    params = PipelineParams(field_type="sdf", extraction_method="mc")
+    assert params.extraction_method == "mc"
+
+
+def test_extraction_method_surfnets():
+    """Surface nets is a valid extraction method."""
+    params = PipelineParams(extraction_method="surfnets")
+    assert params.extraction_method == "surfnets"
+
+
+def test_extraction_method_invalid():
+    """Invalid extraction method raises validation error."""
+    with pytest.raises(ValidationError):
+        PipelineParams(extraction_method="invalid")
+
+
+def test_dc_smoothing_defaults():
+    """DC extraction auto-reduces smoothing to preserve sharp features."""
+    params = PipelineParams(field_type="sdf")  # defaults to dc
+    assert params.extraction_method == "dc"
+    assert params.taubin_iterations == 5
+    assert params.smoothing_method == "bilateral"
+
+
+def test_surfnets_smoothing_defaults():
+    """Surface nets also gets reduced smoothing defaults."""
+    params = PipelineParams(extraction_method="surfnets")
+    assert params.taubin_iterations == 5
+    assert params.smoothing_method == "bilateral"
+
+
+def test_dc_smoothing_explicit_override():
+    """User can override DC smoothing defaults."""
+    params = PipelineParams(field_type="sdf", taubin_iterations=20, smoothing_method="taubin")
+    assert params.taubin_iterations == 20
+    assert params.smoothing_method == "taubin"
+
+
+def test_mc_smoothing_unchanged():
+    """MC extraction keeps standard smoothing defaults."""
+    params = PipelineParams(field_type="density")
+    assert params.extraction_method == "mc"
+    assert params.taubin_iterations == 20
+    assert params.smoothing_method == "taubin"
