@@ -6,11 +6,11 @@ from pathlib import Path
 
 import click
 
+from xeltofab.field_plots import plot_comparison
 from xeltofab.io import load_field, save_mesh
 from xeltofab.loaders import get_supported_formats
 from xeltofab.pipeline import process
 from xeltofab.state import PipelineParams
-from xeltofab.field_plots import plot_comparison
 
 
 def _parse_shape(value: str) -> tuple[int, ...]:
@@ -71,8 +71,12 @@ def main() -> None:
 @click.option("--no-remesh", is_flag=True, help="Disable isotropic remeshing")
 @click.option("--no-decimate", is_flag=True, help="Disable QEM mesh decimation")
 @click.option("--smoothing", type=click.Choice(["taubin", "bilateral"]), default="taubin", help="Mesh smoothing method")
-@click.option("--extraction-method", type=click.Choice(["mc", "dc", "surfnets", "manifold"]), default="mc",
-              help="Mesh extraction algorithm (mc=marching cubes, dc=dual contouring, surfnets=surface nets, manifold=manifold3d)")
+@click.option(
+    "--extraction-method",
+    type=click.Choice(["mc", "dc", "surfnets", "manifold"]),
+    default="mc",
+    help="Extraction: mc=marching cubes, dc=dual contouring, surfnets=surface nets, manifold=manifold3d",
+)
 @click.option("--viz", is_flag=True, help="Save a comparison visualization alongside the mesh")
 @click.pass_context
 def process_cmd(
@@ -93,7 +97,9 @@ def process_cmd(
     viz: bool,
 ) -> None:
     """Process a scalar field into a mesh."""
-    params = _build_params(ctx, threshold, sigma, field_type, direct, no_repair, no_remesh, no_decimate, smoothing, extraction_method)
+    params = _build_params(
+        ctx, threshold, sigma, field_type, direct, no_repair, no_remesh, no_decimate, smoothing, extraction_method
+    )
     shape = _parse_shape(shape_str) if shape_str else None
 
     try:
@@ -131,8 +137,12 @@ def process_cmd(
 @click.option("--no-remesh", is_flag=True, help="Disable isotropic remeshing")
 @click.option("--no-decimate", is_flag=True, help="Disable QEM mesh decimation")
 @click.option("--smoothing", type=click.Choice(["taubin", "bilateral"]), default="taubin", help="Mesh smoothing method")
-@click.option("--extraction-method", type=click.Choice(["mc", "dc", "surfnets", "manifold"]), default="mc",
-              help="Mesh extraction algorithm (mc=marching cubes, dc=dual contouring, surfnets=surface nets, manifold=manifold3d)")
+@click.option(
+    "--extraction-method",
+    type=click.Choice(["mc", "dc", "surfnets", "manifold"]),
+    default="mc",
+    help="Extraction: mc=marching cubes, dc=dual contouring, surfnets=surface nets, manifold=manifold3d",
+)
 @click.pass_context
 def viz(
     ctx: click.Context,
@@ -151,7 +161,9 @@ def viz(
     extraction_method: str,
 ) -> None:
     """Visualize a scalar field and its extraction result."""
-    params = _build_params(ctx, threshold, sigma, field_type, direct, no_repair, no_remesh, no_decimate, smoothing, extraction_method)
+    params = _build_params(
+        ctx, threshold, sigma, field_type, direct, no_repair, no_remesh, no_decimate, smoothing, extraction_method
+    )
     shape = _parse_shape(shape_str) if shape_str else None
 
     try:

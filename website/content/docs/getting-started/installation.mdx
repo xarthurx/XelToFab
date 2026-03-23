@@ -20,6 +20,26 @@ uv sync
 
 This installs all core dependencies: `numpy`, `scipy`, `scikit-image`, `trimesh`, `pydantic`, `matplotlib`, and `click`.
 
+## Install as a dependency
+
+To add XelToFab as a dependency of another project:
+
+```bash
+uv add git+https://github.com/xarthurx/xelToFab.git
+```
+
+With optional extras:
+
+```bash
+uv add "xeltofab[vtk,hdf5] @ git+https://github.com/xarthurx/xelToFab.git"
+```
+
+Or with pip:
+
+```bash
+pip install git+https://github.com/xarthurx/xelToFab.git
+```
+
 ## Optional format support
 
 Some input formats require additional libraries. Install everything at once:

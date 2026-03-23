@@ -50,9 +50,7 @@ def extract(state: PipelineState) -> PipelineState:
 
     # Empty mesh guard: catch all backends producing no geometry
     if result.vertices is not None and result.vertices.shape[0] == 0:
-        raise ValueError(
-            "Extraction produced no geometry — check field values and extraction level"
-        )
+        raise ValueError("Extraction produced no geometry — check field values and extraction level")
     return result
 
 
@@ -150,9 +148,7 @@ def _extract_3d_manifold(state: PipelineState, field: np.ndarray, level: float) 
     z = np.linspace(0, nz - 1, nz)
     y = np.linspace(0, ny - 1, ny)
     x = np.linspace(0, nx - 1, nx)
-    interp = RegularGridInterpolator(
-        (z, y, x), field, method="linear", bounds_error=False, fill_value=level + 1.0
-    )
+    interp = RegularGridInterpolator((z, y, x), field, method="linear", bounds_error=False, fill_value=level + 1.0)
 
     # manifold3d: positive = inside, our SDF: negative = inside → negate
     # For density fields (values 0-1, level=0.5): inside = field > level → (field - level) > 0

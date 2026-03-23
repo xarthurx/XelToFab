@@ -72,9 +72,7 @@ class DualContouringVertexStrategy(DualVertexStrategy):
     ) -> np.ndarray:
         if gradients is None:
             # Fall back to surface nets if no gradients available
-            return NaiveSurfaceNetVertexStrategy().find_vertex_locations(
-                active_voxels, edge_coords, gradients, grid
-            )
+            return NaiveSurfaceNetVertexStrategy().find_vertex_locations(active_voxels, edge_coords, gradients, grid)
 
         sijk = grid.unravel_nd(active_voxels, grid.padded_shape)  # (M, 3)
         active_voxel_edges = grid.find_voxel_edges(active_voxels)  # (M, 12)
@@ -84,21 +82,17 @@ class DualContouringVertexStrategy(DualVertexStrategy):
         normals = self._interpolate_gradients(points, gradients, grid)  # (M, 12, 3)
 
         # Compute bias vertices (naive surface net solution)
-        bias_verts = NaiveSurfaceNetVertexStrategy().find_vertex_locations(
-            active_voxels, edge_coords, gradients, grid
-        )
+        bias_verts = NaiveSurfaceNetVertexStrategy().find_vertex_locations(active_voxels, edge_coords, gradients, grid)
 
         verts = []
-        for off, p, n, bias in zip(sijk, points, normals, bias_verts):
+        for off, p, n, bias in zip(sijk, points, normals, bias_verts, strict=False):
             q = p - off[None, :]
             mask = np.isfinite(q).all(-1) & np.isfinite(n).all(-1)
             x = self._solve_lst(q[mask], n[mask], bias=(bias - off))
             verts.append(x + off)
         return np.array(verts, dtype=float_dtype)
 
-    def _interpolate_gradients(
-        self, points: np.ndarray, gradients: np.ndarray, grid: Grid
-    ) -> np.ndarray:
+    def _interpolate_gradients(self, points: np.ndarray, gradients: np.ndarray, grid: Grid) -> np.ndarray:
         """Trilinearly interpolate gradient field at edge intersection points."""
         shape = points.shape  # (M, 12, 3)
         pts_flat = points.reshape(-1, 3)  # (M*12, 3)
@@ -115,18 +109,18 @@ class DualContouringVertexStrategy(DualVertexStrategy):
         gk = pts_flat[valid, 2]
 
         # Clamp to valid range
-        I, J, K = gradients.shape[:3]
-        gi = np.clip(gi, 0, I - 1.001)
-        gj = np.clip(gj, 0, J - 1.001)
-        gk = np.clip(gk, 0, K - 1.001)
+        ni, nj, nk = gradients.shape[:3]
+        gi = np.clip(gi, 0, ni - 1.001)
+        gj = np.clip(gj, 0, nj - 1.001)
+        gk = np.clip(gk, 0, nk - 1.001)
 
         # Floor indices for trilinear interpolation
         i0 = np.floor(gi).astype(int)
         j0 = np.floor(gj).astype(int)
         k0 = np.floor(gk).astype(int)
-        i1 = np.minimum(i0 + 1, I - 1)
-        j1 = np.minimum(j0 + 1, J - 1)
-        k1 = np.minimum(k0 + 1, K - 1)
+        i1 = np.minimum(i0 + 1, ni - 1)
+        j1 = np.minimum(j0 + 1, nj - 1)
+        k1 = np.minimum(k0 + 1, nk - 1)
 
         # Fractional parts
         fi = (gi - i0)[:, None]

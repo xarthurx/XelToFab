@@ -66,9 +66,7 @@ def dual_isosurface(
     # Step 1: Find active edges (sign changes)
     edges_active_mask = np.zeros((grid.num_edges,), dtype=bool)
     edges_flip_mask = np.zeros((grid.num_edges,), dtype=bool)
-    edges_isect_coords = np.full(
-        (grid.num_edges, 3), np.nan, dtype=np.float64
-    )
+    edges_isect_coords = np.full((grid.num_edges, 3), np.nan, dtype=np.float64)
 
     sijk = grid.get_all_source_vertices()
     si, sj, sk = sijk.T
@@ -84,9 +82,12 @@ def dual_isosurface(
         active = (src_sign != dst_sign) & np.isfinite(sdf_dst)
 
         t = edge_strategy.find_edge_intersections(
-            sijk[active], sdf_src[active],
-            tijk[active], sdf_dst[active],
-            aidx, off,
+            sijk[active],
+            sdf_src[active],
+            tijk[active],
+            sdf_dst[active],
+            aidx,
+            off,
         )
         isect_coords = sijk[active] + off[None, :] * t[:, None]
         need_flip = (sdf_dst[active] - sdf_src[active]) < 0.0
@@ -115,9 +116,7 @@ def dual_isosurface(
     active_voxels, faces = np.unique(active_quads, return_inverse=True)
 
     # Step 3: Vertex placement
-    grid_verts = v_strategy.find_vertex_locations(
-        active_voxels, edges_isect_coords, gradients, grid
-    )
+    grid_verts = v_strategy.find_vertex_locations(active_voxels, edges_isect_coords, gradients, grid)
 
     # Clip vertices to voxel bounds with relaxation tolerance
     grid_ijk = grid.unravel_nd(active_voxels, grid.padded_shape)

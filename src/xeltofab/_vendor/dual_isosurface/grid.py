@@ -61,11 +61,11 @@ class Grid:
         spacing: tuple[float, float, float] = (1.0, 1.0, 1.0),
     ) -> Grid:
         """Construct a grid from a volume shape and spacing."""
-        I, J, K = shape
+        ni, nj, nk = shape
         ranges = [
-            np.linspace(0, (I - 1) * spacing[0], I, dtype=float_dtype),
-            np.linspace(0, (J - 1) * spacing[1], J, dtype=float_dtype),
-            np.linspace(0, (K - 1) * spacing[2], K, dtype=float_dtype),
+            np.linspace(0, (ni - 1) * spacing[0], ni, dtype=float_dtype),
+            np.linspace(0, (nj - 1) * spacing[1], nj, dtype=float_dtype),
+            np.linspace(0, (nk - 1) * spacing[2], nk, dtype=float_dtype),
         ]
         X, Y, Z = np.meshgrid(*ranges, indexing="ij")
         xyz = np.stack((X, Y, Z), -1)
@@ -105,21 +105,19 @@ class Grid:
         return np.stack(ur, -1)
 
     def get_all_source_vertices(self) -> np.ndarray:
-        I, J, K = self.edge_shape[:3]
+        ni, nj, nk = self.edge_shape[:3]
         sijk = np.stack(
             np.meshgrid(
-                np.arange(I, dtype=np.int32),
-                np.arange(J, dtype=np.int32),
-                np.arange(K, dtype=np.int32),
+                np.arange(ni, dtype=np.int32),
+                np.arange(nj, dtype=np.int32),
+                np.arange(nk, dtype=np.int32),
                 indexing="ij",
             ),
             -1,
         ).reshape(-1, 3)
         return sijk
 
-    def find_voxels_sharing_edge(
-        self, edges: np.ndarray, ravel: bool = True
-    ) -> tuple[np.ndarray, np.ndarray]:
+    def find_voxels_sharing_edge(self, edges: np.ndarray, ravel: bool = True) -> tuple[np.ndarray, np.ndarray]:
         edges = np.asarray(edges, dtype=np.int32)
         if edges.ndim == 1:
             edges = self.unravel_nd(edges, self.edge_shape)
@@ -132,9 +130,7 @@ class Grid:
         neighbors[~edge_mask] = 0
 
         if ravel:
-            neighbors = self.ravel_nd(
-                neighbors.reshape(-1, 3), self.padded_shape
-            ).reshape(-1, 4)
+            neighbors = self.ravel_nd(neighbors.reshape(-1, 3), self.padded_shape).reshape(-1, 4)
         return neighbors, edge_mask
 
     def find_voxel_edges(self, voxels: np.ndarray, ravel: bool = True) -> np.ndarray:
@@ -143,9 +139,7 @@ class Grid:
             voxels = self.unravel_nd(voxels, self.padded_shape)
         N = voxels.shape[0]
 
-        voxels = np.expand_dims(
-            np.concatenate((voxels, np.zeros((N, 1), dtype=np.int32)), -1), -2
-        )
+        voxels = np.expand_dims(np.concatenate((voxels, np.zeros((N, 1), dtype=np.int32)), -1), -2)
         edges = voxels + Grid.VOXEL_EDGE_OFFSETS
         if ravel:
             edges = self.ravel_nd(edges.reshape(-1, 4), self.edge_shape).reshape(-1, 12)
