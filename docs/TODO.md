@@ -29,6 +29,19 @@
 - ~~Tier 3 — API + CLI reference page illustrations~~ (dropped — reference pages are inherently textual)
 - [ ] SVG animation versions of pipeline diagrams (nice-to-have, for interactive web experience)
 
+## Advanced Extraction Methods (Tier 2.5)
+
+- [x] Dual Contouring — QEF-based vertex placement for sharp SDF features (vendored sdftoolbox)
+- [x] Naive Surface Nets — centroid-based dual method for smoother SDF meshes
+- [x] manifold3d extraction — guaranteed manifold/watertight output via marching tetrahedra
+- [x] GPU-accelerated DC — optional isoext backend (requires CUDA)
+- [x] Smart defaults — SDF fields auto-select DC, density fields keep MC
+- [x] DC/surfnets smoothing reduction — auto bilateral with 5 iterations
+- [ ] Extraction method comparison benchmark (MC vs DC vs SurfNets quality metrics)
+- [ ] Website docs for extraction methods (comparison table, usage guidance)
+- [ ] Interactive MC vs DC visual comparison on website
+- [ ] Coordinate system contract documentation (all backends → grid index coords)
+
 ## Visualization Upgrades
 
 - [ ] Polyscope integration — interactive 3D mesh/volume inspection (`polyscope` Python package)

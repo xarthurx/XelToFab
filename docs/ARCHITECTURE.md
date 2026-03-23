@@ -18,7 +18,7 @@ scalar field (numpy)
        ▼
 ┌──────────────┐
 │   Extract     │  2D: marching squares → contours
-│               │  3D: marching cubes → triangle mesh
+│               │  3D: MC / DC / SurfNets / manifold3d
 └──────┬───────┘
        │  vertices + faces (3D) or contour arrays (2D)
        ▼
@@ -83,6 +83,12 @@ src/xeltofab/
 │   ├── csv_loader.py   .csv/.txt (with shape parsing)
 │   ├── vtk_loader.py   .vtk/.vtr/.vti (optional: pyvista)
 │   └── hdf5_loader.py  .h5/.hdf5/.xdmf (optional: h5py)
+├── _vendor/        Vendored third-party code
+│   └── dual_isosurface/  DC + Surface Nets from sdftoolbox (MIT)
+│       ├── core.py       Main dual_isosurface() function
+│       ├── grid.py       Grid class: topology lookups, coord transforms
+│       ├── strategies.py Edge + vertex strategies (Linear, DC QEF, SurfNets)
+│       └── mesh_utils.py Quad triangulation, face normals
 ├── field_plots.py  Matplotlib visualization (field, result, comparison plots)
 ├── quality_plots.py Quality visualization (PyVista heatmaps, matplotlib histograms)
 ├── cli.py          Click CLI (xtf process, xtf viz, xtf formats)
@@ -112,6 +118,19 @@ def stage(state: PipelineState) -> PipelineState:
 | `smoothed_vertices` | `ndarray` | `smooth()` (3D only); cleared by `repair()`/`remesh()` |
 
 The `best_vertices` property returns `smoothed_vertices` if available, otherwise `vertices`. Use this instead of the manual fallback pattern. After repair/remesh, `smoothed_vertices` is `None` because `vertices` itself contains the latest geometry.
+
+## Extraction Methods
+
+| Method | Backend | Sharp Features | Manifold | Best For |
+|--------|---------|---------------|----------|----------|
+| `mc` (default) | scikit-image | No | Yes (topological) | Density fields, general use |
+| `dc` | vendored sdftoolbox (CPU) / isoext (GPU) | Yes (QEF) | No (use repair stage) | SDF fields with sharp features |
+| `surfnets` | vendored sdftoolbox | No (smoother) | No (use repair stage) | SDF fields wanting smooth output |
+| `manifold` | manifold3d (optional dep) | No | **Guaranteed watertight** | When manifold is critical, neural SDFs |
+
+Smart defaults: SDF fields auto-select `dc`, density fields keep `mc`. DC/surfnets auto-reduce smoothing to preserve sharp features (bilateral, 5 iterations).
+
+DC/surfnets require pymeshlab for repair (`uv sync --extra mesh-quality`). The manifold method skips repair automatically (output is guaranteed watertight).
 
 ## Field Types and Extraction Modes
 
@@ -144,7 +163,9 @@ The `xtf` command (installed via `[project.scripts]`) exposes three subcommands:
 | Field smoothing | `scipy.ndimage` (Gaussian filter) |
 | Morphological ops | `scikit-image` (opening, closing, remove_small_objects) |
 | Contour extraction | `scikit-image` (find_contours) |
-| Mesh extraction | `scikit-image` (marching_cubes) |
+| Mesh extraction | `scikit-image` (marching_cubes), vendored `sdftoolbox` (DC, Surface Nets) |
+| Manifold extraction | `manifold3d` (optional — `uv sync --extra manifold`) |
+| GPU extraction | `isoext` (optional — `uv sync --extra cuda`, requires CUDA) |
 | Mesh smoothing | `trimesh` (Taubin filter), `numpy` (bilateral filter) |
 | Mesh decimation | `pyfqmr` (QEM edge collapse) |
 | Mesh repair | `pymeshlab` (optional — `uv sync --extra mesh-quality`) |
