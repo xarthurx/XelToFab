@@ -102,18 +102,33 @@ def _extract_3d_dc(state: PipelineState, field: np.ndarray, level: float) -> Pip
 
 
 def _extract_3d_dc_gpu(state: PipelineState, shifted_field: np.ndarray) -> PipelineState:
-    """GPU-accelerated Dual Contouring via isoext (requires PyTorch + CUDA)."""
+    """GPU-accelerated Dual Contouring via isoext (requires PyTorch + CUDA).
+
+    isoext API: create UniformGrid → set_values() → get_intersection() → dual_contouring().
+    The grid uses AABB bounds matching grid index coordinates [0, N-1] per axis.
+    """
     import torch
 
     if not torch.cuda.is_available():
         raise RuntimeError("CUDA not available")
     import isoext
 
+    ni, nj, nk = shifted_field.shape
+    grid = isoext.UniformGrid(
+        [ni, nj, nk],
+        aabb_min=[0.0, 0.0, 0.0],
+        aabb_max=[float(ni - 1), float(nj - 1), float(nk - 1)],
+    )
     tensor = torch.from_numpy(shifted_field).float().cuda()
-    grid = isoext.UniformGrid(list(shifted_field.shape))
-    verts_t, faces_t = isoext.dual_contouring(grid, tensor)
-    vertices = verts_t.cpu().numpy()
-    faces = faces_t.cpu().numpy()
+    grid.set_values(tensor)
+    its = isoext.get_intersection(grid, level=0.0)
+    verts_t, faces_t = isoext.dual_contouring(grid, its, level=0.0)
+    if verts_t is None or (hasattr(verts_t, "shape") and verts_t.shape[0] == 0):
+        return state.model_copy(
+            update={"vertices": np.empty((0, 3), dtype=np.float64), "faces": np.empty((0, 3), dtype=np.int64)}
+        )
+    vertices = verts_t.cpu().numpy().astype(np.float64)
+    faces = faces_t.cpu().numpy() if hasattr(faces_t, "cpu") else np.asarray(faces_t, dtype=np.int64)
     return state.model_copy(update={"vertices": vertices, "faces": faces})
 
 
