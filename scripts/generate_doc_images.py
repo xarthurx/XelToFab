@@ -770,13 +770,13 @@ def gen_extraction_comparison() -> None:
             v[:, 0], v[:, 1], v[:, 2], triangles=f, color="#3182BD", edgecolor="#1a1a1a", linewidth=0.02, alpha=0.95
         )
         ax.set_title(f"{name}\n({v.shape[0]:,} verts, {f.shape[0]:,} faces)", fontsize=12, fontweight="bold")
-        ax.view_init(elev=20, azim=150)  # classic bunny side profile
+        ax.view_init(elev=30, azim=-60)  # matplotlib default-like 3/4 view
         ax.set_axis_off()
         ax.set_xlim(*xlim)
         ax.set_ylim(*ylim)
         ax.set_zlim(*zlim)
         ax.set_box_aspect(box_aspect)
-    fig.subplots_adjust(left=0.0, right=1.0, bottom=-0.05, top=0.88, wspace=-0.1)
+    fig.subplots_adjust(left=0.0, right=1.0, bottom=-0.05, top=0.82, wspace=-0.1)
     fig.savefig(OUTPUT_DIR / "extraction-comparison.png", dpi=DPI, bbox_inches="tight", facecolor=BG_COLOR)
     plt.close(fig)
 
