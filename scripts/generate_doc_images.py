@@ -755,12 +755,17 @@ def gen_extraction_comparison() -> None:
         ("Dual Contouring", dc_v, dc_f),
         ("Surface Nets", sn_v, sn_f),
     ]
-    # Tight bounds — zoom in by reducing padding
+    # Zoom: shrink axis limits inward to crop empty space around the bunny
     all_v = np.vstack([mc_v, dc_v, sn_v])
     # After Y↔Z swap: plot X=axis0 (length), Y=axis2 (width), Z=axis1 (height)
-    xlim = (all_v[:, 0].min(), all_v[:, 0].max())
-    ylim = (all_v[:, 2].min(), all_v[:, 2].max())
-    zlim = (all_v[:, 1].min(), all_v[:, 1].max())
+    shrink = 0.08  # fraction to crop from each side
+    def _tight(vals: "np.ndarray") -> tuple[float, float]:
+        span = vals.max() - vals.min()
+        return (vals.min() + span * shrink, vals.max() - span * shrink)
+
+    xlim = _tight(all_v[:, 0])
+    ylim = _tight(all_v[:, 2])
+    zlim = _tight(all_v[:, 1])
     ranges = np.array([xlim[1] - xlim[0], ylim[1] - ylim[0], zlim[1] - zlim[0]])
     box_aspect = ranges / ranges.max()
     for i, (name, v, f) in enumerate(methods):
@@ -779,7 +784,7 @@ def gen_extraction_comparison() -> None:
         ax.set_zlim(*zlim)
         ax.set_box_aspect(box_aspect)
     fig.subplots_adjust(left=0.0, right=1.0, bottom=-0.12, top=0.88, wspace=-0.1)
-    fig.savefig(OUTPUT_DIR / "extraction-comparison.png", dpi=DPI, bbox_inches="tight", pad_inches=0.3, facecolor=BG_COLOR)
+    fig.savefig(OUTPUT_DIR / "extraction-comparison.png", dpi=DPI, bbox_inches="tight", pad_inches=0.15, facecolor=BG_COLOR)
     plt.close(fig)
 
 
