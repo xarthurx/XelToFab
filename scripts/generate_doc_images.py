@@ -811,11 +811,14 @@ def gen_extraction_models() -> None:
     # Use true SDF — clean DC output for interactive comparison
     sdf = _make_bunny_sdf_true()
     mc_v, mc_f, _, _ = marching_cubes(sdf, level=0.0)
-    trimesh.Trimesh(vertices=mc_v, faces=mc_f, process=False).export(models_dir / "bunny_mc.stl")
+    # Flip face winding — VTK implicit_distance produces inward-pointing normals
+    mc_mesh = trimesh.Trimesh(vertices=mc_v, faces=mc_f[:, ::-1], process=False)
+    mc_mesh.export(models_dir / "bunny_mc.stl")
     print("  bunny_mc.stl")
 
     dc_v, dc_f = dual_isosurface(sdf, vertex_strategy="dc")
-    trimesh.Trimesh(vertices=dc_v, faces=dc_f, process=False).export(models_dir / "bunny_dc.stl")
+    dc_mesh = trimesh.Trimesh(vertices=dc_v, faces=dc_f[:, ::-1], process=False)
+    dc_mesh.export(models_dir / "bunny_dc.stl")
     print("  bunny_dc.stl")
 
 
