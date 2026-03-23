@@ -5,14 +5,14 @@ description: XelToFab — Design field post-processing pipeline
 
 XelToFab converts scalar design fields into clean, fabrication-ready triangle meshes. It handles the full post-processing pipeline: preprocessing, mesh extraction, smoothing, repair, and quality analysis.
 
-<img src="/images/guides/pipeline-stages.png" alt="Pipeline progression: raw field → binary threshold → marching cubes mesh → smoothed mesh" width={800} />
+<img src="/images/guides/pipeline-stages.png" alt="Pipeline progression: raw field → binary threshold → extracted mesh → smoothed mesh" width={800} />
 
 ## What it does
 
 Given a scalar field (a numpy array) from a topology optimization solver, neural network, or other computational design tool, XelToFab:
 
 1. **Preprocesses** the field *(optional)* — Gaussian smoothing, thresholding, morphological cleanup
-2. **Extracts** geometry — marching cubes (3D → triangle mesh) or marching squares (2D → contours)
+2. **Extracts** geometry — marching cubes, dual contouring, surface nets, or manifold3d (3D → triangle mesh) or marching squares (2D → contours)
 3. **Smooths** the result — Taubin or bilateral filtering to remove staircase artifacts
 4. **Repairs** the mesh *(optional)* — non-manifold fixing for watertight geometry
 5. **Remeshes** for quality *(optional)* — isotropic remeshing for FEA-ready elements
