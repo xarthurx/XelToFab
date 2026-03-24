@@ -100,7 +100,23 @@ result = process_from_sdf(my_sdf, bounds=(-2, -2, -2, 2, 2, 2), resolution=64)
 save_mesh(result, "sphere.stl")
 ```
 
-This evaluates the function on a uniform grid internally, then runs the full pipeline. Works with any SDF source — PyTorch models, ONNX, analytical formulas. See [`process_from_sdf`](/docs/api/process-from-sdf) for details.
+This evaluates the function on a uniform grid internally, then runs the full pipeline. Works with any SDF source — PyTorch models, ONNX, analytical formulas. See the [SDF Functions guide](/docs/guides/sdf-functions) for details.
+
+### Adaptive evaluation for large grids
+
+For high-resolution grids or expensive SDF functions, enable octree-accelerated evaluation to skip regions far from the surface:
+
+```python
+result = process_from_sdf(
+    my_sdf,
+    bounds=(-2, -2, -2, 2, 2, 2),
+    resolution=256,
+    adaptive=True,      # octree: ~O(N²) instead of O(N³) evaluations
+)
+save_mesh(result, "sphere_hires.stl")
+```
+
+See [Uniform vs adaptive](/docs/guides/sdf-functions#uniform-vs-adaptive-evaluation) for when adaptive evaluation helps.
 
 ### Feature-preserving smoothing
 

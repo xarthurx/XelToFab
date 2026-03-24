@@ -83,12 +83,12 @@ def _pv_screenshot(vertices, faces, color="#88BDE6", zoom=1.0, window_size=None,
 
 
 def gen_pipeline_diagram() -> None:
-    """Image 1: 3-row pipeline flow diagram with blue palette.
+    """Image 1: Pipeline flow diagram with blue palette.
 
-    Row 1: Field terminal (top-left)
+    Row 0 (top): SDF Function terminal + SDF Evaluate stage (alternative entry)
+    Row 1: Field terminal (grid-based entry, also receives SDF Evaluate output)
     Row 2: 6 pipeline stages with horizontal arrows
     Row 3: Mesh terminal (bottom-right)
-    Vertical arrows connect Field→row2 and row2→Mesh.
     Optional stages have a dashed outline offset around the solid box.
     """
     stages = list(STAGE_COLORS.keys())
@@ -106,13 +106,16 @@ def gen_pipeline_diagram() -> None:
     stage_x = [i * gap for i in range(len(stages))]
     total_w = stage_x[-1]
 
-    # Terminal positions
+    # Terminal and entry positions
     field_x, field_y = stage_x[0], row_gap * 0.8
+    sdf_fn_x = field_x - gap * 1.3     # SDF Function terminal: left of Field
+    sdf_eval_x = field_x - gap * 0.0   # SDF Evaluate: same x as Field
+    sdf_row_y = field_y + row_gap * 0.7  # SDF row: above Field
     mesh_x, mesh_y = stage_x[-1], -row_gap
 
-    fig, ax = plt.subplots(figsize=(12, 4.5))
-    ax.set_xlim(-1.0, total_w + 1)
-    ax.set_ylim(-row_gap - 0.5, row_gap + 0.3)
+    fig, ax = plt.subplots(figsize=(12, 5.5))
+    ax.set_xlim(-gap * 1.8, total_w + 1)
+    ax.set_ylim(-row_gap - 0.5, sdf_row_y + 0.5)
     ax.set_aspect("equal")
     ax.axis("off")
     fig.patch.set_facecolor(BG_COLOR)
@@ -127,9 +130,15 @@ def gen_pipeline_diagram() -> None:
     }
     optional_stages = {"Preprocess", "Repair", "Remesh", "Decimate"}
 
-    def _draw_box(x, y, label, is_terminal=False):
+    # SDF Evaluate stage color — teal to distinguish from the blue pipeline
+    sdf_eval_color = "#2A7F62"
+    sdf_eval_text = "white"
+
+    def _draw_box(x, y, label, is_terminal=False, custom_color=None, custom_text_color=None):
         if is_terminal:
             fc, ec, tc = "#E8E8E8", "#999999", "#333333"
+        elif custom_color:
+            fc, ec, tc = custom_color, "#333333", custom_text_color or "white"
         else:
             fc = STAGE_COLORS[label]
             ec = "#333333"
@@ -153,6 +162,13 @@ def gen_pipeline_diagram() -> None:
                 linewidth=1.0, linestyle="--",
             ))
 
+    # --- Row 0: SDF Function → SDF Evaluate (alternative entry) ---
+    _draw_box(sdf_fn_x, sdf_row_y, "SDF Function", is_terminal=True)
+    _draw_box(sdf_eval_x, sdf_row_y, "SDF Evaluate",
+              custom_color=sdf_eval_color, custom_text_color=sdf_eval_text)
+    ax.text(sdf_eval_x, sdf_row_y - box_hh - 0.12, "adaptive\nchunk_size",
+            ha="center", va="top", fontsize=7, color="#666666", fontstyle="italic")
+
     # --- Row 1: Field terminal ---
     _draw_box(field_x, field_y, "Field", is_terminal=True)
 
@@ -169,7 +185,23 @@ def gen_pipeline_diagram() -> None:
 
     # --- Arrows ---
     arrow_kw = dict(arrowstyle="-|>", color="#555555", lw=1.3)
+    sdf_arrow_kw = dict(arrowstyle="-|>", color="#2A7F62", lw=1.3)
     e = uniform_edge + arrow_gap
+
+    # SDF Function → SDF Evaluate (horizontal, teal)
+    ax.annotate("", xy=(sdf_eval_x - e, sdf_row_y),
+                xytext=(sdf_fn_x + e, sdf_row_y),
+                arrowprops=sdf_arrow_kw)
+
+    # SDF Evaluate → Field (vertical, teal)
+    ax.annotate("", xy=(field_x, field_y + box_hh + arrow_gap),
+                xytext=(sdf_eval_x, sdf_row_y - box_hh - arrow_gap),
+                arrowprops=sdf_arrow_kw)
+
+    # "or" label between SDF path and grid-data path
+    ax.text(field_x + box_hw + 0.3, field_y + (sdf_row_y - field_y) * 0.5,
+            "process_from_sdf()", ha="left", va="center",
+            fontsize=7, color="#2A7F62", fontstyle="italic")
 
     # Field → Preprocess (vertical)
     ax.annotate("", xy=(field_x, e * 0.95),
@@ -187,7 +219,7 @@ def gen_pipeline_diagram() -> None:
                 xytext=(mesh_x, mesh_y + box_hh + arrow_gap + 0.6),
                 arrowprops=arrow_kw)
 
-    # --- Legend (small dashed rectangle, bottom-left) ---
+    # --- Legend (bottom-left) ---
     leg_w = 0.5
     leg_h = 0.35
     leg_x = stage_x[0] - box_hw - dash_gap

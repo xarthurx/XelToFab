@@ -19,6 +19,16 @@ from xeltofab.pipeline import process
 result = process(state)  # preprocess -> extract -> smooth -> repair -> remesh -> decimate
 ```
 
+For SDF functions (neural models, analytical formulas), use `process_from_sdf` to evaluate the function on a grid first:
+
+```python
+from xeltofab.pipeline import process_from_sdf
+
+result = process_from_sdf(my_sdf, bounds=(-1, -1, -1, 1, 1, 1), resolution=128)
+```
+
+This evaluates the SDF on a uniform grid (or an adaptive octree grid with `adaptive=True`), then feeds into the same pipeline stages. See the [SDF Functions guide](/docs/guides/sdf-functions) for details.
+
 ## PipelineState threading pattern
 
 All stage functions follow the same signature:

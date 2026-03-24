@@ -1,5 +1,5 @@
 {
   "title": "Guides",
   "defaultOpen": true,
-  "pages": ["pipeline-overview", "field-types", "extraction-methods", "input-formats", "parameters", "quality-metrics"]
+  "pages": ["pipeline-overview", "field-types", "sdf-functions", "extraction-methods", "input-formats", "parameters", "quality-metrics"]
 }

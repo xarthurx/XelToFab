@@ -1,0 +1,175 @@
+---
+title: SDF Functions
+description: Evaluating neural and analytical SDF functions with process_from_sdf
+---
+
+## Overview
+
+XelToFab provides two entry points depending on your data:
+
+- **[`process()`](/docs/api/process)** — for pre-evaluated grid data (numpy arrays from TO solvers, MATLAB files, VTK volumes)
+- **[`process_from_sdf()`](/docs/api/process-from-sdf)** — for SDF **functions** (neural networks, analytical formulas, ONNX models)
+
+`process_from_sdf` evaluates your SDF function on a grid internally, then runs the full pipeline (extract → smooth → repair → remesh → decimate). You provide the function; XelToFab handles everything else.
+
+```python
+from xeltofab import process_from_sdf, save_mesh
+
+result = process_from_sdf(my_sdf, bounds=(-1, -1, -1, 1, 1, 1), resolution=128)
+save_mesh(result, "output.stl")
+```
+
+## The SDF function protocol
+
+Any Python callable that accepts `[N, 3]` points and returns `[N]` signed distances works:
+
+```python
+def my_sdf(points: np.ndarray) -> np.ndarray:
+    # points: [N, 3] float64 — (x, y, z) coordinates
+    # return: [N] float64 — signed distances (negative inside, positive outside)
+    ...
+```
+
+This is a structural protocol — no base class, no registration. If your function has the right signature, it works. This means any SDF source can be used: PyTorch models, ONNX runtimes, JAX functions, analytical formulas, or C/C++ extensions via ctypes.
+
+## When to use process_from_sdf
+
+| Your data | Entry point | Why |
+|-----------|-------------|-----|
+| Numpy/MATLAB/VTK grid | `process()` with `field_type="sdf"` | Data is already evaluated on a grid |
+| Neural SDF model (PyTorch, ONNX) | `process_from_sdf()` | No grid exists — model is a function |
+| Analytical SDF formula | `process_from_sdf()` | Evaluate on-the-fly at any resolution |
+| Large model, memory-constrained | `process_from_sdf(chunk_size=...)` | Evaluate in batches to limit memory |
+| Large model, sparse surface | `process_from_sdf(adaptive=True)` | Skip empty regions via octree |
+
+## Wrapping SDF sources
+
+### Analytical SDFs
+
+Any mathematical formula that computes signed distance:
+
+```python
+import numpy as np
+from xeltofab import process_from_sdf, save_mesh
+
+def gyroid_sdf(points: np.ndarray) -> np.ndarray:
+    """Gyroid minimal surface (approximate SDF)."""
+    x, y, z = points[:, 0], points[:, 1], points[:, 2]
+    return np.sin(x) * np.cos(y) + np.sin(y) * np.cos(z) + np.sin(z) * np.cos(x)
+
+result = process_from_sdf(gyroid_sdf, bounds=(-6, -6, -6, 6, 6, 6), resolution=128)
+save_mesh(result, "gyroid.stl")
+```
+
+### PyTorch neural SDFs
+
+Wrap the model with `torch.no_grad()` and handle the numpy ↔ tensor conversion:
+
+```python
+import torch
+import numpy as np
+from xeltofab import process_from_sdf, save_mesh
+
+model = torch.load("my_sdf_model.pt", map_location="cuda")
+model.eval()
+
+def neural_sdf(points: np.ndarray) -> np.ndarray:
+    with torch.no_grad():
+        t = torch.from_numpy(points).float().cuda()
+        return model(t).squeeze(-1).cpu().numpy()
+
+result = process_from_sdf(neural_sdf, bounds=(-1, -1, -1, 1, 1, 1), resolution=256)
+save_mesh(result, "neural_shape.stl")
+```
+
+For GPU memory control, set `chunk_size` to limit how many points are sent per call:
+
+```python
+result = process_from_sdf(neural_sdf, bounds=(-1, -1, -1, 1, 1, 1),
+                          resolution=256, chunk_size=50000)
+```
+
+### ONNX models
+
+Framework-free inference — no PyTorch required:
+
+```python
+import onnxruntime as ort
+
+session = ort.InferenceSession("model.onnx")
+
+def onnx_sdf(points: np.ndarray) -> np.ndarray:
+    return session.run(None, {"points": points.astype(np.float32)})[0]
+
+result = process_from_sdf(onnx_sdf, bounds=(-1, -1, -1, 1, 1, 1), resolution=256)
+```
+
+## Uniform vs adaptive evaluation
+
+By default, `process_from_sdf` evaluates every point on the grid — O(N³) evaluations for an N³ grid. For large grids with expensive SDF functions, most of these evaluations are wasted on regions far from the surface.
+
+**Adaptive evaluation** (`adaptive=True`) uses octree-accelerated coarse-to-fine refinement:
+
+1. Evaluate SDF at a coarse grid (resolution / 8)
+2. Cull cells far from the zero level set (Lipschitz bound)
+3. Subdivide only near-surface cells
+4. Repeat for `log2(coarse_factor)` levels (3 levels with default coarse_factor=8)
+
+This reduces evaluations from O(N³) to ~O(N²) — significant for neural SDFs at high resolution.
+
+```python
+# Uniform: evaluates all 256³ = 16.7M points
+result = process_from_sdf(my_sdf, bounds, resolution=256)
+
+# Adaptive: evaluates ~N² points near the surface
+result = process_from_sdf(my_sdf, bounds, resolution=256, adaptive=True)
+```
+
+### When to use adaptive
+
+| Scenario | Use adaptive? |
+|----------|--------------|
+| Resolution ≥ 128, expensive SDF (neural net) | Yes |
+| Shape occupies small fraction of bounding box | Yes |
+| Resolution < 64, fast SDF (analytical) | No — overhead exceeds savings |
+| SDF fills most of the bounding box | No — few cells to cull |
+| Need exact values everywhere in the grid | No — unevaluated regions filled with +1.0 |
+
+For advanced octree control (`coarse_factor`, `lipschitz` threshold), use `octree_evaluate()` directly — see the [API reference](/docs/api/process-from-sdf#adaptive-evaluation).
+
+## Memory management
+
+**`chunk_size`** limits the number of points sent to your SDF function per call. Set it when:
+- Your GPU has limited VRAM (neural SDFs)
+- The SDF function allocates per-point intermediate data
+
+```python
+# Default: entire Z-slab at once (~65K points for 256² grid)
+result = process_from_sdf(my_sdf, bounds, resolution=256)
+
+# Limited: 50K points per call
+result = process_from_sdf(my_sdf, bounds, resolution=256, chunk_size=50000)
+```
+
+**`resolution`** specifies cells along the longest bounding box axis. Shorter axes get proportionally fewer cells, preserving aspect ratio. For example, `bounds=(0,0,0, 2,1,1)` with `resolution=128` produces a 128 x 64 x 64 grid.
+
+## Best practices for neural SDFs
+
+1. **Test at low resolution first** (`resolution=32`) to verify your wrapper works before committing to expensive high-resolution evaluation.
+
+2. **Gradient quality matters for Dual Contouring.** DC is the default extraction method for SDFs. It uses SDF gradients (computed via finite differences) to place vertices precisely. If your SDF has noisy gradients (e.g., from a poorly trained model), DC can produce rough surfaces. See [Gradient quality](/docs/guides/extraction-methods#gradient-quality-matters) for details.
+
+3. **Fallback extraction methods.** If DC produces artifacts, try:
+   - `extraction_method="surfnets"` — smoother output, less sensitive to gradient quality
+   - `extraction_method="mc"` — Marching Cubes, most robust but loses sharp features
+
+4. **Always use `torch.no_grad()`** for inference. XelToFab is non-differentiable — gradients through the pipeline are not needed and waste memory.
+
+5. **Consider `adaptive=True`** for resolution ≥ 128 with neural SDFs. The evaluation savings compound: fewer SDF calls means less GPU time and memory.
+
+## See also
+
+- [`process_from_sdf()` API reference](/docs/api/process-from-sdf) — full parameter documentation
+- [Field Types](/docs/guides/field-types) — density vs SDF semantics and smart defaults
+- [Extraction Methods](/docs/guides/extraction-methods) — MC vs DC vs SurfNets comparison
+- [Parameters](/docs/guides/parameters) — full PipelineParams reference

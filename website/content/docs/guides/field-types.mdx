@@ -43,6 +43,8 @@ from xeltofab.state import PipelineParams
 params = PipelineParams(field_type="sdf")
 ```
 
+For SDF *functions* (callable models rather than pre-evaluated grids), see the [SDF Functions guide](/docs/guides/sdf-functions) for how to use `process_from_sdf` with neural networks, ONNX models, and analytical formulas.
+
 ### Smart defaults for SDF fields
 
 When `field_type="sdf"` is set, the pipeline automatically adjusts defaults (unless you explicitly override them):
@@ -102,3 +104,4 @@ The effective level is always available via `params.effective_extraction_level`.
 - Values represent signed distance to the surface
 - The field is already smooth and continuous -- preprocessing would degrade quality
 - You want the zero level set as the surface
+- Your input is a callable function (neural SDF, analytical formula) — use [`process_from_sdf()`](/docs/api/process-from-sdf) with `adaptive=True` for large grids

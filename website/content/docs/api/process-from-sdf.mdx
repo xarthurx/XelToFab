@@ -61,8 +61,27 @@ The SDF function receives points as `[N, 3]` arrays in `(x, y, z)` order and mus
 Since the input is an SDF function, `process_from_sdf` automatically sets `field_type="sdf"`, which triggers the same [smart defaults](/docs/guides/field-types#sdf-fields) as grid-based SDF processing:
 - Direct extraction (no preprocessing)
 - Extraction level at 0.0 (zero level set)
-- Dual Contouring as the default extraction method
-- Bilateral smoothing with 5 iterations
+- Dual Contouring as the default extraction method (which in turn triggers bilateral smoothing with reduced Taubin iterations)
+
+### Adaptive evaluation
+
+When `adaptive=True`, the evaluator uses octree-accelerated coarse-to-fine refinement instead of evaluating every grid point:
+
+1. Evaluate SDF at a coarse grid (resolution / 8)
+2. Cull cells far from the zero level set using a Lipschitz bound
+3. Subdivide only near-surface cells and repeat for `log2(coarse_factor)` levels
+4. Evaluate remaining fine cells at the target resolution
+
+This reduces evaluations from O(N³) to ~O(N²). Unevaluated regions are filled with `+1.0` (outside), so extraction ignores them.
+
+For finer control, use `octree_evaluate()` directly from `xeltofab.sdf_eval`:
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `coarse_factor` | `int` | `8` | Fine-to-coarse ratio. Must be a power of 2. |
+| `lipschitz` | `float` | `1.1` | Culling threshold. Cells kept when `min(\|SDF\|) < lipschitz * cell_diagonal` |
+
+See the [SDF Functions guide](/docs/guides/sdf-functions#uniform-vs-adaptive-evaluation) for details on when adaptive evaluation helps.
 
 ## Examples
 
@@ -126,8 +145,42 @@ result = process_from_sdf(
 )
 ```
 
+### Adaptive evaluation (octree)
+
+```python
+# Large grid with expensive neural SDF — adaptive skips far-from-surface cells
+result = process_from_sdf(
+    neural_sdf,
+    bounds=(-1, -1, -1, 1, 1, 1),
+    resolution=256,
+    adaptive=True,
+    chunk_size=50000,
+)
+```
+
+For advanced octree control (`coarse_factor`, `lipschitz`):
+
+```python
+from xeltofab.sdf_eval import octree_evaluate
+from xeltofab.pipeline import process
+from xeltofab.state import PipelineParams, PipelineState
+
+grid, x, y, z = octree_evaluate(
+    my_sdf,
+    bounds=(-1, -1, -1, 1, 1, 1),
+    resolution=256,
+    coarse_factor=16,   # 4 refinement levels
+    lipschitz=1.5,      # more conservative culling
+)
+
+params = PipelineParams(field_type="sdf")
+state = PipelineState(field=grid, params=params)
+result = process(state)
+```
+
 ## See also
 
+- [SDF Functions Guide](/docs/guides/sdf-functions) — when to use, wrapping models, uniform vs adaptive
 - [`process()`](/docs/api/process) — for pre-evaluated numpy grid fields
 - [Field Types](/docs/guides/field-types) — density vs SDF semantics and smart defaults
 - [Extraction Methods](/docs/guides/extraction-methods) — MC vs DC vs SurfNets comparison

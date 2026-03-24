@@ -54,7 +54,7 @@ The same Dual Contouring algorithm on the same Stanford bunny, with the only dif
 
 <img src="/images/guides/extraction-gradient-quality.png" alt="DC with noisy EDT SDF (left, rough surface) vs DC with true signed distance (right, clean surface)" width={800} />
 
-**Recommendation:** If your SDF comes from a binary voxelization or distance transform, use `surfnets` (robust averaging) or `mc` instead of `dc`.
+**Recommendation:** If your SDF comes from a binary voxelization or distance transform, use `surfnets` (robust averaging) or `mc` instead of `dc`. For neural SDF models, see the [SDF Functions guide](/docs/guides/sdf-functions#best-practices-for-neural-sdfs) for extraction method selection advice.
 
 ## GPU acceleration
 

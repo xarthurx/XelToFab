@@ -38,8 +38,8 @@
 - [x] Smart defaults — SDF fields auto-select DC, density fields keep MC
 - [x] DC/surfnets smoothing reduction — auto bilateral with 5 iterations
 - [ ] Extraction method comparison benchmark (MC vs DC vs SurfNets quality metrics)
-- [ ] Website docs for extraction methods (comparison table, usage guidance)
-- [ ] Interactive MC vs DC visual comparison on website
+- [x] Website docs for extraction methods (comparison table, usage guidance)
+- [x] Interactive MC vs DC visual comparison on website
 - [ ] Coordinate system contract documentation (all backends → grid index coords)
 
 ## Visualization Upgrades
