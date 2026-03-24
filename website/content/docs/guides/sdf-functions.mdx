@@ -99,7 +99,8 @@ import onnxruntime as ort
 session = ort.InferenceSession("model.onnx")
 
 def onnx_sdf(points: np.ndarray) -> np.ndarray:
-    return session.run(None, {"points": points.astype(np.float32)})[0]
+    # flatten() ensures [N] output even if model returns [N, 1]
+    return session.run(None, {"points": points.astype(np.float32)})[0].flatten()
 
 result = process_from_sdf(onnx_sdf, bounds=(-1, -1, -1, 1, 1, 1), resolution=256)
 ```
@@ -133,7 +134,13 @@ result = process_from_sdf(my_sdf, bounds, resolution=256, adaptive=True)
 | Shape occupies small fraction of bounding box | Yes |
 | Resolution < 64, fast SDF (analytical) | No — overhead exceeds savings |
 | SDF fills most of the bounding box | No — few cells to cull |
-| Need exact values everywhere in the grid | No — unevaluated regions filled with +1.0 |
+| Need exact SDF values everywhere in the grid | No — deep interior filled with +1.0 (see limitations below) |
+
+<Callout type="warn" title="Known limitations of adaptive mode">
+- **Grid resolution may round up slightly** — the octree needs cell counts that are multiples of `coarse_factor`, so `resolution=32` may produce a 33³ grid. The returned coordinate arrays reflect the actual dimensions.
+- **Output is an extraction cache, not a true SDF.** Deep interior regions far from the surface are filled with `+1.0` regardless of the actual sign. This is correct for mesh extraction but should not be used as a general-purpose signed distance field. If no surface is found at all, the fill value is determined by evaluating the SDF at the domain center.
+- **Mesh vertices are in grid-index coordinates**, consistent with all extraction methods in the pipeline.
+</Callout>
 
 For advanced octree control (`coarse_factor`, `lipschitz` threshold), use `octree_evaluate()` directly — see the [API reference](/docs/api/process-from-sdf#adaptive-evaluation).
 
@@ -155,21 +162,27 @@ result = process_from_sdf(my_sdf, bounds, resolution=256, chunk_size=50000)
 
 ## Best practices for neural SDFs
 
-1. **Test at low resolution first** (`resolution=32`) to verify your wrapper works before committing to expensive high-resolution evaluation.
+<Callout type="info" title="Test at low resolution first">
+Use `resolution=32` to verify your SDF wrapper works before committing to expensive high-resolution evaluation.
+</Callout>
 
-2. **Gradient quality matters for Dual Contouring.** DC is the default extraction method for SDFs. It uses SDF gradients (computed via finite differences) to place vertices precisely. If your SDF has noisy gradients (e.g., from a poorly trained model), DC can produce rough surfaces. See [Gradient quality](/docs/guides/extraction-methods#gradient-quality-matters) for details.
+<Callout type="warn" title="Gradient quality matters for Dual Contouring">
+DC is the default extraction method for SDFs. It uses SDF gradients (computed via finite differences) to place vertices precisely. If your SDF has noisy gradients (e.g., from a poorly trained model), DC can produce rough surfaces. See [Gradient quality](/docs/guides/extraction-methods#gradient-quality-matters) for details.
 
-3. **Fallback extraction methods.** If DC produces artifacts, try:
-   - `extraction_method="surfnets"` — smoother output, less sensitive to gradient quality
-   - `extraction_method="mc"` — Marching Cubes, most robust but loses sharp features
+If DC produces artifacts, try `extraction_method="surfnets"` (smoother, less gradient-sensitive) or `extraction_method="mc"` (most robust but loses sharp features).
+</Callout>
 
-4. **Always use `torch.no_grad()`** for inference. XelToFab is non-differentiable — gradients through the pipeline are not needed and waste memory.
-
-5. **Consider `adaptive=True`** for resolution ≥ 128 with neural SDFs. The evaluation savings compound: fewer SDF calls means less GPU time and memory.
+<Callout type="info" title="Performance tips">
+- **Always use `torch.no_grad()`** for inference — XelToFab is non-differentiable, so autograd tracking wastes memory.
+- **Consider `adaptive=True`** for resolution ≥ 128 with neural SDFs — fewer SDF calls means less GPU time and memory.
+- **Set `chunk_size`** if your GPU runs out of memory during evaluation.
+</Callout>
 
 ## See also
 
-- [`process_from_sdf()` API reference](/docs/api/process-from-sdf) — full parameter documentation
-- [Field Types](/docs/guides/field-types) — density vs SDF semantics and smart defaults
-- [Extraction Methods](/docs/guides/extraction-methods) — MC vs DC vs SurfNets comparison
-- [Parameters](/docs/guides/parameters) — full PipelineParams reference
+<Cards>
+  <Card title="process_from_sdf() API" description="Full parameter documentation and examples" href="/docs/api/process-from-sdf" />
+  <Card title="Field Types" description="Density vs SDF semantics and smart defaults" href="/docs/guides/field-types" />
+  <Card title="Extraction Methods" description="MC vs DC vs SurfNets comparison" href="/docs/guides/extraction-methods" />
+  <Card title="Parameters" description="Full PipelineParams reference" href="/docs/guides/parameters" />
+</Cards>

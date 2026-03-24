@@ -52,6 +52,10 @@ When `field_type` is set to `"sdf"`, `PipelineParams` automatically adjusts defa
 
 If you explicitly pass `direct_extraction=False` or `smooth_sigma=2.0` with an SDF field, your values take precedence over the smart defaults.
 
+<Callout type="info" title="Using with process_from_sdf()">
+When using [`process_from_sdf()`](/docs/api/process-from-sdf), `field_type="sdf"` is set automatically — you don't need to specify it. Any additional `PipelineParams` fields can be passed as keyword arguments (e.g., `process_from_sdf(my_sdf, bounds, smoothing_method="taubin")`).
+</Callout>
+
 ```python
 # Smart defaults apply automatically
 sdf_params = PipelineParams(field_type="sdf")

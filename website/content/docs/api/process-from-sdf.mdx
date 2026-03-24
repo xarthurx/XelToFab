@@ -72,7 +72,13 @@ When `adaptive=True`, the evaluator uses octree-accelerated coarse-to-fine refin
 3. Subdivide only near-surface cells and repeat for `log2(coarse_factor)` levels
 4. Evaluate remaining fine cells at the target resolution
 
-This reduces evaluations from O(N³) to ~O(N²). Unevaluated regions are filled with `+1.0` (outside), so extraction ignores them.
+This reduces evaluations from O(N³) to ~O(N²). Unevaluated regions far from the surface are filled with `+1.0` (positive = outside). If the entire domain is inside or outside the surface (no zero crossing found), the fill value is determined by evaluating the SDF at the domain center — avoiding false surfaces.
+
+<Callout type="warn" title="Known limitations of adaptive mode">
+- **Grid resolution may differ slightly** from the requested `resolution` due to rounding during coarse cell computation (e.g., `resolution=32` may produce a 33³ grid). The returned coordinate arrays reflect the actual grid dimensions.
+- **The output is an extraction cache, not a true SDF.** Deep interior regions are filled with `+1.0` regardless of the actual SDF sign. This is correct for mesh extraction (MC/DC ignore these regions) but means `octree_evaluate()` output should not be used as a general-purpose SDF field.
+- **Mesh vertices are in grid-index coordinates**, not world-space. This is consistent with all extraction methods in the pipeline (MC, DC, SurfNets, manifold3d).
+</Callout>
 
 For finer control, use `octree_evaluate()` directly from `xeltofab.sdf_eval`:
 
@@ -126,7 +132,8 @@ from xeltofab import process_from_sdf, save_mesh
 session = ort.InferenceSession("model.onnx")
 
 def onnx_sdf(points: np.ndarray) -> np.ndarray:
-    return session.run(None, {"points": points.astype(np.float32)})[0]
+    # flatten() ensures [N] output even if model returns [N, 1]
+    return session.run(None, {"points": points.astype(np.float32)})[0].flatten()
 
 result = process_from_sdf(onnx_sdf, bounds=(-1, -1, -1, 1, 1, 1), resolution=256)
 save_mesh(result, "output.stl")
@@ -180,7 +187,9 @@ result = process(state)
 
 ## See also
 
-- [SDF Functions Guide](/docs/guides/sdf-functions) — when to use, wrapping models, uniform vs adaptive
-- [`process()`](/docs/api/process) — for pre-evaluated numpy grid fields
-- [Field Types](/docs/guides/field-types) — density vs SDF semantics and smart defaults
-- [Extraction Methods](/docs/guides/extraction-methods) — MC vs DC vs SurfNets comparison
+<Cards>
+  <Card title="SDF Functions Guide" description="When to use, wrapping models, uniform vs adaptive" href="/docs/guides/sdf-functions" />
+  <Card title="process()" description="For pre-evaluated numpy grid fields" href="/docs/api/process" />
+  <Card title="Field Types" description="Density vs SDF semantics and smart defaults" href="/docs/guides/field-types" />
+  <Card title="Extraction Methods" description="MC vs DC vs SurfNets comparison" href="/docs/guides/extraction-methods" />
+</Cards>

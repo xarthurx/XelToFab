@@ -53,10 +53,10 @@ def validate_bounds(bounds: Bounds3D) -> tuple[np.ndarray, np.ndarray]:
 
 
 def compute_grid_dims(bounds_min: np.ndarray, bounds_max: np.ndarray, resolution: int) -> tuple[int, int, int]:
-    """Compute grid dimensions preserving aspect ratio.
+    """Compute grid point counts preserving aspect ratio.
 
-    Resolution specifies cells along the longest bounding box axis.
-    Shorter axes get proportionally fewer cells (minimum 2).
+    Resolution specifies points along the longest bounding box axis.
+    Shorter axes get proportionally fewer points (minimum 2).
     """
     extents = bounds_max - bounds_min
     longest = extents.max()
