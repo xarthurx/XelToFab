@@ -9,7 +9,7 @@ from xeltofab.extract import extract
 from xeltofab.preprocess import preprocess
 from xeltofab.remesh import remesh
 from xeltofab.repair import repair
-from xeltofab.sdf_eval import Bounds3D, SDFFunction, uniform_grid_evaluate
+from xeltofab.sdf_eval import Bounds3D, SDFFunction, octree_evaluate, uniform_grid_evaluate
 from xeltofab.smooth import smooth
 from xeltofab.state import PipelineParams, PipelineState
 
@@ -38,7 +38,8 @@ def process_from_sdf(
     resolution : int
         Cells along the longest axis; shorter axes proportional.
     adaptive : bool
-        Reserved for Phase 2 octree evaluation. Currently unused.
+        Use octree-accelerated evaluation. Reduces evaluations from O(N³) to
+        ~O(N²) by culling cells far from the surface at coarse resolution.
     extraction_method : str
         Extraction backend: 'mc', 'dc', 'surfnets', 'manifold'.
     chunk_size : int | None
@@ -51,12 +52,11 @@ def process_from_sdf(
     PipelineState
         Pipeline result with extracted and post-processed mesh.
     """
-    if adaptive:
-        raise NotImplementedError("Adaptive (octree) evaluation is planned for Phase 2")
-
     # Coordinates discarded: extraction operates in grid-index space, not world space.
-    # World-space placement would require threading coords through PipelineState (Phase 2).
-    grid, _, _, _ = uniform_grid_evaluate(sdf_fn, bounds, resolution, chunk_size)
+    if adaptive:
+        grid, _, _, _ = octree_evaluate(sdf_fn, bounds, resolution, chunk_size=chunk_size)
+    else:
+        grid, _, _, _ = uniform_grid_evaluate(sdf_fn, bounds, resolution, chunk_size)
 
     params = PipelineParams(
         field_type="sdf",

@@ -11,8 +11,8 @@ scalar field (numpy)          SDF function f(xyz) → d
         │                              │
         ▼                              ▼
                               ┌──────────────┐
-                              │  SDF Evaluate  │  Uniform grid evaluation
-                              │  (sdf_eval)    │  Z-slab chunking, validation
+                              │  SDF Evaluate  │  Uniform grid or octree-adaptive
+                              │  (sdf_eval)    │  Lipschitz culling, Z-slab chunking
                               └──────┬───────┘
                                      │  dense numpy array
         ┌────────────────────────────┘
@@ -81,7 +81,7 @@ src/xeltofab/
 ├── remesh.py       Isotropic remeshing (gpytoolbox, Botsch & Kobbelt)
 ├── quality.py      Mesh quality metrics (pyvista + trimesh)
 ├── decimate.py     QEM mesh decimation (pyfqmr, quadric edge collapse)
-├── sdf_eval.py     SDF function evaluation (SDFFunction protocol, uniform grid evaluator)
+├── sdf_eval.py     SDF function evaluation (SDFFunction protocol, uniform + octree evaluators)
 ├── pipeline.py     Orchestrator: process() for grid fields, process_from_sdf() for SDF callables
 ├── io.py           File I/O: multi-format load (via loaders/), save STL/OBJ
 ├── loaders/        Format-specific loaders (dispatched by extension)

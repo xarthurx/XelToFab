@@ -32,7 +32,7 @@ def process_from_sdf(
 | `sdf_fn` | `Callable[[ndarray], ndarray]` | required | SDF function: `[N, 3] float64 → [N] float64` signed distances |
 | `bounds` | `tuple[float, ...]` | required | `(xmin, ymin, zmin, xmax, ymax, zmax)` spatial region |
 | `resolution` | `int` | `128` | Cells along the longest bounding box axis; shorter axes proportional |
-| `adaptive` | `bool` | `False` | Reserved for octree evaluation (not yet implemented) |
+| `adaptive` | `bool` | `False` | Use octree-accelerated evaluation — reduces evaluations from O(N³) to ~O(N²) by culling cells far from the surface |
 | `extraction_method` | `str` | `"dc"` | Extraction backend: `mc`, `dc`, `surfnets`, `manifold` |
 | `chunk_size` | `int \| None` | `None` | Max points per `sdf_fn` call. `None` = entire Z-slab at once |
 | `**pipeline_kwargs` | | | Forwarded to [PipelineParams](/docs/api/pipeline-params) (e.g., `smoothing_method`, `decimate_ratio`) |

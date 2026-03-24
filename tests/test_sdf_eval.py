@@ -9,6 +9,7 @@ from xeltofab.pipeline import process_from_sdf
 from xeltofab.sdf_eval import (
     Bounds3D,
     compute_grid_dims,
+    octree_evaluate,
     uniform_grid_evaluate,
     validate_bounds,
     validate_sdf_output,
@@ -230,7 +231,131 @@ class TestProcessFromSdf:
         assert state.params.extraction_method == "mc"
         assert state.params.smoothing_method == "bilateral"
 
-    def test_adaptive_raises(self):
-        """adaptive=True raises NotImplementedError (Phase 2)."""
-        with pytest.raises(NotImplementedError, match="Phase 2"):
-            process_from_sdf(sphere_sdf, bounds=(-2, -2, -2, 2, 2, 2), adaptive=True)
+    def test_adaptive_produces_mesh(self):
+        """adaptive=True produces a valid mesh via octree evaluation."""
+        state = process_from_sdf(sphere_sdf, bounds=(-2, -2, -2, 2, 2, 2), resolution=32, adaptive=True)
+        assert state.vertices is not None
+        assert state.faces is not None
+        assert state.vertices.shape[0] > 0
+        assert state.faces.shape[0] > 0
+
+
+# ---------------------------------------------------------------------------
+# Octree-accelerated evaluation
+# ---------------------------------------------------------------------------
+
+
+class TestOctreeEvaluate:
+    def test_sphere_matches_uniform(self):
+        """Octree near-surface values match uniform evaluator at same grid."""
+        bounds: Bounds3D = (-2, -2, -2, 2, 2, 2)
+        # Octree grid may be slightly larger due to cell rounding — use octree's
+        # actual coordinates to build the uniform reference at the same resolution.
+        grid_octree, x, y, z = octree_evaluate(sphere_sdf, bounds, resolution=32)
+        rx = len(x)
+        grid_uniform, _, _, _ = uniform_grid_evaluate(sphere_sdf, bounds, resolution=rx)
+
+        # Both grids should now have the same shape
+        assert grid_octree.shape == grid_uniform.shape
+
+        # Compare only where octree actually evaluated (not +1.0 fill)
+        evaluated = grid_octree != 1.0
+        assert np.count_nonzero(evaluated) > 0
+        np.testing.assert_allclose(grid_octree[evaluated], grid_uniform[evaluated], atol=1e-10)
+
+    def test_fewer_evaluations(self):
+        """Octree evaluates fewer points than uniform grid."""
+        total_evaluated = [0]
+
+        def counting_sdf(points: np.ndarray) -> np.ndarray:
+            total_evaluated[0] += len(points)
+            return sphere_sdf(points)
+
+        grid, _, _, _ = octree_evaluate(counting_sdf, (-2, -2, -2, 2, 2, 2), resolution=64)
+        rx, ry, rz = grid.shape[2], grid.shape[1], grid.shape[0]
+        total_grid_points = rx * ry * rz
+        assert total_evaluated[0] < total_grid_points
+
+    def test_noncubic_bounds(self):
+        """Non-cubic bounds produce a correctly shaped grid."""
+        grid, x, y, z = octree_evaluate(sphere_sdf, (0, 0, 0, 2, 1, 1), resolution=64)
+        # x is longest axis → more points along x
+        assert grid.shape[2] > grid.shape[1]  # Nx > Ny
+        # Surface should be found (sphere at origin intersects this box)
+        assert np.any(grid < 0)
+
+    def test_unevaluated_regions_far_from_surface(self):
+        """Unevaluated (+1.0) regions are far from the zero level set."""
+        bounds: Bounds3D = (-2, -2, -2, 2, 2, 2)
+        grid_octree, x, y, z = octree_evaluate(sphere_sdf, bounds, resolution=32)
+        rx = len(x)
+        grid_uniform, _, _, _ = uniform_grid_evaluate(sphere_sdf, bounds, resolution=rx)
+
+        # Unevaluated regions should have large |SDF| — far from the surface
+        unevaluated = grid_octree == 1.0
+        if np.any(unevaluated):
+            abs_sdf = np.abs(grid_uniform[unevaluated])
+            assert np.min(abs_sdf) > 0.1  # comfortably far from zero crossing
+
+    def test_coarse_factor_validation(self):
+        """Non-power-of-2 coarse_factor raises ValueError."""
+        with pytest.raises(ValueError, match="power of 2"):
+            octree_evaluate(sphere_sdf, (-1, -1, -1, 1, 1, 1), coarse_factor=3)
+
+    def test_chunk_size_octree(self):
+        """chunk_size limits points per sdf_fn call in octree mode."""
+        max_call_size = [0]
+
+        def tracking_sdf(points: np.ndarray) -> np.ndarray:
+            max_call_size[0] = max(max_call_size[0], len(points))
+            return sphere_sdf(points)
+
+        octree_evaluate(tracking_sdf, (-2, -2, -2, 2, 2, 2), resolution=32, chunk_size=500)
+        assert max_call_size[0] <= 500
+
+    def test_box_sdf_surface_found(self):
+        """Box SDF surface is correctly identified by octree culling."""
+        grid, _, _, _ = octree_evaluate(box_sdf, (-2, -2, -2, 2, 2, 2), resolution=32)
+        # Box surface should produce sign changes
+        assert np.any(grid < 0)  # inside the box
+        assert np.any(grid > 0)  # outside the box
+
+    def test_coordinate_convention(self):
+        """SDF function receives (x, y, z) ordered points in octree mode."""
+        received_points = []
+
+        def capturing_sdf(points: np.ndarray) -> np.ndarray:
+            received_points.append(points.copy())
+            return sphere_sdf(points)
+
+        octree_evaluate(capturing_sdf, (-1, -1, -1, 1, 1, 1), resolution=16, coarse_factor=4)
+        all_points = np.concatenate(received_points)
+        # Points should be in [-1, 1] range (matching bounds)
+        assert np.all(all_points >= -1.0 - 1e-10)
+        assert np.all(all_points <= 1.0 + 1e-10)
+
+    def test_coarse_factor_1(self):
+        """coarse_factor=1 degenerates to full evaluation."""
+        grid, _, _, _ = octree_evaluate(sphere_sdf, (-2, -2, -2, 2, 2, 2), resolution=16, coarse_factor=1)
+        assert np.any(grid < 0)
+        assert np.any(grid > 0)
+
+    def test_all_outside_no_false_surface(self):
+        """SDF entirely outside bounds produces no false zero crossings."""
+
+        def far_sphere(points: np.ndarray) -> np.ndarray:
+            return np.linalg.norm(points - 100.0, axis=1) - 1.0  # sphere at (100,100,100)
+
+        grid, _, _, _ = octree_evaluate(far_sphere, (-1, -1, -1, 1, 1, 1), resolution=16)
+        # All values should be positive (outside) — no false surface from fill
+        assert np.all(grid > 0)
+
+    def test_all_inside_no_false_surface(self):
+        """SDF entirely inside bounds does not fabricate surfaces from fill."""
+
+        def huge_sphere(points: np.ndarray) -> np.ndarray:
+            return np.linalg.norm(points, axis=1) - 100.0  # radius 100, bounds [-2,2]
+
+        grid, _, _, _ = octree_evaluate(huge_sphere, (-2, -2, -2, 2, 2, 2), resolution=16)
+        # All values should be negative (inside) — no +1.0 fill creating false crossing
+        assert np.all(grid < 0)
