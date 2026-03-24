@@ -6,6 +6,16 @@ Session log of learnings, failures, solutions discovered, and context gathered d
 
 ## Accumulated Project Wisdom
 
+### 2026-03-24 — Docs Introduction Omitted SDF Intake Path
+
+**Problem:** The introduction page's `What it does` section described only grid-based scalar-field processing, even though the docs and pipeline diagram now expose `process_from_sdf()` for callable SDF inputs.
+
+**Root cause:** The introductory copy was written around the original field-only narrative and was not updated when the optional SDF intake path was added to the docs and diagram.
+
+**Resolution:** Updated `website/content/docs/index.mdx` to mention optional SDF evaluation explicitly, and updated the `pipeline-flow.png` captioning/alt text in both `website/content/docs/index.mdx` and `website/content/docs/guides/pipeline-overview.mdx` so the prose matches the diagram. Fix: uncommitted working tree
+
+**Prevention:** When adding a new pipeline entry path or branch to documentation diagrams, audit the adjacent overview copy and every page embedding the figure so text, alt text, and visuals stay in sync.
+
 ### 2026-02-24 — MVP Pipeline Implementation
 
 **Problem:** scikit-image `binary_opening`, `binary_closing`, and `remove_small_objects(min_size=)` are deprecated (v0.26+, removed in v0.28).

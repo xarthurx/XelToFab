@@ -85,37 +85,48 @@ def _pv_screenshot(vertices, faces, color="#88BDE6", zoom=1.0, window_size=None,
 def gen_pipeline_diagram() -> None:
     """Image 1: Pipeline flow diagram with blue palette.
 
-    Row 0 (top): SDF Function terminal + SDF Evaluate stage (alternative entry)
-    Row 1: Field terminal (grid-based entry, also receives SDF Evaluate output)
-    Row 2: 6 pipeline stages with horizontal arrows
-    Row 3: Mesh terminal (bottom-right)
-    Optional stages have a dashed outline offset around the solid box.
+    Field is the core entry (upper-left, larger box).
+    SDF Function and SDF Evaluate are an optional serial branch above the main
+    pipeline, grouped under process_from_sdf() and feeding into Field.
+    Row 2: 6 pipeline stages with horizontal arrows.
+    Row 3: Mesh terminal (bottom-right).
     """
     stages = list(STAGE_COLORS.keys())
 
     # Layout constants
     gap = 2.0        # horizontal gap between stage centers
     row_gap = 2.0    # vertical gap between row centers
-    box_hw = 0.55    # half-width
-    box_hh = 0.3     # half-height
+    box_hw = 0.55    # half-width for pipeline stage boxes
+    box_hh = 0.3     # half-height for pipeline stage boxes
     dash_gap = 0.12  # offset between solid box and dashed outline
     arrow_gap = 0.1  # clearance between arrow tip and nearest border
-    uniform_edge = box_hw + dash_gap  # all arrows use same offset
+    uniform_edge = box_hw + dash_gap
 
     # Stage positions (row 2, y=0)
     stage_x = [i * gap for i in range(len(stages))]
     total_w = stage_x[-1]
 
-    # Terminal and entry positions
-    field_x, field_y = stage_x[0], row_gap * 0.8
-    sdf_fn_x = field_x - gap * 1.3     # SDF Function terminal: left of Field
-    sdf_eval_x = field_x - gap * 0.0   # SDF Evaluate: same x as Field
-    sdf_row_y = field_y + row_gap * 0.7  # SDF row: above Field
+    # Field: upper-left, prominent
+    field_x, field_y = stage_x[0], row_gap * 0.95
+    field_hw = 0.78
+    field_hh = 0.46
+
+    # Mesh: emphasized terminal output
+    mesh_hw = 0.78
+    mesh_hh = 0.46
+
+    # SDF path: same visual weight as pipeline stages, laid out horizontally
+    sdf_fn_x = stage_x[2]
+    sdf_eval_x = stage_x[1]
+    sdf_hw = box_hw
+    sdf_hh = box_hh
+    sdf_y = field_y
+
     mesh_x, mesh_y = stage_x[-1], -row_gap
 
-    fig, ax = plt.subplots(figsize=(12, 5.5))
-    ax.set_xlim(-gap * 1.8, total_w + 1)
-    ax.set_ylim(-row_gap - 0.5, sdf_row_y + 0.5)
+    fig, ax = plt.subplots(figsize=(12.5, 5.4))
+    ax.set_xlim(-1.1, total_w + 1.1)
+    ax.set_ylim(-row_gap - 0.55, field_y + field_hh + 0.25)
     ax.set_aspect("equal")
     ax.axis("off")
     fig.patch.set_facecolor(BG_COLOR)
@@ -130,11 +141,12 @@ def gen_pipeline_diagram() -> None:
     }
     optional_stages = {"Preprocess", "Repair", "Remesh", "Decimate"}
 
-    # SDF Evaluate stage color — teal to distinguish from the blue pipeline
-    sdf_eval_color = "#2A7F62"
-    sdf_eval_text = "white"
+    sdf_color = "#2A7F62"
+    sdf_arrow_dash_style = (0, (4, 2.4))
 
-    def _draw_box(x, y, label, is_terminal=False, custom_color=None, custom_text_color=None):
+    def _draw_box(x, y, label, hw=box_hw, hh=box_hh, is_terminal=False,
+                  custom_color=None, custom_text_color=None, is_optional=False,
+                  fontsize=None, border_lw=1.2, border_color=None):
         if is_terminal:
             fc, ec, tc = "#E8E8E8", "#999999", "#333333"
         elif custom_color:
@@ -143,69 +155,110 @@ def gen_pipeline_diagram() -> None:
             fc = STAGE_COLORS[label]
             ec = "#333333"
             tc = _STAGE_TEXT[label]
+        if border_color is not None:
+            ec = border_color
 
+        fs = fontsize or (9 if is_terminal else 8.5)
         ax.add_patch(matplotlib.patches.FancyBboxPatch(
-            (x - box_hw, y - box_hh), box_hw * 2, box_hh * 2,
+            (x - hw, y - hh), hw * 2, hh * 2,
             boxstyle="round,pad=0.08",
-            facecolor=fc, edgecolor=ec, linewidth=1.2,
+            facecolor=fc, edgecolor=ec, linewidth=border_lw,
         ))
         ax.text(x, y, label, ha="center", va="center",
-                fontsize=9 if is_terminal else 8.5, fontweight="bold", color=tc)
+                fontsize=fs, fontweight="bold", color=tc, linespacing=1.1)
 
-        if label in optional_stages:
-            d = dash_gap
+        is_dashed = label in optional_stages or is_optional
+        outer_pad = dash_gap if is_dashed else 0.0
+        if is_dashed:
+            dash_ec = sdf_color if is_optional else "#888888"
             ax.add_patch(matplotlib.patches.FancyBboxPatch(
-                (x - box_hw - d, y - box_hh - d),
-                (box_hw + d) * 2, (box_hh + d) * 2,
+                (x - hw - outer_pad, y - hh - outer_pad),
+                (hw + outer_pad) * 2, (hh + outer_pad) * 2,
                 boxstyle="round,pad=0.08",
-                facecolor="none", edgecolor="#888888",
+                facecolor="none", edgecolor=dash_ec,
                 linewidth=1.0, linestyle="--",
             ))
 
-    # --- Row 0: SDF Function → SDF Evaluate (alternative entry) ---
-    _draw_box(sdf_fn_x, sdf_row_y, "SDF Function", is_terminal=True)
-    _draw_box(sdf_eval_x, sdf_row_y, "SDF Evaluate",
-              custom_color=sdf_eval_color, custom_text_color=sdf_eval_text)
-    ax.text(sdf_eval_x, sdf_row_y - box_hh - 0.12, "adaptive\nchunk_size",
-            ha="center", va="top", fontsize=7, color="#666666", fontstyle="italic")
+        return {
+            "x": x,
+            "y": y,
+            "solid_left": x - hw,
+            "solid_right": x + hw,
+            "solid_top": y + hh,
+            "solid_bottom": y - hh,
+            "outer_left": x - hw - outer_pad,
+            "outer_right": x + hw + outer_pad,
+            "outer_top": y + hh + outer_pad,
+            "outer_bottom": y - hh - outer_pad,
+        }
 
-    # --- Row 1: Field terminal ---
-    _draw_box(field_x, field_y, "Field", is_terminal=True)
+    # --- Field terminal (core entry, upper-left, LARGER) ---
+    field_box = _draw_box(field_x, field_y, "Field", hw=field_hw, hh=field_hh,
+                          is_terminal=True, fontsize=12, border_lw=2.2,
+                          border_color="#222222")
+
+    # --- SDF optional path (above the pipeline, horizontal and serial) ---
+    sdf_fn_box = _draw_box(sdf_fn_x, sdf_y, "SDF\nFunction", hw=sdf_hw, hh=sdf_hh,
+                           is_terminal=True, fontsize=8)
+    sdf_eval_box = _draw_box(sdf_eval_x, sdf_y, "SDF\nEvaluate", hw=sdf_hw, hh=sdf_hh,
+                             custom_color=sdf_color, custom_text_color="white",
+                             fontsize=8)
+
+    sdf_frame_pad_x = 0.16
+    sdf_frame_pad_y = 0.14
+    sdf_frame_left = sdf_eval_box["solid_left"] - sdf_frame_pad_x
+    sdf_frame_right = sdf_fn_box["solid_right"] + sdf_frame_pad_x
+    sdf_frame_top = sdf_y + sdf_hh + sdf_frame_pad_y
+    sdf_frame_bottom = sdf_y - sdf_hh - sdf_frame_pad_y
+
+    ax.add_patch(matplotlib.patches.FancyBboxPatch(
+        (sdf_frame_left, sdf_frame_bottom),
+        sdf_frame_right - sdf_frame_left,
+        sdf_frame_top - sdf_frame_bottom,
+        boxstyle="round,pad=0.08",
+        facecolor="none",
+        edgecolor=sdf_color,
+        linewidth=1.0,
+        linestyle="--",
+    ))
+
+    # Group label under the optional SDF branch
+    ax.text((sdf_eval_x + sdf_fn_x) / 2, sdf_frame_bottom - 0.14,
+            "process_from_sdf()  (optional)",
+            ha="center", va="top", fontsize=7, color=sdf_color, fontstyle="italic")
 
     # --- Row 2: Pipeline stages ---
+    stage_boxes = {}
     for i, label in enumerate(stages):
-        _draw_box(stage_x[i], 0, label)
+        stage_boxes[label] = _draw_box(stage_x[i], 0, label)
         if label in param_annotations:
             ax.text(stage_x[i], -box_hh - dash_gap - 0.15, param_annotations[label],
                     ha="center", va="top", fontsize=7, color="#666666",
                     fontstyle="italic")
 
     # --- Row 3: Mesh terminal ---
-    _draw_box(mesh_x, mesh_y, "Mesh", is_terminal=True)
+    mesh_box = _draw_box(mesh_x, mesh_y, "Mesh", hw=mesh_hw, hh=mesh_hh,
+                         is_terminal=True, fontsize=12, border_lw=2.2,
+                         border_color="#222222")
 
     # --- Arrows ---
     arrow_kw = dict(arrowstyle="-|>", color="#555555", lw=1.3)
-    sdf_arrow_kw = dict(arrowstyle="-|>", color="#2A7F62", lw=1.3)
+    sdf_arrow_kw = dict(arrowstyle="-|>", color=sdf_color, lw=1.3)
+    sdf_internal_arrow_kw = dict(arrowstyle="-|>", color=sdf_color, lw=1.5)
     e = uniform_edge + arrow_gap
 
-    # SDF Function → SDF Evaluate (horizontal, teal)
-    ax.annotate("", xy=(sdf_eval_x - e, sdf_row_y),
-                xytext=(sdf_fn_x + e, sdf_row_y),
+    # Optional SDF branch: SDF Function -> SDF Evaluate -> Field.
+    ax.annotate("", xy=(sdf_eval_x + e, sdf_y),
+                xytext=(sdf_fn_x - e, sdf_y),
+                arrowprops=sdf_internal_arrow_kw)
+    ax.annotate("", xy=(field_box["solid_right"] + arrow_gap, field_box["y"]),
+                xytext=(sdf_eval_box["solid_left"] - arrow_gap, field_box["y"]),
                 arrowprops=sdf_arrow_kw)
 
-    # SDF Evaluate → Field (vertical, teal)
-    ax.annotate("", xy=(field_x, field_y + box_hh + arrow_gap),
-                xytext=(sdf_eval_x, sdf_row_y - box_hh - arrow_gap),
-                arrowprops=sdf_arrow_kw)
-
-    # "or" label between SDF path and grid-data path
-    ax.text(field_x + box_hw + 0.3, field_y + (sdf_row_y - field_y) * 0.5,
-            "process_from_sdf()", ha="left", va="center",
-            fontsize=7, color="#2A7F62", fontstyle="italic")
-
-    # Field → Preprocess (vertical)
-    ax.annotate("", xy=(field_x, e * 0.95),
-                xytext=(field_x, field_y - box_hh - arrow_gap * 2),
+    # Field → Preprocess (vertical, main flow)
+    preprocess_box = stage_boxes["Preprocess"]
+    ax.annotate("", xy=(field_box["x"], preprocess_box["outer_top"] + arrow_gap),
+                xytext=(field_box["x"], field_box["solid_bottom"] - arrow_gap),
                 arrowprops=arrow_kw)
 
     # Horizontal arrows between stages (uniform length)
@@ -214,9 +267,9 @@ def gen_pipeline_diagram() -> None:
                     xytext=(stage_x[i] + e, 0),
                     arrowprops=arrow_kw)
 
-    # Decimate → Mesh (shortened from top to clear annotation)
-    ax.annotate("", xy=(mesh_x, mesh_y + box_hh + arrow_gap),
-                xytext=(mesh_x, mesh_y + box_hh + arrow_gap + 0.6),
+    # Decimate → Mesh
+    ax.annotate("", xy=(mesh_box["x"], mesh_box["solid_top"] + arrow_gap),
+                xytext=(mesh_box["x"], mesh_box["solid_top"] + arrow_gap + 0.6),
                 arrowprops=arrow_kw)
 
     # --- Legend (bottom-left) ---
