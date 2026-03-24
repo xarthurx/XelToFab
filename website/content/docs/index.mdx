@@ -30,14 +30,27 @@ Given either a scalar field (a numpy array) or an SDF function (analytical or ne
 - **Quality metrics** — aspect ratio, min angle, scaled Jacobian via PyVista
 - **CLI and Python API** — `xtf` command-line tool or import directly
 
-## Quick example
+## Quick examples
+
+From a grid file (density or SDF array):
 
 ```python
-from xeltofab.io import load_field, save_mesh
-from xeltofab.pipeline import process
+from xeltofab import load_field, process, save_mesh
 
 result = process(load_field("field.npy"))
 save_mesh(result, "output.stl")
+```
+
+From an SDF function (neural model, analytical formula):
+
+```python
+from xeltofab import process_from_sdf, save_mesh
+
+def my_sdf(points):  # [N, 3] → [N] signed distances
+    return np.linalg.norm(points, axis=1) - 1.0
+
+result = process_from_sdf(my_sdf, bounds=(-2, -2, -2, 2, 2, 2), resolution=64)
+save_mesh(result, "sphere.stl")
 ```
 
 ## Next steps
@@ -45,3 +58,4 @@ save_mesh(result, "output.stl")
 - [Installation](/docs/getting-started/installation) — set up XelToFab
 - [Quick Start](/docs/getting-started/quick-start) — process your first field
 - [Pipeline Overview](/docs/guides/pipeline-overview) — understand how the pipeline works
+- [SDF Functions](/docs/guides/sdf-functions) — evaluate neural and analytical SDFs
