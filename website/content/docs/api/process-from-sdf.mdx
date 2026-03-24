@@ -1,0 +1,133 @@
+---
+title: process_from_sdf
+description: Evaluate an SDF function and run the full pipeline
+---
+
+## Import
+
+```python
+from xeltofab import process_from_sdf
+# or
+from xeltofab.pipeline import process_from_sdf
+```
+
+## Signature
+
+```python
+def process_from_sdf(
+    sdf_fn: SDFFunction,
+    bounds: Bounds3D,
+    resolution: int = 128,
+    adaptive: bool = False,
+    extraction_method: Literal["mc", "dc", "surfnets", "manifold"] = "dc",
+    chunk_size: int | None = None,
+    **pipeline_kwargs,
+) -> PipelineState
+```
+
+## Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `sdf_fn` | `Callable[[ndarray], ndarray]` | required | SDF function: `[N, 3] float64 → [N] float64` signed distances |
+| `bounds` | `tuple[float, ...]` | required | `(xmin, ymin, zmin, xmax, ymax, zmax)` spatial region |
+| `resolution` | `int` | `128` | Cells along the longest bounding box axis; shorter axes proportional |
+| `adaptive` | `bool` | `False` | Reserved for octree evaluation (not yet implemented) |
+| `extraction_method` | `str` | `"dc"` | Extraction backend: `mc`, `dc`, `surfnets`, `manifold` |
+| `chunk_size` | `int \| None` | `None` | Max points per `sdf_fn` call. `None` = entire Z-slab at once |
+| `**pipeline_kwargs` | | | Forwarded to [PipelineParams](/docs/api/pipeline-params) (e.g., `smoothing_method`, `decimate_ratio`) |
+
+## Return value
+
+Returns a `PipelineState` with extracted and post-processed mesh, identical to what [`process()`](/docs/api/process) returns.
+
+## What it does
+
+`process_from_sdf` is the entry point for **SDF functions** (neural models, analytical formulas, or any callable). It:
+
+1. **Validates** the bounds (6 floats, each min < max)
+2. **Evaluates** the SDF function on a uniform grid (one Z-slab at a time for memory efficiency)
+3. **Validates** the first slab's output (shape, NaN/inf, dtype)
+4. **Runs the full pipeline** — extract → smooth → repair → remesh → decimate
+
+The SDF function receives points as `[N, 3]` arrays in `(x, y, z)` order and must return `[N]` signed distances. Internally, the grid is stored as `[Nz, Ny, Nx]` to match the existing extraction pipeline.
+
+### Resolution semantics
+
+`resolution` specifies cells along the **longest** bounding box axis. Shorter axes get proportionally fewer cells, preserving aspect ratio. For example, `bounds=(0, 0, 0, 2, 1, 1)` with `resolution=128` produces a 128 x 64 x 64 grid.
+
+### Smart defaults
+
+Since the input is an SDF function, `process_from_sdf` automatically sets `field_type="sdf"`, which triggers the same [smart defaults](/docs/guides/field-types#sdf-fields) as grid-based SDF processing:
+- Direct extraction (no preprocessing)
+- Extraction level at 0.0 (zero level set)
+- Dual Contouring as the default extraction method
+- Bilateral smoothing with 5 iterations
+
+## Examples
+
+### Analytical SDF
+
+```python
+import numpy as np
+from xeltofab import process_from_sdf, save_mesh
+
+def sphere_sdf(points: np.ndarray) -> np.ndarray:
+    return np.linalg.norm(points, axis=1) - 1.0
+
+result = process_from_sdf(sphere_sdf, bounds=(-2, -2, -2, 2, 2, 2), resolution=64)
+save_mesh(result, "sphere.stl")
+```
+
+### PyTorch neural SDF
+
+```python
+import numpy as np
+import torch
+from xeltofab import process_from_sdf, save_mesh
+
+model = torch.load("nito_bridge.pt")
+
+def bridge_sdf(points: np.ndarray) -> np.ndarray:
+    with torch.no_grad():
+        t = torch.from_numpy(points).float().cuda()
+        return model(t).squeeze(-1).cpu().numpy()
+
+result = process_from_sdf(bridge_sdf, bounds=(-1, -1, -1, 1, 1, 1), resolution=256)
+save_mesh(result, "bridge.stl")
+```
+
+### ONNX model (framework-free)
+
+```python
+import numpy as np
+import onnxruntime as ort
+from xeltofab import process_from_sdf, save_mesh
+
+session = ort.InferenceSession("model.onnx")
+
+def onnx_sdf(points: np.ndarray) -> np.ndarray:
+    return session.run(None, {"points": points.astype(np.float32)})[0]
+
+result = process_from_sdf(onnx_sdf, bounds=(-1, -1, -1, 1, 1, 1), resolution=256)
+save_mesh(result, "output.stl")
+```
+
+### Custom pipeline parameters
+
+```python
+result = process_from_sdf(
+    my_sdf,
+    bounds=(-1, -1, -1, 1, 1, 1),
+    resolution=128,
+    extraction_method="mc",          # use Marching Cubes instead of DC
+    smoothing_method="taubin",       # override bilateral default
+    decimate_ratio=0.3,              # aggressive decimation
+)
+```
+
+## See also
+
+- [`process()`](/docs/api/process) — for pre-evaluated numpy grid fields
+- [Field Types](/docs/guides/field-types) — density vs SDF semantics and smart defaults
+- [Extraction Methods](/docs/guides/extraction-methods) — MC vs DC vs SurfNets comparison

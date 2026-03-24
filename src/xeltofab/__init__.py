@@ -5,7 +5,7 @@ from xeltofab.io import (
     load_field,
     save_mesh,
 )
-from xeltofab.pipeline import process
+from xeltofab.pipeline import process, process_from_sdf
 from xeltofab.state import PipelineParams, PipelineState
 
 __all__ = [
@@ -14,5 +14,6 @@ __all__ = [
     "load_field",
     "load_density",  # deprecated alias
     "process",
+    "process_from_sdf",
     "save_mesh",
 ]

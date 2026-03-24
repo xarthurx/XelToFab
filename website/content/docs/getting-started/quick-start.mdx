@@ -84,6 +84,24 @@ save_mesh(result, "output.stl")
 
 SDF mode automatically enables direct extraction (skipping preprocessing) and sets the extraction level to 0.0 (the zero level set). See [Field Types](/docs/guides/field-types) for details.
 
+### SDF functions (neural models)
+
+For SDF functions (neural networks, analytical formulas, or any callable), use `process_from_sdf` instead of loading a grid:
+
+```python
+import numpy as np
+from xeltofab import process_from_sdf, save_mesh
+
+# Any callable: [N, 3] → [N] signed distances
+def my_sdf(points: np.ndarray) -> np.ndarray:
+    return np.linalg.norm(points, axis=1) - 1.0  # unit sphere
+
+result = process_from_sdf(my_sdf, bounds=(-2, -2, -2, 2, 2, 2), resolution=64)
+save_mesh(result, "sphere.stl")
+```
+
+This evaluates the function on a uniform grid internally, then runs the full pipeline. Works with any SDF source — PyTorch models, ONNX, analytical formulas. See [`process_from_sdf`](/docs/api/process-from-sdf) for details.
+
 ### Feature-preserving smoothing
 
 For meshes with sharp structural features (corners, ridges, thin walls), use bilateral filtering instead of the default Taubin smoothing:

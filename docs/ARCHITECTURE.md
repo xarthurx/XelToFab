@@ -7,8 +7,15 @@ XelToFab is a design field post-processing pipeline that converts scalar design 
 ## Pipeline Stages
 
 ```
-scalar field (numpy)
-        │
+scalar field (numpy)          SDF function f(xyz) → d
+        │                              │
+        ▼                              ▼
+                              ┌──────────────┐
+                              │  SDF Evaluate  │  Uniform grid evaluation
+                              │  (sdf_eval)    │  Z-slab chunking, validation
+                              └──────┬───────┘
+                                     │  dense numpy array
+        ┌────────────────────────────┘
         ▼
 ┌──────────────┐
 │  Preprocess   │  Gaussian smooth → threshold → morphological cleanup
@@ -74,7 +81,8 @@ src/xeltofab/
 ├── remesh.py       Isotropic remeshing (gpytoolbox, Botsch & Kobbelt)
 ├── quality.py      Mesh quality metrics (pyvista + trimesh)
 ├── decimate.py     QEM mesh decimation (pyfqmr, quadric edge collapse)
-├── pipeline.py     Orchestrator: process() chains preprocess → extract → smooth → repair → remesh → decimate
+├── sdf_eval.py     SDF function evaluation (SDFFunction protocol, uniform grid evaluator)
+├── pipeline.py     Orchestrator: process() for grid fields, process_from_sdf() for SDF callables
 ├── io.py           File I/O: multi-format load (via loaders/), save STL/OBJ
 ├── loaders/        Format-specific loaders (dispatched by extension)
 │   ├── __init__.py     Loader registry, resolve_loader(), get_supported_formats()
