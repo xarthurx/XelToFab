@@ -108,7 +108,3 @@ def plot_comparison(state: PipelineState) -> Figure:
     fig.suptitle(f"Volume fraction: {state.volume_fraction:.3f}" if state.volume_fraction else "")
     fig.tight_layout()
     return fig
-
-
-# Deprecated alias — use plot_field() instead
-plot_density = plot_field

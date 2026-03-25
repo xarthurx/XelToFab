@@ -30,10 +30,6 @@ def load_field(
     return PipelineState(field=field, params=params)
 
 
-# Deprecated alias — use load_field() instead
-load_density = load_field
-
-
 def save_mesh(state: PipelineState, path: str | Path) -> None:
     """Save extracted mesh to file (STL, OBJ, PLY)."""
     path = Path(path)

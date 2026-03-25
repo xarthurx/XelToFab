@@ -46,9 +46,9 @@ Source: [Corner-Based TO Dataset](https://github.com/dustin-bielecki/Corner-Base
 ## Usage
 
 ```python
-from xeltofab.io import load_density
+from xeltofab.io import load_field
 from xeltofab.pipeline import process
 
-state = load_density("data/examples/beams_2d_50x100_sample0.npy")
+state = load_field("data/examples/beams_2d_50x100_sample0.npy")
 result = process(state)
 ```

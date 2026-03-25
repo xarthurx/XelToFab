@@ -21,7 +21,7 @@ def _(mo):
     mo.md(r"""
     # XelToFab — Supported Data Formats
 
-    Interactive demo of all file formats supported by the `load_density` / `save_mesh`
+    Interactive demo of all file formats supported by the `load_field` / `save_mesh`
     I/O layer. Each section creates a temporary file in the chosen format, loads it back
     through the loader registry, and visualises the round-tripped density field.
 
@@ -54,12 +54,12 @@ def _():
 
 @app.cell
 def _():
-    from xeltofab.io import load_density, save_mesh
+    from xeltofab.io import load_field, save_mesh
     from xeltofab.loaders import get_supported_formats
     from xeltofab.state import PipelineParams
-    from xeltofab.field_plots import plot_density
+    from xeltofab.field_plots import plot_field
 
-    return PipelineParams, get_supported_formats, load_density, plot_density, save_mesh
+    return PipelineParams, get_supported_formats, load_field, plot_field, save_mesh
 
 
 # ── Format availability ──────────────────────────────────────────────
@@ -125,11 +125,11 @@ def _(np):
 
 
 @app.cell
-def _(mo, plot_density, plt, test_field):
+def _(mo, plot_field, plt, test_field):
     from xeltofab.state import PipelineParams as _PP, PipelineState as _PS
 
     _state = _PS(field=test_field, params=_PP())
-    _fig = plot_density(_state)
+    _fig = plot_field(_state)
     _out = mo.as_html(_fig)
     plt.close(_fig)
     _out
@@ -139,11 +139,11 @@ def _(mo, plot_density, plt, test_field):
 
 
 @app.cell
-def _(mo, plot_density, plt):
+def _(mo, plot_field, plt):
     def show_round_trip(state, label: str):
         """Plot a round-tripped density field and print stats."""
         d = state.field
-        _fig = plot_density(state)
+        _fig = plot_field(state)
         _html = mo.as_html(_fig)
         plt.close(_fig)
         info = mo.md(
@@ -170,18 +170,18 @@ def _(mo):
 
     ```python
     np.save("density.npy", array)
-    state = load_density("density.npy")
+    state = load_field("density.npy")
     ```
     """)
     return
 
 
 @app.cell
-def _(Path, load_density, np, show_round_trip, tempfile, test_field):
+def _(Path, load_field, np, show_round_trip, tempfile, test_field):
     with tempfile.TemporaryDirectory() as _td:
         _p = Path(_td) / "density.npy"
         np.save(_p, test_field)
-        _state = load_density(_p)
+        _state = load_field(_p)
     npy_out = show_round_trip(_state, ".npy round-trip")
     npy_out
 
@@ -200,19 +200,19 @@ def _(mo):
 
     ```python
     np.savez_compressed("data.npz", density=array, metadata=info)
-    state = load_density("data.npz")                     # auto-detects "density"
-    state = load_density("data.npz", field_name="density")  # explicit
+    state = load_field("data.npz")                     # auto-detects "density"
+    state = load_field("data.npz", field_name="density")  # explicit
     ```
     """)
     return
 
 
 @app.cell
-def _(Path, load_density, np, show_round_trip, tempfile, test_field):
+def _(Path, load_field, np, show_round_trip, tempfile, test_field):
     with tempfile.TemporaryDirectory() as _td:
         _p = Path(_td) / "data.npz"
         np.savez_compressed(_p, density=test_field, extra=np.zeros(5))
-        _state = load_density(_p)  # auto-detects "density" key
+        _state = load_field(_p)  # auto-detects "density" key
     npz_out = show_round_trip(_state, ".npz round-trip (auto-detected 'density' key)")
     npz_out
 
@@ -231,8 +231,8 @@ def _(mo):
 
     ```python
     scipy.io.savemat("result.mat", {"xPhys": array})
-    state = load_density("result.mat")           # auto-detects "xPhys"
-    state = load_density("result.mat", field_name="xPhys")
+    state = load_field("result.mat")           # auto-detects "xPhys"
+    state = load_field("result.mat", field_name="xPhys")
     ```
 
     > **Note:** MATLAB v7.3+ files are HDF5-based — load them as `.h5` instead.
@@ -241,13 +241,13 @@ def _(mo):
 
 
 @app.cell
-def _(Path, load_density, show_round_trip, tempfile, test_field):
+def _(Path, load_field, show_round_trip, tempfile, test_field):
     import scipy.io as _sio
 
     with tempfile.TemporaryDirectory() as _td:
         _p = Path(_td) / "result.mat"
         _sio.savemat(_p, {"xPhys": test_field})
-        _state = load_density(_p)  # auto-detects "xPhys"
+        _state = load_field(_p)  # auto-detects "xPhys"
     mat_out = show_round_trip(_state, ".mat round-trip (auto-detected 'xPhys')")
     mat_out
 
@@ -266,35 +266,35 @@ def _(mo):
 
     ```python
     np.savetxt("field.csv", array, delimiter=",")
-    state = load_density("field.csv")
+    state = load_field("field.csv")
 
     # Flat CSV with explicit reshape
     np.savetxt("flat.txt", array.ravel())
-    state = load_density("flat.txt", shape=(80, 160))
+    state = load_field("flat.txt", shape=(80, 160))
     ```
     """)
     return
 
 
 @app.cell
-def _(Path, load_density, np, show_round_trip, tempfile, test_field):
+def _(Path, load_field, np, show_round_trip, tempfile, test_field):
     with tempfile.TemporaryDirectory() as _td:
         # Comma-delimited 2-D table
         _p = Path(_td) / "field.csv"
         np.savetxt(_p, test_field, delimiter=",")
-        _state_csv = load_density(_p)
+        _state_csv = load_field(_p)
 
     csv_out = show_round_trip(_state_csv, ".csv round-trip (comma-delimited 2-D table)")
     csv_out
 
 
 @app.cell
-def _(Path, load_density, np, show_round_trip, tempfile, test_field):
+def _(Path, load_field, np, show_round_trip, tempfile, test_field):
     with tempfile.TemporaryDirectory() as _td:
         # Whitespace-delimited flat data with explicit reshape
         _p = Path(_td) / "flat.txt"
         np.savetxt(_p, test_field.ravel())
-        _state_txt = load_density(_p, shape=test_field.shape)
+        _state_txt = load_field(_p, shape=test_field.shape)
 
     txt_out = show_round_trip(
         _state_txt,
@@ -320,14 +320,14 @@ def _(mo):
     grid.cell_data["density"] = array.ravel(order="F")
     grid.save("field.vti")
 
-    state = load_density("field.vti")
+    state = load_field("field.vti")
     ```
     """)
     return
 
 
 @app.cell
-def _(Path, PipelineParams, load_density, mo, np, show_round_trip, tempfile, test_field):
+def _(Path, PipelineParams, load_field, mo, np, show_round_trip, tempfile, test_field):
     try:
         import pyvista as _pv
         from xeltofab.state import PipelineState as _PS
@@ -340,7 +340,7 @@ def _(Path, PipelineParams, load_density, mo, np, show_round_trip, tempfile, tes
             _grid.cell_data["density"] = test_field.ravel(order="C")
             _p = Path(_td) / "field.vti"
             _grid.save(str(_p))
-            _state_vti = load_density(_p)
+            _state_vti = load_field(_p)
 
         # VTK loader outputs (x, y) axis order — transpose back to numpy (rows, cols)
         _field_fixed = _state_vti.field.T
@@ -376,15 +376,15 @@ def _(mo):
     with h5py.File("result.h5", "w") as f:
         f.create_dataset("density", data=array)
 
-    state = load_density("result.h5")
-    state = load_density("result.h5", field_name="density")
+    state = load_field("result.h5")
+    state = load_field("result.h5", field_name="density")
     ```
     """)
     return
 
 
 @app.cell
-def _(Path, load_density, mo, show_round_trip, tempfile, test_field):
+def _(Path, load_field, mo, show_round_trip, tempfile, test_field):
     try:
         import h5py as _h5py
 
@@ -392,7 +392,7 @@ def _(Path, load_density, mo, show_round_trip, tempfile, test_field):
             _p = Path(_td) / "result.h5"
             with _h5py.File(_p, "w") as _f:
                 _f.create_dataset("density", data=test_field)
-            _state_h5 = load_density(_p)
+            _state_h5 = load_field(_p)
 
         h5_out = show_round_trip(_state_h5, ".h5 round-trip (h5py)")
     except ImportError:
@@ -417,15 +417,15 @@ def _(mo):
     Requires **h5py** (`uv sync --extra hdf5`).
 
     ```python
-    state = load_density("simulation.xdmf")
-    state = load_density("simulation.xdmf", field_name="density")
+    state = load_field("simulation.xdmf")
+    state = load_field("simulation.xdmf", field_name="density")
     ```
     """)
     return
 
 
 @app.cell
-def _(Path, load_density, mo, show_round_trip, tempfile, test_field):
+def _(Path, load_field, mo, show_round_trip, tempfile, test_field):
     try:
         import h5py as _h5py
 
@@ -456,7 +456,7 @@ def _(Path, load_density, mo, show_round_trip, tempfile, test_field):
   </Domain>
 </Xdmf>
 """)
-            _state_xdmf = load_density(_xdmf_path)
+            _state_xdmf = load_field(_xdmf_path)
 
         xdmf_out = show_round_trip(_state_xdmf, ".xdmf round-trip (XML + HDF5)")
     except ImportError:
@@ -481,7 +481,7 @@ def _(mo):
     from xeltofab.io import save_mesh
     from xeltofab.pipeline import process
 
-    state_3d = load_density("sphere.npy")
+    state_3d = load_field("sphere.npy")
     result = process(state_3d)
     save_mesh(result, "output.stl")
     save_mesh(result, "output.obj")
@@ -569,7 +569,7 @@ def _(mo):
     The unified entry point is:
 
     ```python
-    from xeltofab.io import load_density, save_mesh
+    from xeltofab.io import load_field, save_mesh
     ```
     """)
     return
