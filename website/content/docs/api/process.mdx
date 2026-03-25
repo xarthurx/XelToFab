@@ -29,7 +29,7 @@ Returns a new `PipelineState` with all pipeline stages applied. The returned sta
 
 ## What it does
 
-`process` chains the three core pipeline stages in order:
+`process` chains six pipeline stages in order:
 
 1. **Preprocess** — Gaussian smoothing, Heaviside thresholding, and morphological cleanup. Produces the `binary` field on the state.
 2. **Extract** — Dispatch to configured extraction method (MC, DC, SurfNets, or manifold for 3D; marching squares for 2D). Produces `vertices`/`faces` or `contours`.
@@ -41,6 +41,15 @@ Returns a new `PipelineState` with all pipeline stages applied. The returned sta
 ### When preprocessing is skipped
 
 If `params.direct_extraction` is `True`, the preprocessing step is skipped entirely. Extraction operates directly on the continuous input field rather than a binarized version. This is the default behavior for SDF fields (where `field_type="sdf"`).
+
+### Relationship with `process_from_sdf`
+
+`process_from_sdf()` is a convenience wrapper that evaluates an SDF function on a grid and then calls `process()` internally. The two functions are **alternatives**, not sequential — use one or the other depending on your input:
+
+| Your input | Use |
+|---|---|
+| SDF function (neural model, analytical formula) | [`process_from_sdf()`](/docs/api/process-from-sdf) — evaluates grid + runs full pipeline |
+| Pre-loaded numpy array (`.npy`, `.mat`, `.h5`, or pre-evaluated grid) | `process()` — runs pipeline directly on the field |
 
 ## Example
 

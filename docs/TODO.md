@@ -42,6 +42,10 @@
 - [x] Interactive MC vs DC visual comparison on website
 - [ ] Coordinate system contract documentation (all backends → grid index coords)
 
+## API Ergonomics
+
+- [ ] Unify `process()` interface — accept raw `ndarray` + `**kwargs` in addition to `PipelineState`, matching `process_from_sdf()`'s flat calling convention. Keeps backward compat; eliminates manual `PipelineParams`/`PipelineState` construction for the common case.
+
 ## Visualization Upgrades
 
 - [ ] Polyscope integration — interactive 3D mesh/volume inspection (`polyscope` Python package)
