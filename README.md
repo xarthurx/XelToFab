@@ -1,26 +1,39 @@
 <h1 align="center">XelToFab</h1>
 
 <p align="center">
+  <a href="https://pypi.org/project/xeltofab/"><img src="https://img.shields.io/pypi/v/xeltofab.svg" alt="PyPI"></a>
   <a href="https://www.python.org/downloads/"><img src="https://img.shields.io/badge/python-3.13%2B-blue.svg" alt="Python 3.13+"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License: MIT"></a>
 </p>
 
 A design field post-processing pipeline that transforms continuous scalar fields from optimization solvers and neural networks into clean, fabrication-ready triangle meshes (3D) and contour representations (2D). The pipeline handles thresholding, smoothing, mesh extraction, quality improvement, visualization, and multi-format export.
 
+## Installation
+
+```bash
+# From PyPI (stable)
+pip install xeltofab
+
+# With optional format support
+pip install "xeltofab[vtk,hdf5]"
+
+# From source (development)
+git clone https://github.com/xarthurx/XelToFab.git
+cd XelToFab
+uv sync
+```
+
 ## Quick Start
 
 ```bash
-# Install
-uv sync
-
 # Process a 3D density field into an STL mesh
-uv run xtf process density.npy -o output.stl
+xtf process density.npy -o output.stl
 
 # Process with custom parameters and save a comparison plot
-uv run xtf process density.npy -o output.stl --threshold 0.4 --sigma 1.5 --viz
+xtf process density.npy -o output.stl --threshold 0.4 --sigma 1.5 --viz
 
 # Visualize a 2D density field
-uv run xtf viz density_2d.npy -o comparison.png
+xtf viz density_2d.npy -o comparison.png
 ```
 
 ## Pipeline
@@ -75,11 +88,11 @@ result = process(state)
 | NumPy | .npy, .npz | Built-in |
 | MATLAB | .mat | Built-in (via scipy) |
 | CSV/Text | .csv, .txt | Built-in |
-| VTK | .vtk, .vtr, .vti | `uv sync --extra vtk` |
-| HDF5/XDMF | .h5, .hdf5, .xdmf | `uv sync --extra hdf5` |
-| All formats | — | `uv sync --extra all-formats` |
+| VTK | .vtk, .vtr, .vti | `pip install "xeltofab[vtk]"` |
+| HDF5/XDMF | .h5, .hdf5, .xdmf | `pip install "xeltofab[hdf5]"` |
+| All formats | — | `pip install "xeltofab[all-formats]"` |
 
-List available formats: `uv run xtf formats`
+List available formats: `xtf formats`
 
 ## Development
 
@@ -108,7 +121,11 @@ src/xeltofab/
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for detailed architecture documentation.
 
+## Documentation
+
+Full documentation is available at [xel-to-fab.vercel.app](https://xel-to-fab.vercel.app).
+
 ## Requirements
 
 - Python 3.13+
-- [uv](https://docs.astral.sh/uv/) for project management
+- [uv](https://docs.astral.sh/uv/) for development

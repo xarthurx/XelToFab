@@ -1,43 +1,55 @@
 ---
 title: Installation
-description: Install XelToFab and its dependencies using uv
+description: Install XelToFab and its dependencies
 ---
 
 ## Requirements
 
 - **Python 3.13+**
-- **[uv](https://docs.astral.sh/uv/)** for project management and dependency resolution
+- **[uv](https://docs.astral.sh/uv/)** (recommended) or pip for installation
 
-## Install from source
+## Install from PyPI (recommended)
 
-Clone the repository and install dependencies:
-
-```bash
-git clone https://github.com/xarthurx/xelToFab.git
-cd xelToFab
-uv sync
-```
-
-This installs all core dependencies: `numpy`, `scipy`, `scikit-image`, `trimesh`, `pydantic`, `matplotlib`, and `click`.
-
-## Install as a dependency
-
-To add XelToFab as a dependency of another project:
+The stable release is available on [PyPI](https://pypi.org/project/xeltofab/):
 
 ```bash
-uv add git+https://github.com/xarthurx/xelToFab.git
+pip install xeltofab
 ```
 
 With optional extras:
 
 ```bash
-uv add "xeltofab[vtk,hdf5] @ git+https://github.com/xarthurx/xelToFab.git"
+pip install "xeltofab[vtk,hdf5]"
 ```
 
-Or with pip:
+Or using uv:
 
 ```bash
-pip install git+https://github.com/xarthurx/xelToFab.git
+uv add xeltofab
+```
+
+## Install from source (development)
+
+For the latest development version or to contribute:
+
+```bash
+git clone https://github.com/xarthurx/XelToFab.git
+cd XelToFab
+uv sync
+```
+
+This installs all core dependencies: `numpy`, `scipy`, `scikit-image`, `trimesh`, `pydantic`, `matplotlib`, and `click`.
+
+You can also install the development version directly from GitHub:
+
+```bash
+pip install git+https://github.com/xarthurx/XelToFab.git
+```
+
+Or with uv:
+
+```bash
+uv add git+https://github.com/xarthurx/XelToFab.git
 ```
 
 ## Optional format support
