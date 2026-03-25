@@ -4,6 +4,16 @@ version = "0.2.2"
 description = "Design fields to fabrication-ready geometry"
 readme = "README.md"
 requires-python = ">=3.13"
+license = "MIT"
+authors = [{ name = "Zhao MA", email = "zhma@ethz.ch" }]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Scientific/Engineering",
+]
 dependencies = [
   "numpy",
   "scipy",
@@ -25,6 +35,12 @@ manifold = ["manifold3d>=3.0"]
 cuda = ["isoext>=0.5"]
 all-formats = ["pyvista>=0.43", "h5py>=3.10"]
 all = ["pyvista>=0.43", "h5py>=3.10", "pymeshlab>=2023.12", "gpytoolbox>=0.3.0", "manifold3d>=3.0"]
+
+[project.urls]
+Homepage = "https://xel-to-fab.vercel.app"
+Documentation = "https://xel-to-fab.vercel.app"
+Repository = "https://github.com/xarthurx/XelToFab"
+Issues = "https://github.com/xarthurx/XelToFab/issues"
 
 [project.scripts]
 xtf = "xeltofab.cli:main"
