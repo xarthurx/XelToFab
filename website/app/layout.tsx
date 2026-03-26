@@ -13,13 +13,42 @@ const mono = JetBrains_Mono({
   variable: '--font-code',
 });
 
+const description =
+  'Design fields to fabrication-ready geometry. Post-processing pipeline for topology optimization, neural fields, and computational design.';
+
 export const metadata: Metadata = {
+  metadataBase: new URL('https://xel-to-fab.vercel.app'),
   title: {
     default: 'XelToFab',
     template: '%s | XelToFab',
   },
-  description:
-    'Design fields to fabrication-ready geometry. Post-processing pipeline for topology optimization, neural fields, and computational design.',
+  description,
+  keywords: [
+    'topology optimization',
+    'post-processing',
+    'mesh generation',
+    'fabrication',
+    'computational design',
+    'marching cubes',
+    'CAD',
+    'Python',
+  ],
+  authors: [{ name: 'XelToFab Contributors' }],
+  openGraph: {
+    type: 'website',
+    siteName: 'XelToFab',
+    title: 'XelToFab',
+    description,
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'XelToFab',
+    description,
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function Layout({ children }: LayoutProps<'/'>) {
