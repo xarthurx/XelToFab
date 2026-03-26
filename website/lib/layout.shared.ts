@@ -16,6 +16,18 @@ export function baseOptions(): BaseLayoutProps {
     nav: {
       title: 'XelToFab',
     },
+    links: [
+      {
+        text: 'Documentation',
+        url: '/docs',
+        active: 'nested-url',
+      },
+      {
+        text: 'API Reference',
+        url: '/docs/api/process',
+        active: 'nested-url',
+      },
+    ],
     githubUrl: `https://github.com/${gitConfig.user}/${gitConfig.repo}`,
   };
 }
