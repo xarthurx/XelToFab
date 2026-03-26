@@ -42,6 +42,12 @@ Collaboration: M4X–IDEAL Lab with Prof. Mark Fuge.
 | Format conversion | `meshio` |
 | I/O formats | `scipy.io` (.mat), `pyvista` (.vtk), `h5py` (.h5/.xdmf) |
 
+## Version Management
+
+The project version is the single source of truth in `pyproject.toml`. When bumping the version, **always update both files**:
+- `pyproject.toml` — `version = "X.Y.Z"`
+- `website/package.json` — `"version": "X.Y.Z"`
+
 ## Conventions
 
 - Input: numpy arrays — density fields in [0, 1] or SDF fields (unbounded)
