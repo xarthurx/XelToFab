@@ -34,6 +34,7 @@ export const metadata: Metadata = {
     'Python',
   ],
   authors: [{ name: 'XelToFab Contributors' }],
+  publisher: 'M4X Center, ETH Zurich',
   openGraph: {
     type: 'website',
     siteName: 'XelToFab',
