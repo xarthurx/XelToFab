@@ -6,6 +6,21 @@ Session log of learnings, failures, solutions discovered, and context gathered d
 
 ## Accumulated Project Wisdom
 
+### 2026-04-08 — Branding, Icons, Citation Page, and Metadata
+
+**What:** Added complete branding/icon set (favicon SVG+ICO, apple-icon, opengraph image, nav icon), citation page with BibTeX entry, "Cite" nav link, and publisher metadata. Cleaned up unused draft SVGs and moved source images to `data/`.
+
+**Decisions:**
+- Nav icon SVG uses `fill="currentColor"` for automatic light/dark theme adaptation.
+- Favicon SVG uses `paint-order: stroke` for white halo on dark tabs (avoids duplicating path data).
+- Source images (opengraph originals, xtf_icon.jpg) stored in `data/`, not committed under `app/`.
+- Citation uses GitHub URL only (no Zenodo DOI); JOSS paper deferred until tool is mature.
+- Version bump checklist now includes `citation.mdx` BibTeX entry (documented in CLAUDE.md).
+
+**Fix:** `d28adf2`
+
+---
+
 ### 2026-03-24 — Docs Introduction Omitted SDF Intake Path
 
 **Problem:** The introduction page's `What it does` section described only grid-based scalar-field processing, even though the docs and pipeline diagram now expose `process_from_sdf()` for callable SDF inputs.
