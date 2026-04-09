@@ -216,3 +216,4 @@ website/node_modules/
 website/.source/
 .vercel
 .env*.local
+.gstack/
