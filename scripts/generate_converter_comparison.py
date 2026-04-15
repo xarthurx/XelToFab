@@ -67,9 +67,10 @@ def gen_profiles() -> None:
             ls="--", label="sigmoid (bw=2)", zorder=2)
 
     ax.annotate("iso-level invariant:\nsdf = level → density = 0.5",
-                xy=(0.0, 0.5), xytext=(0.55, 0.68),
-                fontsize=8.5, color="#444",
-                arrowprops={"arrowstyle": "->", "color": "#888", "lw": 0.7})
+                xy=(0.0, 0.5), xytext=(-2.85, 0.12),
+                fontsize=8.5, color="#444", ha="left",
+                arrowprops={"arrowstyle": "->", "color": "#888", "lw": 0.7,
+                            "connectionstyle": "arc3,rad=0.25"})
 
     ax.set_xlabel("sdf  (signed distance; level = 0)")
     ax.set_ylabel("density")
