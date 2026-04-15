@@ -6,6 +6,18 @@ Session log of learnings, failures, solutions discovered, and context gathered d
 
 ## Accumulated Project Wisdom
 
+### 2026-04-15 — SDF→Density Converter Added
+
+**Problem:** Third-party consumers (EngiBench and density-only TO solvers) needed to feed SDF arrays into the density-mode pipeline, but no explicit conversion utility existed. Callers had to hand-roll thresholds, risking inconsistent iso-surface conventions.
+
+**Root cause:** The library treated density and SDF as parallel input types, routed via `PipelineParams.field_type`, with no bridge utility between them.
+
+**Resolution:** Added `src/xeltofab/convert.py` exposing three converters — `heaviside` (binary, 0.5 at iso-level), `linear_ramp` (default, compact support), `sigmoid` (smooth, numerically stable piecewise form) — plus a `sdf_to_density(method=...)` dispatcher. All four are exported from the top-level package. Shared invariant: `sdf == level → density == 0.5` for all three methods, so `extract(iso=0.5)` is self-consistent. An integration test verifies sphere SDF → linear density → `process(direct_extraction=True)` yields a valid mesh. Fix: TBD.
+
+**Prevention:** Pre-code Codex review caught three bugs before a line of code was written: a Heaviside contract inconsistency (tests disagreed with design summary), a sigmoid numerical-stability bug (piecewise branches were swapped, would have produced NaN for large inputs), and two documentation dead-ends against stale file layouts. Lesson: when introducing a public API, run a plan-level review *before* writing tests — the cost is small, the rework avoided is larger than it looks.
+
+---
+
 ### 2026-04-08 — Branding, Icons, Citation Page, and Metadata
 
 **What:** Added complete branding/icon set (favicon SVG+ICO, apple-icon, opengraph image, nav icon), citation page with BibTeX entry, "Cite" nav link, and publisher metadata. Cleaned up unused draft SVGs and moved source images to `data/`.

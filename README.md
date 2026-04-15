@@ -69,6 +69,42 @@ result = process(state)
 save_mesh(result, "sphere.stl")
 ```
 
+### Converting SDF to density
+
+If you have an SDF array and want to feed it into the density-mode pipeline
+(for example to share a density field with a downstream library such as
+EngiBench), use `sdf_to_density`:
+
+```python
+import numpy as np
+from xeltofab import sdf_to_density, process, PipelineParams, PipelineState
+
+# sdf_grid: ndarray, negative inside the shape, positive outside
+density = sdf_to_density(sdf_grid, method="linear", bandwidth=1.0)
+
+# direct_extraction=True skips the density preprocessor (Gaussian smooth +
+# threshold + morphology) so the iso=0.5 surface of the converted field is
+# preserved exactly. Drop it to run the full density pipeline instead.
+params = PipelineParams(
+    field_type="density",
+    direct_extraction=True,
+    extraction_level=0.5,
+)
+result = process(PipelineState(field=density, params=params))
+```
+
+Three methods are available:
+
+| Method       | Use when you want                                                        |
+| ------------ | ------------------------------------------------------------------------ |
+| `"heaviside"` | Binary density (no sub-voxel information).                              |
+| `"linear"` *(default)* | Compact-support linear ramp — matches MC-at-0.5 behavior.       |
+| `"sigmoid"`  | Smooth, differentiable profile — for gradient-based optimizers.         |
+
+`bandwidth` controls the transition width in the same units as the SDF (voxel
+units when the SDF came from `scipy.ndimage.distance_transform_edt`, world
+units when it came from an analytic SDF on a world-space grid).
+
 ### Using Example Data
 
 Pre-computed topology optimization results are included in `data/examples/` (sourced from [IDEALLab EngiBench](https://huggingface.co/IDEALLab)):

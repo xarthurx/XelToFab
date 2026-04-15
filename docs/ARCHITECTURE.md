@@ -82,6 +82,7 @@ src/xeltofab/
 ├── quality.py      Mesh quality metrics (pyvista + trimesh)
 ├── decimate.py     QEM mesh decimation (pyfqmr, quadric edge collapse)
 ├── sdf_eval.py     SDF function evaluation (SDFFunction protocol, uniform + octree evaluators)
+├── convert.py      SDF→density converters (heaviside / linear_ramp / sigmoid + sdf_to_density dispatcher)
 ├── pipeline.py     Orchestrator: process() for grid fields, process_from_sdf() for SDF callables
 ├── io.py           File I/O: multi-format load (via loaders/), save STL/OBJ
 ├── loaders/        Format-specific loaders (dispatched by extension)

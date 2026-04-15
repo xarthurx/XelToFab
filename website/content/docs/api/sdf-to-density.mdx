@@ -1,0 +1,106 @@
+---
+title: sdf_to_density
+description: Convert an SDF array to a density array in [0, 1]
+---
+
+## Import
+
+```python
+from xeltofab import sdf_to_density
+# or, for direct access to each primitive:
+from xeltofab import heaviside, linear_ramp, sigmoid
+```
+
+## Signature
+
+```python
+def sdf_to_density(
+    sdf: np.ndarray,
+    method: Literal["heaviside", "linear", "sigmoid"] = "linear",
+    *,
+    bandwidth: float = 1.0,
+    level: float = 0.0,
+) -> np.ndarray
+```
+
+## Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `sdf` | array-like | — | Signed-distance field. Any shape. Finite values only. Negative inside, positive outside. |
+| `method` | `"heaviside" \| "linear" \| "sigmoid"` | `"linear"` | Conversion profile (see below). |
+| `bandwidth` | `float` | `1.0` | Transition scale in the same units as `sdf`. Must be `> 0` for `"linear"` and `"sigmoid"`; ignored for `"heaviside"`. |
+| `level` | `float` | `0.0` | Iso-surface offset. |
+
+## Return value
+
+A float64 array with the same shape as `sdf` and values in `[0, 1]`. All three methods map `sdf == level` to density exactly `0.5`, so extracting the density at iso=0.5 recovers the input iso-surface.
+
+## Methods
+
+| Method | Formula | When to use |
+|---|---|---|
+| `"heaviside"` | `{1 if sdf<level, 0.5 if sdf==level, 0 if sdf>level}` | Binary density when sub-voxel information is not needed. |
+| `"linear"` *(default)* | `clip(0.5 - (sdf-level)/(2·bandwidth), 0, 1)` | Compact-support ramp — matches marching-cubes-at-0.5 behavior on band-limited density fields. |
+| `"sigmoid"` | `1 / (1 + exp((sdf-level)/bandwidth))` | Smooth, differentiable profile for gradient-based optimizers (e.g. TO solvers with projection filters). |
+
+## When to use this
+
+The pipeline already accepts SDF arrays directly via `PipelineParams(field_type="sdf")` — you do **not** need `sdf_to_density` for native SDF processing. Use it when a downstream consumer expects density semantics:
+
+- Feeding an SDF-sourced field into a density-only TO solver or benchmarking harness (e.g. EngiBench).
+- Comparing SDF-derived meshes against density-pipeline meshes under matched defaults.
+- Converting once and caching a density grid for repeated density-mode runs.
+
+## Examples
+
+### Basic conversion with direct extraction
+
+```python
+import numpy as np
+from xeltofab import sdf_to_density, process, PipelineParams, PipelineState
+
+# sdf_grid: ndarray, negative inside the shape, positive outside
+density = sdf_to_density(sdf_grid, method="linear", bandwidth=1.0)
+
+# direct_extraction=True skips the density preprocessor so the iso=0.5
+# surface of the converted field is preserved exactly.
+params = PipelineParams(
+    field_type="density",
+    direct_extraction=True,
+    extraction_level=0.5,
+)
+result = process(PipelineState(field=density, params=params))
+```
+
+### Choosing a bandwidth
+
+`bandwidth` has the same units as your SDF.
+
+- SDF from `scipy.ndimage.distance_transform_edt` → `bandwidth` is in **voxels**. `bandwidth=1.0` gives a one-voxel transition band.
+- SDF from an analytic function on a world-space grid → `bandwidth` is in **world units**. Pick `~ (1-2) * voxel_spacing` to keep the transition band at grid resolution.
+
+### Using a primitive directly
+
+The three primitives are exported for callers that want an explicit function reference rather than a string dispatch:
+
+```python
+from xeltofab import sigmoid
+
+density = sigmoid(sdf_grid, bandwidth=0.5)
+```
+
+## Errors
+
+- `ValueError` — `sdf` contains NaN or Inf values.
+- `ValueError` — `bandwidth` is not a finite positive number (for `"linear"` and `"sigmoid"`).
+- `ValueError` — `level` is not finite.
+- `ValueError` — unknown `method` string.
+
+## See also
+
+<Cards>
+  <Card title="Field Types" description="How density and SDF inputs differ in the pipeline" href="/docs/guides/field-types" />
+  <Card title="process()" description="Run the pipeline on a pre-built density or SDF grid" href="/docs/api/process" />
+  <Card title="process_from_sdf()" description="Evaluate an SDF callable on a grid and run the pipeline" href="/docs/api/process-from-sdf" />
+</Cards>

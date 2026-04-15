@@ -92,6 +92,10 @@ params = PipelineParams(field_type="sdf", extraction_level=0.1)
 
 The effective level is always available via `params.effective_extraction_level`.
 
+## Bridging SDF and density
+
+If you already have an SDF array and a downstream consumer expects a density field (e.g. a density-only TO benchmark such as EngiBench), convert it with [`sdf_to_density()`](/docs/api/sdf-to-density). Three conversion profiles are provided — `heaviside`, `linear` (default), and `sigmoid` — all sharing the invariant that `sdf == level → density == 0.5`, so extracting the result at iso=0.5 recovers the input iso-surface.
+
 ## When to use each type
 
 ### Use `density` (default) when:
