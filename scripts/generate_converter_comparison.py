@@ -184,7 +184,7 @@ def gen_field_slice() -> None:
         density = sdf_to_density(sdf2d, method=method, bandwidth=bw)  # type: ignore[arg-type]
         panels.append((method, subtitle, density))
 
-    fig, axes = plt.subplots(1, 3, figsize=(11.5, 4.3), dpi=DPI)
+    fig, axes = plt.subplots(1, 3, figsize=(11.5, 4.0), dpi=DPI, layout="constrained")
     for ax, (method, subtitle, density) in zip(axes, panels, strict=True):
         im = ax.imshow(
             density.T, origin="lower", extent=(-extent, extent, -extent, extent),
@@ -197,18 +197,17 @@ def gen_field_slice() -> None:
         ax.text(0.5, -0.04, subtitle, transform=ax.transAxes,
                 ha="center", va="top", fontsize=8.5, color="#555")
 
-    cbar = fig.colorbar(im, ax=axes, shrink=0.75, aspect=22, pad=0.02)
+    cbar = fig.colorbar(im, ax=axes, shrink=0.75, aspect=22)
     cbar.set_label("density", fontsize=9)
     cbar.ax.tick_params(labelsize=8)
 
     fig.suptitle(
         "2D density field for a unit-circle SDF — white dashed line is the MC iso=0.5 contour",
-        fontsize=10, y=0.96, color="#444",
+        fontsize=10, color="#444",
     )
     fig.patch.set_facecolor(BG_COLOR)
-    fig.subplots_adjust(top=0.88, bottom=0.08)
     out = OUTPUT_DIR / "sdf-to-density-field-slice.png"
-    fig.savefig(out, bbox_inches="tight")
+    fig.savefig(out)
     plt.close(fig)
     print(f"wrote {out}")
 
