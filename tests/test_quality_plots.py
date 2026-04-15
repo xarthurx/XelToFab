@@ -6,7 +6,7 @@ import pytest
 
 pv = pytest.importorskip("pyvista")
 
-from xeltofab.state import PipelineParams, PipelineState
+from xeltofab.state import PipelineParams, PipelineState  # noqa: E402
 
 
 def test_heatmap_returns_plotter(processed_3d: PipelineState):

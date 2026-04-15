@@ -48,6 +48,9 @@ xtf = "xeltofab.cli:main"
 [tool.ruff]
 line-length = 120
 indent-width = 4
+# notebooks/ holds marimo + jupyter-style demo files that rely on trailing
+# bare expressions for auto-display — excluded from lint to avoid B018 noise.
+extend-exclude = ["notebooks"]
 
 [tool.ruff.format]
 quote-style = "double"

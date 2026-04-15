@@ -33,6 +33,7 @@ from xeltofab.state import PipelineParams, PipelineState
 # Model registry
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class BenchmarkModel:
     name: str
@@ -72,6 +73,7 @@ def _generate_synthetic(generator: str) -> np.ndarray:
 # Metric computation
 # ---------------------------------------------------------------------------
 
+
 def _to_pyvista(state: PipelineState):
     """Build a pyvista PolyData from pipeline state, or None if unavailable."""
     vertices = state.best_vertices
@@ -98,6 +100,7 @@ def compute_metrics(state: PipelineState, pv_mesh=None) -> dict:
 # ---------------------------------------------------------------------------
 # Visualization
 # ---------------------------------------------------------------------------
+
 
 def save_comparison_plot(state: PipelineState, output_path: Path) -> None:
     """Save a matplotlib comparison plot (field vs result)."""
@@ -151,6 +154,7 @@ def save_quality_histograms(state: PipelineState, output_path: Path) -> None:
 # Summary generation
 # ---------------------------------------------------------------------------
 
+
 def write_summary(all_metrics: dict, output_dir: Path) -> None:
     """Write a markdown summary table from collected metrics."""
     lines = [
@@ -200,6 +204,7 @@ def write_summary(all_metrics: dict, output_dir: Path) -> None:
 # Main
 # ---------------------------------------------------------------------------
 
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run pipeline benchmark and capture quality baseline.")
     parser.add_argument("--output-dir", type=Path, default=Path("benchmarks/baseline"))
@@ -211,9 +216,9 @@ def main() -> None:
     all_metrics: dict[str, dict] = {}
 
     for model in MODELS:
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"Processing: {model.name}")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
 
         # Load
         params = PipelineParams(field_type=model.field_type)

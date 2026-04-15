@@ -14,6 +14,7 @@ import argparse
 from pathlib import Path
 
 import matplotlib
+import numpy as np
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -94,10 +95,10 @@ def gen_pipeline_diagram() -> None:
     stages = list(STAGE_COLORS.keys())
 
     # Layout constants
-    gap = 2.0        # horizontal gap between stage centers
-    row_gap = 2.0    # vertical gap between row centers
-    box_hw = 0.55    # half-width for pipeline stage boxes
-    box_hh = 0.3     # half-height for pipeline stage boxes
+    gap = 2.0  # horizontal gap between stage centers
+    row_gap = 2.0  # vertical gap between row centers
+    box_hw = 0.55  # half-width for pipeline stage boxes
+    box_hh = 0.3  # half-height for pipeline stage boxes
     dash_gap = 0.12  # offset between solid box and dashed outline
     arrow_gap = 0.1  # clearance between arrow tip and nearest border
     uniform_edge = box_hw + dash_gap
@@ -142,11 +143,21 @@ def gen_pipeline_diagram() -> None:
     optional_stages = {"Preprocess", "Repair", "Remesh", "Decimate"}
 
     sdf_color = "#2A7F62"
-    sdf_arrow_dash_style = (0, (4, 2.4))
 
-    def _draw_box(x, y, label, hw=box_hw, hh=box_hh, is_terminal=False,
-                  custom_color=None, custom_text_color=None, is_optional=False,
-                  fontsize=None, border_lw=1.2, border_color=None):
+    def _draw_box(
+        x,
+        y,
+        label,
+        hw=box_hw,
+        hh=box_hh,
+        is_terminal=False,
+        custom_color=None,
+        custom_text_color=None,
+        is_optional=False,
+        fontsize=None,
+        border_lw=1.2,
+        border_color=None,
+    ):
         if is_terminal:
             fc, ec, tc = "#E8E8E8", "#999999", "#333333"
         elif custom_color:
@@ -159,25 +170,35 @@ def gen_pipeline_diagram() -> None:
             ec = border_color
 
         fs = fontsize or (9 if is_terminal else 8.5)
-        ax.add_patch(matplotlib.patches.FancyBboxPatch(
-            (x - hw, y - hh), hw * 2, hh * 2,
-            boxstyle="round,pad=0.08",
-            facecolor=fc, edgecolor=ec, linewidth=border_lw,
-        ))
-        ax.text(x, y, label, ha="center", va="center",
-                fontsize=fs, fontweight="bold", color=tc, linespacing=1.1)
+        ax.add_patch(
+            matplotlib.patches.FancyBboxPatch(
+                (x - hw, y - hh),
+                hw * 2,
+                hh * 2,
+                boxstyle="round,pad=0.08",
+                facecolor=fc,
+                edgecolor=ec,
+                linewidth=border_lw,
+            )
+        )
+        ax.text(x, y, label, ha="center", va="center", fontsize=fs, fontweight="bold", color=tc, linespacing=1.1)
 
         is_dashed = label in optional_stages or is_optional
         outer_pad = dash_gap if is_dashed else 0.0
         if is_dashed:
             dash_ec = sdf_color if is_optional else "#888888"
-            ax.add_patch(matplotlib.patches.FancyBboxPatch(
-                (x - hw - outer_pad, y - hh - outer_pad),
-                (hw + outer_pad) * 2, (hh + outer_pad) * 2,
-                boxstyle="round,pad=0.08",
-                facecolor="none", edgecolor=dash_ec,
-                linewidth=1.0, linestyle="--",
-            ))
+            ax.add_patch(
+                matplotlib.patches.FancyBboxPatch(
+                    (x - hw - outer_pad, y - hh - outer_pad),
+                    (hw + outer_pad) * 2,
+                    (hh + outer_pad) * 2,
+                    boxstyle="round,pad=0.08",
+                    facecolor="none",
+                    edgecolor=dash_ec,
+                    linewidth=1.0,
+                    linestyle="--",
+                )
+            )
 
         return {
             "x": x,
@@ -193,16 +214,30 @@ def gen_pipeline_diagram() -> None:
         }
 
     # --- Field terminal (core entry, upper-left, LARGER) ---
-    field_box = _draw_box(field_x, field_y, "Field", hw=field_hw, hh=field_hh,
-                          is_terminal=True, fontsize=12, border_lw=2.2,
-                          border_color="#222222")
+    field_box = _draw_box(
+        field_x,
+        field_y,
+        "Field",
+        hw=field_hw,
+        hh=field_hh,
+        is_terminal=True,
+        fontsize=12,
+        border_lw=2.2,
+        border_color="#222222",
+    )
 
     # --- SDF optional path (above the pipeline, horizontal and serial) ---
-    sdf_fn_box = _draw_box(sdf_fn_x, sdf_y, "SDF\nFunction", hw=sdf_hw, hh=sdf_hh,
-                           is_terminal=True, fontsize=8)
-    sdf_eval_box = _draw_box(sdf_eval_x, sdf_y, "SDF\nEvaluate", hw=sdf_hw, hh=sdf_hh,
-                             custom_color=sdf_color, custom_text_color="white",
-                             fontsize=8)
+    sdf_fn_box = _draw_box(sdf_fn_x, sdf_y, "SDF\nFunction", hw=sdf_hw, hh=sdf_hh, is_terminal=True, fontsize=8)
+    sdf_eval_box = _draw_box(
+        sdf_eval_x,
+        sdf_y,
+        "SDF\nEvaluate",
+        hw=sdf_hw,
+        hh=sdf_hh,
+        custom_color=sdf_color,
+        custom_text_color="white",
+        fontsize=8,
+    )
 
     sdf_frame_pad_x = 0.16
     sdf_frame_pad_y = 0.14
@@ -211,35 +246,59 @@ def gen_pipeline_diagram() -> None:
     sdf_frame_top = sdf_y + sdf_hh + sdf_frame_pad_y
     sdf_frame_bottom = sdf_y - sdf_hh - sdf_frame_pad_y
 
-    ax.add_patch(matplotlib.patches.FancyBboxPatch(
-        (sdf_frame_left, sdf_frame_bottom),
-        sdf_frame_right - sdf_frame_left,
-        sdf_frame_top - sdf_frame_bottom,
-        boxstyle="round,pad=0.08",
-        facecolor="none",
-        edgecolor=sdf_color,
-        linewidth=1.0,
-        linestyle="--",
-    ))
+    ax.add_patch(
+        matplotlib.patches.FancyBboxPatch(
+            (sdf_frame_left, sdf_frame_bottom),
+            sdf_frame_right - sdf_frame_left,
+            sdf_frame_top - sdf_frame_bottom,
+            boxstyle="round,pad=0.08",
+            facecolor="none",
+            edgecolor=sdf_color,
+            linewidth=1.0,
+            linestyle="--",
+        )
+    )
 
     # Group label under the optional SDF branch
-    ax.text((sdf_eval_x + sdf_fn_x) / 2, sdf_frame_bottom - 0.14,
-            "process_from_sdf()  (optional)",
-            ha="center", va="top", fontsize=7, color=sdf_color, fontstyle="italic")
+    ax.text(
+        (sdf_eval_x + sdf_fn_x) / 2,
+        sdf_frame_bottom - 0.14,
+        "process_from_sdf()  (optional)",
+        ha="center",
+        va="top",
+        fontsize=7,
+        color=sdf_color,
+        fontstyle="italic",
+    )
 
     # --- Row 2: Pipeline stages ---
     stage_boxes = {}
     for i, label in enumerate(stages):
         stage_boxes[label] = _draw_box(stage_x[i], 0, label)
         if label in param_annotations:
-            ax.text(stage_x[i], -box_hh - dash_gap - 0.15, param_annotations[label],
-                    ha="center", va="top", fontsize=7, color="#666666",
-                    fontstyle="italic")
+            ax.text(
+                stage_x[i],
+                -box_hh - dash_gap - 0.15,
+                param_annotations[label],
+                ha="center",
+                va="top",
+                fontsize=7,
+                color="#666666",
+                fontstyle="italic",
+            )
 
     # --- Row 3: Mesh terminal ---
-    mesh_box = _draw_box(mesh_x, mesh_y, "Mesh", hw=mesh_hw, hh=mesh_hh,
-                         is_terminal=True, fontsize=12, border_lw=2.2,
-                         border_color="#222222")
+    mesh_box = _draw_box(
+        mesh_x,
+        mesh_y,
+        "Mesh",
+        hw=mesh_hw,
+        hh=mesh_hh,
+        is_terminal=True,
+        fontsize=12,
+        border_lw=2.2,
+        border_color="#222222",
+    )
 
     # --- Arrows ---
     arrow_kw = dict(arrowstyle="-|>", color="#555555", lw=1.3)
@@ -248,45 +307,57 @@ def gen_pipeline_diagram() -> None:
     e = uniform_edge + arrow_gap
 
     # Optional SDF branch: SDF Function -> SDF Evaluate -> Field.
-    ax.annotate("", xy=(sdf_eval_x + e, sdf_y),
-                xytext=(sdf_fn_x - e, sdf_y),
-                arrowprops=sdf_internal_arrow_kw)
-    ax.annotate("", xy=(field_box["solid_right"] + arrow_gap, field_box["y"]),
-                xytext=(sdf_eval_box["solid_left"] - arrow_gap, field_box["y"]),
-                arrowprops=sdf_arrow_kw)
+    ax.annotate("", xy=(sdf_eval_x + e, sdf_y), xytext=(sdf_fn_x - e, sdf_y), arrowprops=sdf_internal_arrow_kw)
+    ax.annotate(
+        "",
+        xy=(field_box["solid_right"] + arrow_gap, field_box["y"]),
+        xytext=(sdf_eval_box["solid_left"] - arrow_gap, field_box["y"]),
+        arrowprops=sdf_arrow_kw,
+    )
 
     # Field → Preprocess (vertical, main flow)
     preprocess_box = stage_boxes["Preprocess"]
-    ax.annotate("", xy=(field_box["x"], preprocess_box["outer_top"] + arrow_gap),
-                xytext=(field_box["x"], field_box["solid_bottom"] - arrow_gap),
-                arrowprops=arrow_kw)
+    ax.annotate(
+        "",
+        xy=(field_box["x"], preprocess_box["outer_top"] + arrow_gap),
+        xytext=(field_box["x"], field_box["solid_bottom"] - arrow_gap),
+        arrowprops=arrow_kw,
+    )
 
     # Horizontal arrows between stages (uniform length)
     for i in range(len(stages) - 1):
-        ax.annotate("", xy=(stage_x[i + 1] - e, 0),
-                    xytext=(stage_x[i] + e, 0),
-                    arrowprops=arrow_kw)
+        ax.annotate("", xy=(stage_x[i + 1] - e, 0), xytext=(stage_x[i] + e, 0), arrowprops=arrow_kw)
 
     # Decimate → Mesh
-    ax.annotate("", xy=(mesh_box["x"], mesh_box["solid_top"] + arrow_gap),
-                xytext=(mesh_box["x"], mesh_box["solid_top"] + arrow_gap + 0.6),
-                arrowprops=arrow_kw)
+    ax.annotate(
+        "",
+        xy=(mesh_box["x"], mesh_box["solid_top"] + arrow_gap),
+        xytext=(mesh_box["x"], mesh_box["solid_top"] + arrow_gap + 0.6),
+        arrowprops=arrow_kw,
+    )
 
     # --- Legend (bottom-left) ---
     leg_w = 0.5
     leg_h = 0.35
     leg_x = stage_x[0] - box_hw - dash_gap
     leg_y = mesh_y - box_hh + (box_hh * 2 - leg_h) / 2
-    ax.add_patch(matplotlib.patches.FancyBboxPatch(
-        (leg_x, leg_y), leg_w, leg_h,
-        boxstyle="round,pad=0.05",
-        facecolor="none", edgecolor="#888888", linewidth=1.0, linestyle="--",
-    ))
-    ax.text(leg_x + leg_w + 0.12, leg_y + leg_h / 2, "= optional stage",
-            ha="left", va="center", fontsize=7, color="#666666")
+    ax.add_patch(
+        matplotlib.patches.FancyBboxPatch(
+            (leg_x, leg_y),
+            leg_w,
+            leg_h,
+            boxstyle="round,pad=0.05",
+            facecolor="none",
+            edgecolor="#888888",
+            linewidth=1.0,
+            linestyle="--",
+        )
+    )
+    ax.text(
+        leg_x + leg_w + 0.12, leg_y + leg_h / 2, "= optional stage", ha="left", va="center", fontsize=7, color="#666666"
+    )
 
-    fig.savefig(OUTPUT_DIR / "pipeline-flow.png", dpi=DPI, bbox_inches="tight",
-                facecolor=BG_COLOR, pad_inches=0.05)
+    fig.savefig(OUTPUT_DIR / "pipeline-flow.png", dpi=DPI, bbox_inches="tight", facecolor=BG_COLOR, pad_inches=0.05)
     plt.close(fig)
 
 
@@ -339,14 +410,11 @@ def gen_pipeline_stages() -> None:
         bbox = ax.get_position()
         cx = bbox.x0 + bbox.width / 2
         y_top = bbox.y1 + 0.1
-        fig.text(cx, y_top, main, ha="center", va="top", fontsize=9,
-                 fontweight="bold")
+        fig.text(cx, y_top, main, ha="center", va="top", fontsize=9, fontweight="bold")
         if sub:
-            fig.text(cx, y_top - 0.04, sub, ha="center", va="top",
-                     fontsize=8, color="#666666")
+            fig.text(cx, y_top - 0.04, sub, ha="center", va="top", fontsize=8, color="#666666")
 
-    fig.savefig(OUTPUT_DIR / "pipeline-stages.png", dpi=DPI, bbox_inches="tight",
-                facecolor=BG_COLOR)
+    fig.savefig(OUTPUT_DIR / "pipeline-stages.png", dpi=DPI, bbox_inches="tight", facecolor=BG_COLOR)
     plt.close(fig)
 
 
@@ -377,31 +445,26 @@ def gen_field_types() -> None:
     fig, (ax_den, ax_sdf) = plt.subplots(1, 2, figsize=(10, 3.2))
 
     # Left: Density field + extracted contours
-    im0 = ax_den.imshow(state_density.field, cmap="YlOrRd", origin="lower",
-                         vmin=0, vmax=1)
+    im0 = ax_den.imshow(state_density.field, cmap="YlOrRd", origin="lower", vmin=0, vmax=1)
     if result_density.contours:
         for contour in result_density.contours:
-            ax_den.plot(contour[:, 1], contour[:, 0], color="#1a1a1a",
-                        linewidth=1.8)
+            ax_den.plot(contour[:, 1], contour[:, 0], color="#1a1a1a", linewidth=1.8)
     ax_den.set_title("Density field — extracted at threshold = 0.5", fontsize=9.5)
     ax_den.axis("off")
     fig.colorbar(im0, ax=ax_den, fraction=0.046, pad=0.04)
 
     # Right: SDF field + extracted contours
-    im1 = ax_sdf.imshow(sdf_field, cmap="RdBu", origin="lower",
-                         vmin=-vmax_sdf, vmax=vmax_sdf)
+    im1 = ax_sdf.imshow(sdf_field, cmap="RdBu", origin="lower", vmin=-vmax_sdf, vmax=vmax_sdf)
     if result_sdf.contours:
         for contour in result_sdf.contours:
-            ax_sdf.plot(contour[:, 1], contour[:, 0], color="#1a1a1a",
-                        linewidth=1.8)
+            ax_sdf.plot(contour[:, 1], contour[:, 0], color="#1a1a1a", linewidth=1.8)
     ax_sdf.set_title("SDF field — extracted at level = 0.0", fontsize=9.5)
     ax_sdf.axis("off")
     fig.colorbar(im1, ax=ax_sdf, fraction=0.046, pad=0.04)
 
     fig.patch.set_facecolor(BG_COLOR)
     fig.tight_layout(pad=1.5)
-    fig.savefig(OUTPUT_DIR / "field-types-comparison.png", dpi=DPI, bbox_inches="tight",
-                facecolor=BG_COLOR)
+    fig.savefig(OUTPUT_DIR / "field-types-comparison.png", dpi=DPI, bbox_inches="tight", facecolor=BG_COLOR)
     plt.close(fig)
 
 
@@ -439,8 +502,7 @@ def _gen_param_threshold() -> None:
         ax.axis("off")
 
     fig.tight_layout(pad=1.0)
-    fig.savefig(OUTPUT_DIR / "param-threshold.png", dpi=DPI, bbox_inches="tight",
-                facecolor=BG_COLOR)
+    fig.savefig(OUTPUT_DIR / "param-threshold.png", dpi=DPI, bbox_inches="tight", facecolor=BG_COLOR)
     plt.close(fig)
 
 
@@ -471,8 +533,7 @@ def _gen_param_sigma() -> None:
         ax.axis("off")
 
     fig.tight_layout(pad=1.0)
-    fig.savefig(OUTPUT_DIR / "param-sigma.png", dpi=DPI, bbox_inches="tight",
-                facecolor=BG_COLOR)
+    fig.savefig(OUTPUT_DIR / "param-sigma.png", dpi=DPI, bbox_inches="tight", facecolor=BG_COLOR)
     plt.close(fig)
 
 
@@ -508,8 +569,7 @@ def _gen_param_taubin() -> None:
         ax.axis("off")
 
     fig.tight_layout(pad=1.0)
-    fig.savefig(OUTPUT_DIR / "param-taubin.png", dpi=DPI, bbox_inches="tight",
-                facecolor=BG_COLOR)
+    fig.savefig(OUTPUT_DIR / "param-taubin.png", dpi=DPI, bbox_inches="tight", facecolor=BG_COLOR)
     plt.close(fig)
 
 
@@ -546,8 +606,12 @@ def gen_quality_metrics() -> None:
     pv_mesh.cell_data[metric] = values
     pl = pv.Plotter(off_screen=True, window_size=[800, 750])
     pl.add_mesh(
-        pv_mesh, scalars=metric, cmap="RdYlGn",
-        show_edges=True, edge_color="black", line_width=0.3,
+        pv_mesh,
+        scalars=metric,
+        cmap="RdYlGn",
+        show_edges=True,
+        edge_color="black",
+        line_width=0.3,
         scalar_bar_args={
             "title": "",
             "label_font_size": 11,
@@ -579,7 +643,11 @@ def gen_quality_metrics() -> None:
 
     # Right: histogram
     counts, bin_edges, patches = ax_right.hist(
-        values, bins=50, edgecolor="white", linewidth=0.3, alpha=0.9,
+        values,
+        bins=50,
+        edgecolor="white",
+        linewidth=0.3,
+        alpha=0.9,
         color="#3182BD",
     )
     ax_right.axvline(threshold, color="#D0021B", linestyle="--", linewidth=2)
@@ -591,23 +659,28 @@ def gen_quality_metrics() -> None:
     # Stats annotation — top right, well above bars
     direction = ">=" if _HIGHER_IS_BETTER[metric] else "<="
     ax_right.text(
-        0.97, 0.97,
+        0.97,
+        0.97,
         f"{pass_pct:.1f}% pass ({direction} {threshold})\n"
         f"mean = {np.mean(values):.2f}   median = {np.median(values):.2f}",
-        transform=ax_right.transAxes, ha="right", va="top",
+        transform=ax_right.transAxes,
+        ha="right",
+        va="top",
         fontsize=8.5,
-        bbox=dict(boxstyle="round,pad=0.4", facecolor="#F5F5F0",
-                  edgecolor="#CCCCCC", alpha=0.95),
+        bbox=dict(boxstyle="round,pad=0.4", facecolor="#F5F5F0", edgecolor="#CCCCCC", alpha=0.95),
     )
 
     # Threshold legend — top left, same vertical zone as stats
     ax_right.text(
-        0.03, 0.97,
+        0.03,
+        0.97,
         f"- - FEA threshold ({threshold})",
-        transform=ax_right.transAxes, ha="left", va="top",
-        fontsize=8, color="#D0021B",
-        bbox=dict(boxstyle="round,pad=0.3", facecolor="#F5F5F0",
-                  edgecolor="#CCCCCC", alpha=0.95),
+        transform=ax_right.transAxes,
+        ha="left",
+        va="top",
+        fontsize=8,
+        color="#D0021B",
+        bbox=dict(boxstyle="round,pad=0.3", facecolor="#F5F5F0", edgecolor="#CCCCCC", alpha=0.95),
     )
 
     ax_right.set_xlabel(_METRIC_LABELS[metric], fontsize=10)
@@ -618,8 +691,7 @@ def gen_quality_metrics() -> None:
     ax_right.yaxis.grid(True, alpha=0.3, linewidth=0.5)
     ax_right.set_axisbelow(True)
 
-    fig.savefig(OUTPUT_DIR / "quality-jacobian.png", dpi=DPI, bbox_inches="tight",
-                facecolor=BG_COLOR)
+    fig.savefig(OUTPUT_DIR / "quality-jacobian.png", dpi=DPI, bbox_inches="tight", facecolor=BG_COLOR)
     plt.close(fig)
 
 
@@ -661,13 +733,22 @@ def gen_hero_overview() -> None:
     ax_arrow.set_xlim(0, 1)
     ax_arrow.set_ylim(0, 1)
     ax_arrow.axis("off")
-    ax_arrow.text(0.6, 0.50, "XelToFab", ha="center", va="bottom",
-                  fontsize=9, fontweight="bold", color="#1B3A5C",
-                  fontstyle="italic")
+    ax_arrow.text(
+        0.6,
+        0.50,
+        "XelToFab",
+        ha="center",
+        va="bottom",
+        fontsize=9,
+        fontweight="bold",
+        color="#1B3A5C",
+        fontstyle="italic",
+    )
     ax_arrow.annotate(
-        "", xy=(1.1, 0.46), xytext=(0.1, 0.46),
-        arrowprops=dict(arrowstyle="-|>", color="#1B3A5C", lw=1.6,
-                        mutation_scale=13),
+        "",
+        xy=(1.1, 0.46),
+        xytext=(0.1, 0.46),
+        arrowprops=dict(arrowstyle="-|>", color="#1B3A5C", lw=1.6, mutation_scale=13),
         annotation_clip=False,
     )
 
@@ -676,8 +757,7 @@ def gen_hero_overview() -> None:
     ax_mesh.set_title("Triangle Mesh", fontsize=11, fontweight="bold", color="#2B2B2B")
     ax_mesh.axis("off")
 
-    fig.savefig(OUTPUT_DIR_GS / "hero-overview.png", dpi=DPI, bbox_inches="tight",
-                facecolor=BG_COLOR)
+    fig.savefig(OUTPUT_DIR_GS / "hero-overview.png", dpi=DPI, bbox_inches="tight", facecolor=BG_COLOR)
     plt.close(fig)
 
 
@@ -706,8 +786,7 @@ def gen_quickstart_2d() -> None:
     ax_out.axis("off")
 
     fig.tight_layout(pad=1.5)
-    fig.savefig(OUTPUT_DIR_GS / "quick-start-2d.png", dpi=DPI, bbox_inches="tight",
-                facecolor=BG_COLOR)
+    fig.savefig(OUTPUT_DIR_GS / "quick-start-2d.png", dpi=DPI, bbox_inches="tight", facecolor=BG_COLOR)
     plt.close(fig)
 
 
@@ -748,8 +827,7 @@ def gen_quickstart_smoothing() -> None:
     ax_bil.axis("off")
 
     fig.tight_layout(pad=1.0)
-    fig.savefig(OUTPUT_DIR_GS / "quick-start-smoothing.png", dpi=DPI,
-                bbox_inches="tight", facecolor=BG_COLOR)
+    fig.savefig(OUTPUT_DIR_GS / "quick-start-smoothing.png", dpi=DPI, bbox_inches="tight", facecolor=BG_COLOR)
     plt.close(fig)
 
 
@@ -770,8 +848,10 @@ def gen_hero_compare() -> None:
 
     # Before: raw marching cubes mesh
     img_before = _pv_screenshot(
-        state_ext.vertices, state_ext.faces,
-        window_size=[800, 800], transparent_bg=True,
+        state_ext.vertices,
+        state_ext.faces,
+        window_size=[800, 800],
+        transparent_bg=True,
     )
 
     # After: Taubin-smoothed mesh (same camera = iso default)
@@ -779,8 +859,10 @@ def gen_hero_compare() -> None:
     st_smooth = state_ext.model_copy(update={"params": params})
     st_smooth = smooth(st_smooth)
     img_after = _pv_screenshot(
-        st_smooth.best_vertices, st_smooth.faces,
-        window_size=[800, 800], transparent_bg=True,
+        st_smooth.best_vertices,
+        st_smooth.faces,
+        window_size=[800, 800],
+        transparent_bg=True,
     )
 
     # Save mesh images as RGBA PNG (transparent background)
@@ -794,8 +876,7 @@ def gen_hero_compare() -> None:
     ax.imshow(field[mid], cmap="viridis", origin="lower")
     ax.axis("off")
     fig.patch.set_facecolor(BG_COLOR)
-    fig.savefig(OUTPUT_DIR_HOME / "hero-field.png", dpi=100, bbox_inches="tight",
-                facecolor=BG_COLOR, pad_inches=0.05)
+    fig.savefig(OUTPUT_DIR_HOME / "hero-field.png", dpi=100, bbox_inches="tight", facecolor=BG_COLOR, pad_inches=0.05)
     plt.close(fig)
 
 
@@ -852,9 +933,7 @@ def _make_bunny_sdf_true() -> np.ndarray:
     if cache.exists():
         return np.load(cache)
 
-    raise FileNotFoundError(
-        "True bunny SDF cache not found. Run: uv run python scripts/generate_bunny_sdf.py"
-    )
+    raise FileNotFoundError("True bunny SDF cache not found. Run: uv run python scripts/generate_bunny_sdf.py")
 
 
 def gen_extraction_comparison() -> None:
@@ -880,17 +959,25 @@ def gen_extraction_comparison() -> None:
     all_v = np.vstack([mc_v, dc_v, sn_v])
     xlim = _shrink_bounds(all_v[:, 0])
     ylim = _shrink_bounds(all_v[:, 2])
-    zlim = _tight(all_v[:, 1])
+    zlim = _shrink_bounds(all_v[:, 1])
     ranges = np.array([xlim[1] - xlim[0], ylim[1] - ylim[0], zlim[1] - zlim[0]])
     box_aspect = ranges / ranges.max()
     for i, (name, v, f) in enumerate(methods):
         ax = fig.add_subplot(1, 3, i + 1, projection="3d")
         _plot_bunny_panel(
-            ax, v, f, f"{name}\n({v.shape[0]:,} verts, {f.shape[0]:,} faces)",
-            xlim, ylim, zlim, box_aspect,
+            ax,
+            v,
+            f,
+            f"{name}\n({v.shape[0]:,} verts, {f.shape[0]:,} faces)",
+            xlim,
+            ylim,
+            zlim,
+            box_aspect,
         )
     fig.subplots_adjust(left=0.0, right=1.0, bottom=-0.12, top=0.88, wspace=-0.1)
-    fig.savefig(OUTPUT_DIR / "extraction-comparison.png", dpi=DPI, bbox_inches="tight", pad_inches=0.15, facecolor=BG_COLOR)
+    fig.savefig(
+        OUTPUT_DIR / "extraction-comparison.png", dpi=DPI, bbox_inches="tight", pad_inches=0.15, facecolor=BG_COLOR
+    )
     plt.close(fig)
 
 
@@ -921,8 +1008,14 @@ def gen_extraction_models() -> None:
 def _plot_bunny_panel(ax: plt.Axes, v: np.ndarray, f: np.ndarray, title: str, xlim, ylim, zlim, box_aspect) -> None:
     """Render a bunny mesh into a 3D axis with consistent view settings."""
     ax.plot_trisurf(
-        v[:, 0], v[:, 2], v[:, 1], triangles=f,
-        color="#6BAED6", edgecolor="#2a2a2a", linewidth=0.03, alpha=0.95,
+        v[:, 0],
+        v[:, 2],
+        v[:, 1],
+        triangles=f,
+        color="#6BAED6",
+        edgecolor="#2a2a2a",
+        linewidth=0.03,
+        alpha=0.95,
     )
     ax.set_title(title, fontsize=11, fontweight="bold")
     ax.view_init(elev=30, azim=-60)
@@ -959,20 +1052,33 @@ def gen_extraction_gradient_quality() -> None:
 
     ax1 = fig.add_subplot(1, 2, 1, projection="3d")
     _plot_bunny_panel(
-        ax1, dc_edt_v, dc_edt_f,
+        ax1,
+        dc_edt_v,
+        dc_edt_f,
         f"DC — Noisy SDF (binary + EDT)\n({dc_edt_v.shape[0]:,} verts)",
-        xlim, ylim, zlim, box_aspect,
+        xlim,
+        ylim,
+        zlim,
+        box_aspect,
     )
     ax2 = fig.add_subplot(1, 2, 2, projection="3d")
     _plot_bunny_panel(
-        ax2, dc_true_v, dc_true_f,
+        ax2,
+        dc_true_v,
+        dc_true_f,
         f"DC — True SDF (VTK implicit distance)\n({dc_true_v.shape[0]:,} verts)",
-        xlim, ylim, zlim, box_aspect,
+        xlim,
+        ylim,
+        zlim,
+        box_aspect,
     )
     fig.subplots_adjust(left=0.0, right=1.0, bottom=-0.12, top=0.88, wspace=-0.05)
     fig.savefig(
         OUTPUT_DIR / "extraction-gradient-quality.png",
-        dpi=DPI, bbox_inches="tight", pad_inches=0.15, facecolor=BG_COLOR,
+        dpi=DPI,
+        bbox_inches="tight",
+        pad_inches=0.15,
+        facecolor=BG_COLOR,
     )
     plt.close(fig)
 

@@ -51,26 +51,24 @@ def gen_profiles() -> None:
 
     ax.axhline(0.5, color="gray", lw=0.6, ls=":", zorder=0)
     ax.axvline(0.0, color="gray", lw=0.6, ls=":", zorder=0)
-    ax.axvspan(-1.0, 1.0, color=LINEAR_COLOR, alpha=0.07, zorder=0,
-               label="linear band (bw=1)")
+    ax.axvspan(-1.0, 1.0, color=LINEAR_COLOR, alpha=0.07, zorder=0, label="linear band (bw=1)")
 
-    ax.plot(sdf, heaviside(sdf), color=HEAVISIDE_COLOR, lw=2.2,
-            label="heaviside", zorder=3)
-    ax.plot(sdf, linear_ramp(sdf, bandwidth=1.0), color=LINEAR_COLOR, lw=2.2,
-            label="linear  (bw=1)", zorder=3)
-    ax.plot(sdf, sigmoid(sdf, bandwidth=1.0), color=SIGMOID_COLOR, lw=2.2,
-            label="sigmoid (bw=1)", zorder=3)
+    ax.plot(sdf, heaviside(sdf), color=HEAVISIDE_COLOR, lw=2.2, label="heaviside", zorder=3)
+    ax.plot(sdf, linear_ramp(sdf, bandwidth=1.0), color=LINEAR_COLOR, lw=2.2, label="linear  (bw=1)", zorder=3)
+    ax.plot(sdf, sigmoid(sdf, bandwidth=1.0), color=SIGMOID_COLOR, lw=2.2, label="sigmoid (bw=1)", zorder=3)
 
-    ax.plot(sdf, linear_ramp(sdf, bandwidth=2.0), color=LINEAR_COLOR, lw=1.4,
-            ls="--", label="linear  (bw=2)", zorder=2)
-    ax.plot(sdf, sigmoid(sdf, bandwidth=2.0), color=SIGMOID_COLOR, lw=1.4,
-            ls="--", label="sigmoid (bw=2)", zorder=2)
+    ax.plot(sdf, linear_ramp(sdf, bandwidth=2.0), color=LINEAR_COLOR, lw=1.4, ls="--", label="linear  (bw=2)", zorder=2)
+    ax.plot(sdf, sigmoid(sdf, bandwidth=2.0), color=SIGMOID_COLOR, lw=1.4, ls="--", label="sigmoid (bw=2)", zorder=2)
 
-    ax.annotate("iso-level invariant:\nsdf = level → density = 0.5",
-                xy=(0.0, 0.5), xytext=(-2.85, 0.12),
-                fontsize=8.5, color="#444", ha="left",
-                arrowprops={"arrowstyle": "->", "color": "#888", "lw": 0.7,
-                            "connectionstyle": "arc3,rad=0.25"})
+    ax.annotate(
+        "iso-level invariant:\nsdf = level → density = 0.5",
+        xy=(0.0, 0.5),
+        xytext=(-2.85, 0.12),
+        fontsize=8.5,
+        color="#444",
+        ha="left",
+        arrowprops={"arrowstyle": "->", "color": "#888", "lw": 0.7, "connectionstyle": "arc3,rad=0.25"},
+    )
 
     ax.set_xlabel("sdf  (signed distance; level = 0)")
     ax.set_ylabel("density")
@@ -88,15 +86,13 @@ def gen_profiles() -> None:
     print(f"wrote {out}")
 
 
-def _render_mesh(vertices: np.ndarray, faces: np.ndarray,
-                 window_size: tuple[int, int] = (600, 600)) -> np.ndarray:
+def _render_mesh(vertices: np.ndarray, faces: np.ndarray, window_size: tuple[int, int] = (600, 600)) -> np.ndarray:
     """Off-screen isometric render of a mesh, matched framing for comparison."""
     faces_pv = np.column_stack([np.full(len(faces), 3), faces]).ravel()
     pv_mesh = pv.PolyData(vertices.astype(np.float64), faces_pv)
 
     pl = pv.Plotter(off_screen=True, window_size=list(window_size))
-    pl.add_mesh(pv_mesh, color=MESH_COLOR, show_edges=True,
-                edge_color="#1f3a4b", line_width=0.4)
+    pl.add_mesh(pv_mesh, color=MESH_COLOR, show_edges=True, edge_color="#1f3a4b", line_width=0.4)
     pl.set_background(BG_COLOR)
     pl.camera_position = "iso"
     pl.camera.zoom(1.3)
@@ -145,12 +141,13 @@ def gen_sphere_comparison() -> None:
         ax.imshow(img)
         ax.axis("off")
         ax.set_title(method, fontsize=11, fontweight="bold", pad=6)
-        ax.text(0.5, -0.04, subtitle, transform=ax.transAxes,
-                ha="center", va="top", fontsize=8.5, color="#555")
+        ax.text(0.5, -0.04, subtitle, transform=ax.transAxes, ha="center", va="top", fontsize=8.5, color="#555")
 
     fig.suptitle(
         "Sphere SDF (radius 1, resolution 24³) → density → MC iso=0.5",
-        fontsize=10, y=1.02, color="#444",
+        fontsize=10,
+        y=1.02,
+        color="#444",
     )
     fig.patch.set_facecolor(BG_COLOR)
     fig.tight_layout()
@@ -188,10 +185,13 @@ def gen_field_slice() -> None:
     # reserve vertical space for suptitle (top 16%) and subtitles (bottom 14%).
     fig = plt.figure(figsize=(11.5, 4.4), dpi=DPI)
     gs = fig.add_gridspec(
-        1, 4,
+        1,
+        4,
         width_ratios=[1, 1, 1, 0.05],
-        left=0.03, right=0.94,
-        top=0.80, bottom=0.14,
+        left=0.03,
+        right=0.94,
+        top=0.80,
+        bottom=0.14,
         wspace=0.08,
     )
     axes = [fig.add_subplot(gs[0, i]) for i in range(3)]
@@ -200,15 +200,18 @@ def gen_field_slice() -> None:
     im = None
     for ax, (method, subtitle, density) in zip(axes, panels, strict=True):
         im = ax.imshow(
-            density.T, origin="lower", extent=(-extent, extent, -extent, extent),
-            cmap="magma", vmin=0.0, vmax=1.0,
+            density.T,
+            origin="lower",
+            extent=(-extent, extent, -extent, extent),
+            cmap="magma",
+            vmin=0.0,
+            vmax=1.0,
         )
-        ax.contour(xx, yy, density, levels=[0.5], colors="#ffffff",
-                   linewidths=1.2, linestyles="--")
-        ax.set_xticks([]); ax.set_yticks([])
+        ax.contour(xx, yy, density, levels=[0.5], colors="#ffffff", linewidths=1.2, linestyles="--")
+        ax.set_xticks([])
+        ax.set_yticks([])
         ax.set_title(method, fontsize=11, fontweight="bold", pad=6)
-        ax.text(0.5, -0.04, subtitle, transform=ax.transAxes,
-                ha="center", va="top", fontsize=8.5, color="#555")
+        ax.text(0.5, -0.04, subtitle, transform=ax.transAxes, ha="center", va="top", fontsize=8.5, color="#555")
 
     cbar = fig.colorbar(im, cax=cax)
     cbar.set_label("density", fontsize=9)
@@ -216,7 +219,9 @@ def gen_field_slice() -> None:
 
     fig.suptitle(
         "2D density field for a unit-circle SDF — white dashed line is the MC iso=0.5 contour",
-        fontsize=12.5, y=0.94, color="#333",
+        fontsize=12.5,
+        y=0.94,
+        color="#333",
     )
     fig.patch.set_facecolor(BG_COLOR)
     out = OUTPUT_DIR / "sdf-to-density-field-slice.png"

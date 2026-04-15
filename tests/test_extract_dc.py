@@ -174,6 +174,7 @@ class TestGPUFallback:
         """When torch.cuda.is_available() returns False, falls back to CPU DC."""
         with unittest.mock.patch.dict("sys.modules", {"torch": unittest.mock.MagicMock()}):
             import sys
+
             mock_torch = sys.modules["torch"]
             mock_torch.cuda.is_available.return_value = False
             # The fallback should use CPU DC and produce valid output

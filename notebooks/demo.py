@@ -214,12 +214,21 @@ def _(mo, plot_result, plt, result):
 
         _verts = result.smoothed_vertices if result.smoothed_vertices is not None else result.vertices
         _faces = result.faces
-        _fig3d = _go.Figure(data=[_go.Mesh3d(
-            x=_verts[:, 0], y=_verts[:, 1], z=_verts[:, 2],
-            i=_faces[:, 0], j=_faces[:, 1], k=_faces[:, 2],
-            color="steelblue", opacity=0.9,
-            lighting=dict(ambient=0.4, diffuse=0.6, specular=0.3),
-        )])
+        _fig3d = _go.Figure(
+            data=[
+                _go.Mesh3d(
+                    x=_verts[:, 0],
+                    y=_verts[:, 1],
+                    z=_verts[:, 2],
+                    i=_faces[:, 0],
+                    j=_faces[:, 1],
+                    k=_faces[:, 2],
+                    color="steelblue",
+                    opacity=0.9,
+                    lighting=dict(ambient=0.4, diffuse=0.6, specular=0.3),
+                )
+            ]
+        )
         _fig3d.update_layout(
             title="Extracted Mesh (interactive)",
             scene=dict(
@@ -275,12 +284,21 @@ def _(mo, plot_comparison, plt, result):
         plt.close(_fig_bin)
 
         # 3D mesh (plotly)
-        _fig3d = _go.Figure(data=[_go.Mesh3d(
-            x=_verts[:, 0], y=_verts[:, 1], z=_verts[:, 2],
-            i=_faces[:, 0], j=_faces[:, 1], k=_faces[:, 2],
-            color="steelblue", opacity=0.9,
-            lighting=dict(ambient=0.4, diffuse=0.6, specular=0.3),
-        )])
+        _fig3d = _go.Figure(
+            data=[
+                _go.Mesh3d(
+                    x=_verts[:, 0],
+                    y=_verts[:, 1],
+                    z=_verts[:, 2],
+                    i=_faces[:, 0],
+                    j=_faces[:, 1],
+                    k=_faces[:, 2],
+                    color="steelblue",
+                    opacity=0.9,
+                    lighting=dict(ambient=0.4, diffuse=0.6, specular=0.3),
+                )
+            ]
+        )
         _fig3d.update_layout(
             title="Extracted Mesh",
             scene=dict(

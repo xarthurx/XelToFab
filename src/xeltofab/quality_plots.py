@@ -3,18 +3,23 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import numpy as np
 import pyvista as pv
 
 from xeltofab.state import PipelineState
+
+if TYPE_CHECKING:
+    from matplotlib.figure import Figure
 
 # Ordered: aspect ratio, min angle, scaled Jacobian (matches spec overview panels)
 _VALID_METRICS = ["aspect_ratio", "min_angle", "scaled_jacobian"]
 
 # FEA quality thresholds (defaults)
 _THRESHOLDS: dict[str, float] = {
-    "aspect_ratio": 5.0,     # ratio, <= is passing
-    "min_angle": 20.0,       # degrees, >= is passing
+    "aspect_ratio": 5.0,  # ratio, <= is passing
+    "min_angle": 20.0,  # degrees, >= is passing
     "scaled_jacobian": 0.5,  # unitless, >= is passing
 }
 
@@ -55,10 +60,7 @@ def _compute_cell_metric(pv_mesh: pv.PolyData, metric: str) -> np.ndarray:
 
 def _compute_pass_rate(values: np.ndarray, metric: str, threshold: float) -> float:
     """Return percentage of cells passing the FEA threshold."""
-    if _HIGHER_IS_BETTER[metric]:
-        pass_count = int(np.sum(values >= threshold))
-    else:
-        pass_count = int(np.sum(values <= threshold))
+    pass_count = int(np.sum(values >= threshold)) if _HIGHER_IS_BETTER[metric] else int(np.sum(values <= threshold))
     return 100.0 * pass_count / len(values)
 
 
@@ -191,8 +193,7 @@ def plot_metric_histogram(
     # Stats annotation
     direction = ">=" if _HIGHER_IS_BETTER[metric] else "<="
     ax.annotate(
-        f"{pass_pct:.1f}% pass ({direction} {threshold})\n"
-        f"mean={np.mean(values):.2f}, median={np.median(values):.2f}",
+        f"{pass_pct:.1f}% pass ({direction} {threshold})\nmean={np.mean(values):.2f}, median={np.median(values):.2f}",
         xy=(0.97, 0.95),
         xycoords="axes fraction",
         ha="right",

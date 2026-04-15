@@ -45,6 +45,7 @@ def _():
     from pathlib import Path
 
     import matplotlib
+
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
     import numpy as np
@@ -86,10 +87,8 @@ def _(get_supported_formats, mo):
         _hint = fmt["install_hint"] if not fmt["available"] else "—"
         _rows.append(f"| {fmt['name']} | {_exts} | {_status} | `{_hint}` |")
 
-    _table = (
-        "| Format | Extensions | Status | Install |\n"
-        "|--------|-----------|--------|---------|\n"
-        + "\n".join(_rows)
+    _table = "| Format | Extensions | Status | Install |\n|--------|-----------|--------|---------|\n" + "\n".join(
+        _rows
     )
     mo.md(_table)
     return
@@ -113,7 +112,7 @@ def _(mo):
 def _(np):
     def make_test_field(res: int = 100) -> np.ndarray:
         """Half-annulus with smooth density gradient."""
-        y, x = np.mgrid[-1:1:complex(res), -1:1:complex(res)]
+        y, x = np.mgrid[-1 : 1 : complex(res), -1 : 1 : complex(res)]
         r = np.sqrt(x**2 + y**2)
         # Annulus: inner=0.25, outer=0.7, upper half only
         mask = (r > 0.25) & (r < 0.7) & (y > 0)
@@ -353,9 +352,7 @@ def _(Path, PipelineParams, load_field, mo, np, show_round_trip, tempfile, test_
             ".vti round-trip (transposed from VTK (x,y) back to numpy (rows,cols))",
         )
     except ImportError:
-        vtk_out = mo.md(
-            "> **VTK loader not available.** Install with: `uv sync --extra vtk`"
-        )
+        vtk_out = mo.md("> **VTK loader not available.** Install with: `uv sync --extra vtk`")
     vtk_out
 
 
@@ -398,9 +395,7 @@ def _(Path, load_field, mo, show_round_trip, tempfile, test_field):
 
         h5_out = show_round_trip(_state_h5, ".h5 round-trip (h5py)")
     except ImportError:
-        h5_out = mo.md(
-            "> **HDF5 loader not available.** Install with: `uv sync --extra hdf5`"
-        )
+        h5_out = mo.md("> **HDF5 loader not available.** Install with: `uv sync --extra hdf5`")
     h5_out
 
 
@@ -462,9 +457,7 @@ def _(Path, load_field, mo, show_round_trip, tempfile, test_field):
 
         xdmf_out = show_round_trip(_state_xdmf, ".xdmf round-trip (XML + HDF5)")
     except ImportError:
-        xdmf_out = mo.md(
-            "> **XDMF loader not available.** Install with: `uv sync --extra hdf5`"
-        )
+        xdmf_out = mo.md("> **XDMF loader not available.** Install with: `uv sync --extra hdf5`")
     xdmf_out
 
 
@@ -506,7 +499,7 @@ def _(Path, mo, np, save_mesh, tempfile):
 
     # Synthetic 3-D sphere
     _res = 60
-    _z, _y, _x = np.mgrid[-1:1:complex(_res), -1:1:complex(_res), -1:1:complex(_res)]
+    _z, _y, _x = np.mgrid[-1 : 1 : complex(_res), -1 : 1 : complex(_res), -1 : 1 : complex(_res)]
     _sphere = (_x**2 + _y**2 + _z**2 < 0.5**2).astype(float)
 
     _state3d = _PS(field=_sphere, params=_PP(threshold=0.5, smooth_sigma=0.5, taubin_iterations=10))
@@ -515,12 +508,21 @@ def _(Path, mo, np, save_mesh, tempfile):
     # 3-D mesh visualization (interactive plotly)
     _verts = _result3d.smoothed_vertices if _result3d.smoothed_vertices is not None else _result3d.vertices
     _faces = _result3d.faces
-    _fig3d = _go.Figure(data=[_go.Mesh3d(
-        x=_verts[:, 0], y=_verts[:, 1], z=_verts[:, 2],
-        i=_faces[:, 0], j=_faces[:, 1], k=_faces[:, 2],
-        color="steelblue", opacity=0.9,
-        lighting=dict(ambient=0.4, diffuse=0.6, specular=0.3),
-    )])
+    _fig3d = _go.Figure(
+        data=[
+            _go.Mesh3d(
+                x=_verts[:, 0],
+                y=_verts[:, 1],
+                z=_verts[:, 2],
+                i=_faces[:, 0],
+                j=_faces[:, 1],
+                k=_faces[:, 2],
+                color="steelblue",
+                opacity=0.9,
+                lighting=dict(ambient=0.4, diffuse=0.6, specular=0.3),
+            )
+        ]
+    )
     _fig3d.update_layout(
         title="Exported Mesh (interactive)",
         scene=dict(
