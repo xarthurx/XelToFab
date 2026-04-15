@@ -44,10 +44,11 @@ Collaboration: M4X–IDEAL Lab with Prof. Mark Fuge.
 
 ## Version Management
 
-The project version is the single source of truth in `pyproject.toml`. When bumping the version, **always update all three files**:
+The project version is the single source of truth in `pyproject.toml`. When bumping the version, **always update all four files**:
 - `pyproject.toml` — `version = "X.Y.Z"`
 - `website/package.json` — `"version": "X.Y.Z"`
 - `website/content/docs/citation.mdx` — `version = {X.Y.Z}` in the BibTeX entry
+- `uv.lock` — refresh by running `uv sync` (or `uv lock`) **after** editing `pyproject.toml`; the `[[package]]` entry for `xeltofab` must match. Commit `uv.lock` alongside the other files.
 
 ## Conventions
 
