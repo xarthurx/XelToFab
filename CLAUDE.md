@@ -44,11 +44,24 @@ Collaboration: M4X–IDEAL Lab with Prof. Mark Fuge.
 
 ## Version Management
 
-The project version is the single source of truth in `pyproject.toml`. When bumping the version, **always update all four files**:
+The project version is the single source of truth in `pyproject.toml`. A version bump is not complete until the tag is pushed — the CI workflow in `.github/workflows/publish-pypi.yml` triggers on `v*` tag pushes and is what uploads to PyPI and creates the GitHub release.
+
+### Files to update (all four)
+
 - `pyproject.toml` — `version = "X.Y.Z"`
 - `website/package.json` — `"version": "X.Y.Z"`
 - `website/content/docs/citation.mdx` — `version = {X.Y.Z}` in the BibTeX entry
 - `uv.lock` — refresh by running `uv sync` (or `uv lock`) **after** editing `pyproject.toml`; the `[[package]]` entry for `xeltofab` must match. Commit `uv.lock` alongside the other files.
+
+### Full bump-and-release workflow
+
+1. Edit all four files to the new `X.Y.Z` (run `uv sync` for the lockfile).
+2. `git commit -m "bump version to X.Y.Z"` — include all four files.
+3. `git tag -a vX.Y.Z -m "vX.Y.Z"` — annotated tag pointing at the bump commit. Tag format is **`v` prefix + `X.Y.Z`** to match the existing convention (`v0.3.2`, `v0.3.3`, …) and the `v*` trigger in `publish-pypi.yml`.
+4. `git push origin main` and `git push origin vX.Y.Z` — both must be pushed. The tag push is what fires the PyPI + GitHub-release workflow.
+5. Verify the workflow succeeds: `gh run watch` (or check the Actions tab). It runs a tag-vs-pyproject version sanity check; if the four files drifted the build will fail fast.
+
+If the release workflow fails or the tag needs to move, delete the tag locally (`git tag -d vX.Y.Z`) **and** on the remote (`git push origin :refs/tags/vX.Y.Z`) before re-tagging — do not retag silently.
 
 ## Conventions
 
