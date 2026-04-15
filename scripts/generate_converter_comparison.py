@@ -132,8 +132,8 @@ def gen_sphere_comparison() -> None:
     panels: list[tuple[str, str, np.ndarray]] = []
     for method, subtitle in (
         ("heaviside", "binary density"),
-        ("linear", f"bandwidth ≈ 2·voxel ({bw:.3f})"),
-        ("sigmoid", f"bandwidth ≈ 2·voxel ({bw:.3f})"),
+        ("linear", f"bandwidth = 2·voxel ({bw:.3f})"),
+        ("sigmoid", f"bandwidth = 2·voxel ({bw:.3f})"),
     ):
         density = sdf_to_density(sdf_grid, method=method, bandwidth=bw)  # type: ignore[arg-type]
         verts, faces = _extract_only(density)
