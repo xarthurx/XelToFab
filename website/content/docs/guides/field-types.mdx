@@ -106,26 +106,45 @@ All three methods cross `density = 0.5` at the iso-level (here `sdf = 0`), so th
 - `linear` ramps linearly across `[level − bandwidth, level + bandwidth]` and is exactly 0 or 1 outside that band. The shaded region on the plot shows the `bw=1` band; the dashed line shows the same profile at `bw=2`. Bandwidth is the half-width of the transition.
 - `sigmoid` is a smooth tanh-like profile with infinite support — mathematically it is never exactly 0 or 1, though it saturates at float64 extremes. Bandwidth controls steepness: `bw=1` is sharper than `bw=2`.
 
-### What the resulting mesh reveals
+### What the extracted mesh reveals
 
 Marching cubes at iso=0.5 performs linear interpolation along cube edges to place vertices at sub-voxel positions. That interpolation reads only two numbers per surface-crossing edge — the densities on each side — so the mesh depends on the conversion method only through those two values.
 
 <img src="/images/guides/sdf-to-density-sphere.png" alt="Iso-surface meshes of a unit sphere extracted after each conversion method at 24³ resolution" width={900} />
 
-The three panels above all start from the same 24³ SDF of a unit sphere and extract at iso=0.5 with no smoothing, repair, remeshing, or decimation — so every visible difference is attributable to the conversion method:
+The three panels above all start from the same 24³ SDF of a unit sphere and extract at iso=0.5 with no smoothing, repair, remeshing, or decimation — so every visible difference is attributable to the conversion method.
 
-- `heaviside` (left) produces a **blocky, voxel-aligned mesh**. Because neighboring voxel densities are always `{0, 1}`, edge interpolation always snaps to the midpoint — there is no sub-voxel information for MC to use.
-- `linear` and `sigmoid` (middle, right) both recover a **smooth, accurate sphere** and are visually indistinguishable. Any monotonic profile that passes through `(sdf=0, density=0.5)` with a non-zero gradient there gives MC enough information to place vertices at the true surface; the *shape* of the profile on either side of 0.5 barely affects the interpolated crossing.
+#### heaviside — the outlier
 
-In other words: **heaviside is the genuine outlier because its discontinuity at the iso-level discards sub-voxel information**. Linear and sigmoid differ in their mathematical form, but for MC surface extraction their outputs coincide at any reasonable bandwidth.
+A **blocky, voxel-aligned mesh**. Because neighbouring voxel densities are always `{0, 1}`, the linear edge interpolation that MC uses always resolves to the midpoint — there is no sub-voxel information for MC to exploit. The voxel-grid faceting is visible as quadrilateral-scale patches in the left panel. This is the only method whose output differs from the others at the *mesh* level.
+
+#### linear — accurate with compact support
+
+A **smooth, accurate sphere**. The band-limited ramp across `[−bw, +bw]` gives MC a clean linear gradient to interpolate. Because the profile is piecewise linear and passes through `(sdf=0, density=0.5)`, the 0.5-crossing MC computes is *exactly* the sdf=0 crossing (up to voxel quantization) — the method recovers the true iso-surface as well as any band-limited profile can.
+
+#### sigmoid — smooth and differentiable
+
+**Visually identical to linear** in this mesh. This is not an artifact of resolution — it is a mathematical consequence of how MC consumes the density field. Any monotonic profile that passes through `(sdf=0, density=0.5)` with a non-zero gradient at that point feeds MC the same effective surface crossing. Sigmoid differs from linear in its *profile shape* away from 0.5 (smooth tails vs clipped bulk), but those differences live outside the narrow region that controls MC vertex placement.
+
+### Seeing where linear and sigmoid actually differ
+
+The extracted meshes match, but the underlying **density fields** do not. Visualising a 2D slice of the same unit-circle SDF makes the difference concrete:
+
+<img src="/images/guides/sdf-to-density-field-slice.png" alt="2D density-field slices for the three conversion methods at bandwidth 0.3 — white dashed line marks the MC iso=0.5 contour" width={900} />
+
+- `heaviside` is binary — every pixel outside the surface is exactly 0, every pixel inside is exactly 1.
+- `linear` has **compact support**: the transition is confined to a band of half-width `bw` around the surface; outside that band the density is exactly 0 or 1. The sharp outer edge of the halo is the `sdf = +bw` boundary.
+- `sigmoid` has **infinite tails**: even at the corners of the slice the density is not quite 0. The halo has no outer edge.
+
+The white dashed contour in every panel is the MC iso=0.5 line — and it traces the same unit circle in all three. That is why the extracted meshes coincide for `linear` and `sigmoid`. Anything that reads the density field *other than* by iso-contouring at 0.5 — volume-fraction integrals, Gaussian smoothing, gradient-based optimisation, extraction at a different iso-level — will see these halo differences and can yield distinct results.
 
 ### Choosing a method
 
-Since linear and sigmoid produce equivalent surfaces, the choice between them comes down to *downstream* properties of the density field itself:
+Since `linear` and `sigmoid` produce equivalent MC surfaces, the choice between them is about *downstream* use of the density field:
 
-- **`heaviside`** — when a downstream consumer will threshold the field anyway, or when you want to force a binary representation and accept the voxel-aligned artifacts.
-- **`linear`** *(default)* — when you want a faithful surface with compact support: density is exactly 0 or 1 outside a finite band, so volume-fraction computations are exact in the bulk.
-- **`sigmoid`** — when the consumer is a gradient-based optimizer that needs a `C∞` profile (for example, a TO solver using density projection filters), or when you want the smooth infinite-support tails. Note that sigmoid never saturates to exactly 0 or 1 in `float64` only at extreme inputs, which can slightly bias volume-fraction totals.
+- **`heaviside`** — when a consumer will threshold the field anyway, or when you want a binary representation and accept the voxel-aligned mesh.
+- **`linear`** *(default)* — faithful surface with compact support: density is exactly 0 or 1 outside a finite band, so volume-fraction integrals `np.mean(density)` are exact in the bulk.
+- **`sigmoid`** — when the consumer is a gradient-based optimiser that needs a `C∞` profile (e.g. a TO solver using density projection filters). Note the infinite tails: `np.mean(density)` is biased upward relative to the true object volume, and the bias grows with `bw`.
 
 ## When to use each type
 

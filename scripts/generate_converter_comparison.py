@@ -160,10 +160,63 @@ def gen_sphere_comparison() -> None:
     print(f"wrote {out}")
 
 
+def gen_field_slice() -> None:
+    """2D density-field slices — shows where linear and sigmoid actually diverge.
+
+    Matches the sphere example from the mesh comparison but plots the density
+    field on a fine 2D grid instead of the extracted mesh. This separates the
+    profile shape (visible) from MC vertex placement (nearly identical).
+    """
+    extent = 1.5
+    n = 128
+    g = np.linspace(-extent, extent, n)
+    xx, yy = np.meshgrid(g, g, indexing="ij")
+    sdf2d = np.sqrt(xx**2 + yy**2) - 1.0  # unit circle SDF in 2D
+
+    bw = 0.3
+
+    panels: list[tuple[str, str, np.ndarray]] = []
+    for method, subtitle in (
+        ("heaviside", "binary — density ∈ {0, 0.5, 1}"),
+        ("linear", f"compact support, bw = {bw}"),
+        ("sigmoid", f"infinite tails, bw = {bw}"),
+    ):
+        density = sdf_to_density(sdf2d, method=method, bandwidth=bw)  # type: ignore[arg-type]
+        panels.append((method, subtitle, density))
+
+    fig, axes = plt.subplots(1, 3, figsize=(11.5, 4.3), dpi=DPI)
+    for ax, (method, subtitle, density) in zip(axes, panels, strict=True):
+        im = ax.imshow(
+            density.T, origin="lower", extent=(-extent, extent, -extent, extent),
+            cmap="magma", vmin=0.0, vmax=1.0,
+        )
+        ax.contour(xx, yy, density, levels=[0.5], colors="#ffffff",
+                   linewidths=1.2, linestyles="--")
+        ax.set_xticks([]); ax.set_yticks([])
+        ax.set_title(method, fontsize=11, fontweight="bold", pad=6)
+        ax.text(0.5, -0.04, subtitle, transform=ax.transAxes,
+                ha="center", va="top", fontsize=8.5, color="#555")
+
+    cbar = fig.colorbar(im, ax=axes, shrink=0.75, aspect=22, pad=0.02)
+    cbar.set_label("density", fontsize=9)
+    cbar.ax.tick_params(labelsize=8)
+
+    fig.suptitle(
+        "2D density field for a unit-circle SDF — white dashed line is the MC iso=0.5 contour",
+        fontsize=10, y=1.02, color="#444",
+    )
+    fig.patch.set_facecolor(BG_COLOR)
+    out = OUTPUT_DIR / "sdf-to-density-field-slice.png"
+    fig.savefig(out, bbox_inches="tight")
+    plt.close(fig)
+    print(f"wrote {out}")
+
+
 def main() -> None:
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     gen_profiles()
     gen_sphere_comparison()
+    gen_field_slice()
 
 
 if __name__ == "__main__":
