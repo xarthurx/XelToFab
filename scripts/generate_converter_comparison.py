@@ -203,9 +203,10 @@ def gen_field_slice() -> None:
 
     fig.suptitle(
         "2D density field for a unit-circle SDF — white dashed line is the MC iso=0.5 contour",
-        fontsize=10, y=1.02, color="#444",
+        fontsize=10, y=0.96, color="#444",
     )
     fig.patch.set_facecolor(BG_COLOR)
+    fig.subplots_adjust(top=0.88, bottom=0.08)
     out = OUTPUT_DIR / "sdf-to-density-field-slice.png"
     fig.savefig(out, bbox_inches="tight")
     plt.close(fig)
