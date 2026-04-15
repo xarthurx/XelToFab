@@ -184,7 +184,20 @@ def gen_field_slice() -> None:
         density = sdf_to_density(sdf2d, method=method, bandwidth=bw)  # type: ignore[arg-type]
         panels.append((method, subtitle, density))
 
-    fig, axes = plt.subplots(1, 3, figsize=(11.5, 4.0), dpi=DPI, layout="constrained")
+    # Explicit GridSpec: 3 panel columns + 1 narrow colorbar column. Margins
+    # reserve vertical space for suptitle (top 16%) and subtitles (bottom 14%).
+    fig = plt.figure(figsize=(11.5, 4.4), dpi=DPI)
+    gs = fig.add_gridspec(
+        1, 4,
+        width_ratios=[1, 1, 1, 0.05],
+        left=0.03, right=0.94,
+        top=0.84, bottom=0.14,
+        wspace=0.08,
+    )
+    axes = [fig.add_subplot(gs[0, i]) for i in range(3)]
+    cax = fig.add_subplot(gs[0, 3])
+
+    im = None
     for ax, (method, subtitle, density) in zip(axes, panels, strict=True):
         im = ax.imshow(
             density.T, origin="lower", extent=(-extent, extent, -extent, extent),
@@ -197,13 +210,13 @@ def gen_field_slice() -> None:
         ax.text(0.5, -0.04, subtitle, transform=ax.transAxes,
                 ha="center", va="top", fontsize=8.5, color="#555")
 
-    cbar = fig.colorbar(im, ax=axes, shrink=0.75, aspect=22)
+    cbar = fig.colorbar(im, cax=cax)
     cbar.set_label("density", fontsize=9)
     cbar.ax.tick_params(labelsize=8)
 
     fig.suptitle(
         "2D density field for a unit-circle SDF — white dashed line is the MC iso=0.5 contour",
-        fontsize=10, color="#444",
+        fontsize=10, y=0.94, color="#444",
     )
     fig.patch.set_facecolor(BG_COLOR)
     out = OUTPUT_DIR / "sdf-to-density-field-slice.png"
