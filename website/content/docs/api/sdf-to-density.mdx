@@ -44,6 +44,10 @@ A float64 array with the same shape as `sdf` and values in `[0, 1]`. All three m
 | `"linear"` *(default)* | `clip(0.5 - (sdf-level)/(2·bandwidth), 0, 1)` | Compact-support ramp — matches marching-cubes-at-0.5 behavior on band-limited density fields. |
 | `"sigmoid"` | `1 / (1 + exp((sdf-level)/bandwidth))` | Smooth, differentiable profile for gradient-based optimizers (e.g. TO solvers with projection filters). |
 
+<Callout type="info" title="Visual comparison">
+See [Bridging SDF and density](/docs/guides/field-types#bridging-sdf-and-density) for 1D profile plots and side-by-side mesh renders that show exactly how the three methods differ at finite grid resolution.
+</Callout>
+
 ## When to use this
 
 The pipeline already accepts SDF arrays directly via `PipelineParams(field_type="sdf")` — you do **not** need `sdf_to_density` for native SDF processing. Use it when a downstream consumer expects density semantics:

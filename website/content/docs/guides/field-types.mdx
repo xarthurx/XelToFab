@@ -96,6 +96,32 @@ The effective level is always available via `params.effective_extraction_level`.
 
 If you already have an SDF array and a downstream consumer expects a density field (e.g. a density-only TO benchmark such as EngiBench), convert it with [`sdf_to_density()`](/docs/api/sdf-to-density). Three conversion profiles are provided — `heaviside`, `linear` (default), and `sigmoid` — all sharing the invariant that `sdf == level → density == 0.5`, so extracting the result at iso=0.5 recovers the input iso-surface.
 
+### How the profiles differ
+
+<img src="/images/guides/sdf-to-density-profiles.png" alt="1D profiles of the three sdf_to_density methods at bandwidth=1 and bandwidth=2" width={900} />
+
+All three methods cross `density = 0.5` at the iso-level (here `sdf = 0`), so the zero-level-set is preserved in the continuous limit. They differ in the **transition region**:
+
+- `heaviside` is a hard step — density is either 0 or 1 (except exactly at the iso-level, where it is 0.5). It carries no sub-voxel information about how close a point is to the surface.
+- `linear` ramps linearly across `[level − bandwidth, level + bandwidth]` and is exactly 0 or 1 outside that band. The shaded region on the plot shows the `bw=1` band; the dashed line shows the same profile at `bw=2`. Bandwidth is the half-width of the transition.
+- `sigmoid` is a smooth tanh-like profile with infinite support — mathematically it is never exactly 0 or 1, though it saturates at float64 extremes. Bandwidth controls steepness: `bw=1` is sharper than `bw=2`.
+
+### Why the resulting mesh differs at finite resolution
+
+Marching cubes at iso=0.5 performs linear interpolation along cube edges to place vertices at sub-voxel positions. That interpolation depends on the density values of the two neighboring voxels, which in turn depend on the conversion method.
+
+<img src="/images/guides/sdf-to-density-sphere.png" alt="Iso-surface meshes of a unit sphere extracted after each conversion method at 24³ resolution" width={900} />
+
+The three panels above all start from the same 24³ SDF of a unit sphere and extract at iso=0.5 with no smoothing, repair, remeshing, or decimation — so every visible difference is attributable to the conversion method:
+
+- `heaviside` (left) produces a **blocky, voxel-aligned mesh**. Because neighboring voxel values are always {0, 1}, the edge interpolation always snaps to the midpoint — there is no sub-voxel precision.
+- `linear` (middle) recovers a **smooth, accurate sphere**. The density ramp across the transition band gives marching cubes the gradient information it needs to place vertices at the true iso-crossing.
+- `sigmoid` (right) is **visually indistinguishable from linear** at this resolution. The infinite-support tails do not change edge interpolation meaningfully near the surface.
+
+### Choosing a method
+
+Pick `heaviside` only when you explicitly want a density field that encodes nothing beyond the binary occupancy — useful if a downstream solver thresholds the field anyway. Use `linear` (the default) for faithful surface geometry; it matches how marching-cubes-at-0.5 was designed to behave on band-limited density fields. Use `sigmoid` when the consumer is a gradient-based optimizer that needs a `C∞` profile (for example, TO solvers using density projection filters) — its surface output is otherwise equivalent to `linear`.
+
 ## When to use each type
 
 ### Use `density` (default) when:
