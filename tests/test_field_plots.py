@@ -3,9 +3,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.figure import Figure
 
+from xeltofab.field_plots import plot_comparison, plot_field, plot_result
 from xeltofab.pipeline import process
 from xeltofab.state import PipelineParams, PipelineState
-from xeltofab.field_plots import plot_comparison, plot_field, plot_result
 
 
 def test_plot_field_2d(processed_2d: PipelineState):

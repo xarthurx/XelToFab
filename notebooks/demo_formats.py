@@ -54,10 +54,10 @@ def _():
 
 @app.cell
 def _():
+    from xeltofab.field_plots import plot_field
     from xeltofab.io import load_field, save_mesh
     from xeltofab.loaders import get_supported_formats
     from xeltofab.state import PipelineParams
-    from xeltofab.field_plots import plot_field
 
     return PipelineParams, get_supported_formats, load_field, plot_field, save_mesh
 
@@ -126,7 +126,8 @@ def _(np):
 
 @app.cell
 def _(mo, plot_field, plt, test_field):
-    from xeltofab.state import PipelineParams as _PP, PipelineState as _PS
+    from xeltofab.state import PipelineParams as _PP
+    from xeltofab.state import PipelineState as _PS
 
     _state = _PS(field=test_field, params=_PP())
     _fig = plot_field(_state)
@@ -330,6 +331,7 @@ def _(mo):
 def _(Path, PipelineParams, load_field, mo, np, show_round_trip, tempfile, test_field):
     try:
         import pyvista as _pv
+
         from xeltofab.state import PipelineState as _PS
 
         _ny, _nx = test_field.shape
@@ -499,7 +501,8 @@ def _(Path, mo, np, save_mesh, tempfile):
     import plotly.graph_objects as _go
 
     from xeltofab.pipeline import process as _process
-    from xeltofab.state import PipelineParams as _PP, PipelineState as _PS
+    from xeltofab.state import PipelineParams as _PP
+    from xeltofab.state import PipelineState as _PS
 
     # Synthetic 3-D sphere
     _res = 60

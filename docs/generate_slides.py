@@ -1,10 +1,10 @@
 """Generate meeting slides for XelToFab progress meeting with Prof. Mark Fuge."""
 
 from pptx import Presentation
-from pptx.util import Inches, Pt, Emu
 from pptx.dml.color import RGBColor
-from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
 from pptx.enum.shapes import MSO_SHAPE
+from pptx.enum.text import MSO_ANCHOR, PP_ALIGN
+from pptx.util import Inches, Pt
 
 # --- Color palette ---
 WHITE = RGBColor(0xFF, 0xFF, 0xFF)

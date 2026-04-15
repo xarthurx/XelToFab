@@ -292,10 +292,9 @@ def gen_pipeline_diagram() -> None:
 
 def gen_pipeline_stages() -> None:
     """Image 2: 1x4 grid showing pipeline progression on corner 3D model."""
-    import numpy as np
+    from xeltofab.extract import extract
     from xeltofab.io import load_field
     from xeltofab.preprocess import preprocess
-    from xeltofab.extract import extract
     from xeltofab.smooth import smooth
 
     # Use corner model — simpler geometry, easier to parse visually
@@ -354,6 +353,7 @@ def gen_pipeline_stages() -> None:
 def gen_field_types() -> None:
     """Image 3: Density vs SDF 1x2 — field heatmap with contour overlay."""
     import numpy as np
+
     from xeltofab.io import load_field
     from xeltofab.pipeline import process
     from xeltofab.state import PipelineParams, PipelineState
@@ -414,9 +414,9 @@ def gen_parameter_sensitivity() -> None:
 
 def _gen_param_threshold() -> None:
     """Threshold variation: 1x3 strip showing contours at 0.3, 0.5, 0.7."""
+    from xeltofab.extract import extract
     from xeltofab.io import load_field
     from xeltofab.preprocess import preprocess
-    from xeltofab.extract import extract
     from xeltofab.state import PipelineParams
 
     state_2d = load_field("data/examples/beams_2d_100x200_sample0.npy")
@@ -446,9 +446,9 @@ def _gen_param_threshold() -> None:
 
 def _gen_param_sigma() -> None:
     """Sigma variation: 1x3 strip showing contours at sigma 0, 1, 2."""
+    from xeltofab.extract import extract
     from xeltofab.io import load_field
     from xeltofab.preprocess import preprocess
-    from xeltofab.extract import extract
     from xeltofab.state import PipelineParams
 
     state_2d = load_field("data/examples/beams_2d_100x200_sample0.npy")
@@ -478,9 +478,9 @@ def _gen_param_sigma() -> None:
 
 def _gen_param_taubin() -> None:
     """Taubin variation: 1x3 strip showing mesh at 0, 10, 50 iterations."""
+    from xeltofab.extract import extract
     from xeltofab.io import load_field
     from xeltofab.preprocess import preprocess
-    from xeltofab.extract import extract
     from xeltofab.smooth import smooth
     from xeltofab.state import PipelineParams
 
@@ -517,15 +517,16 @@ def gen_quality_metrics() -> None:
     """Image 5: Scaled Jacobian heatmap + histogram composite."""
     import numpy as np
     import pyvista as pv
+
     from xeltofab.io import load_field
     from xeltofab.pipeline import process
     from xeltofab.quality_plots import (  # internal APIs for reuse
-        _build_pv_mesh,
-        _compute_cell_metric,
-        _compute_pass_rate,
         _HIGHER_IS_BETTER,
         _METRIC_LABELS,
         _THRESHOLDS,
+        _build_pv_mesh,
+        _compute_cell_metric,
+        _compute_pass_rate,
     )
 
     # Process real TO data through full pipeline
@@ -712,9 +713,9 @@ def gen_quickstart_2d() -> None:
 
 def gen_quickstart_smoothing() -> None:
     """Tier 2 — Taubin vs bilateral smoothing for quick-start."""
+    from xeltofab.extract import extract
     from xeltofab.io import load_field
     from xeltofab.preprocess import preprocess
-    from xeltofab.extract import extract
     from xeltofab.smooth import smooth
     from xeltofab.state import PipelineParams
 
@@ -755,9 +756,10 @@ def gen_quickstart_smoothing() -> None:
 def gen_hero_compare() -> None:
     """Hero comparison slider images: before mesh, after mesh, input field."""
     from PIL import Image
+
+    from xeltofab.extract import extract
     from xeltofab.io import load_field
     from xeltofab.preprocess import preprocess
-    from xeltofab.extract import extract
     from xeltofab.smooth import smooth
     from xeltofab.state import PipelineParams
 
@@ -800,7 +802,7 @@ def gen_hero_compare() -> None:
 # ---------------------------------------------------------------------------
 
 
-def _shrink_bounds(vals: "np.ndarray", shrink: float = 0.08) -> tuple[float, float]:
+def _shrink_bounds(vals: np.ndarray, shrink: float = 0.08) -> tuple[float, float]:
     """Shrink axis limits inward to crop empty space around geometry."""
     span = vals.max() - vals.min()
     return (vals.min() + span * shrink, vals.max() - span * shrink)
@@ -809,10 +811,10 @@ def _shrink_bounds(vals: "np.ndarray", shrink: float = 0.08) -> tuple[float, flo
 # ---------------------------------------------------------------------------
 # Bunny SDF generators — cached to avoid recomputation when running multiple generators
 
-_bunny_sdf_edt_cache: "np.ndarray | None" = None
+_bunny_sdf_edt_cache: np.ndarray | None = None
 
 
-def _make_bunny_sdf_edt() -> "np.ndarray":
+def _make_bunny_sdf_edt() -> np.ndarray:
     """Generate a bunny SDF via binary voxelization + EDT (noisy gradients).
 
     This produces noisy gradients that degrade DC quality — useful for showing
@@ -838,7 +840,7 @@ def _make_bunny_sdf_edt() -> "np.ndarray":
     return _bunny_sdf_edt_cache
 
 
-def _make_bunny_sdf_true() -> "np.ndarray":
+def _make_bunny_sdf_true() -> np.ndarray:
     """Generate a true signed distance field of the Stanford bunny.
 
     Uses pyvista's compute_implicit_distance (VTK C++) for accurate signed
@@ -894,7 +896,6 @@ def gen_extraction_comparison() -> None:
 
 def gen_extraction_models() -> None:
     """Pre-generate STL models for interactive MeshViewer comparison (Stanford bunny)."""
-    import numpy as np
     import trimesh
     from skimage.measure import marching_cubes
 
@@ -917,7 +918,7 @@ def gen_extraction_models() -> None:
     print("  bunny_dc.stl")
 
 
-def _plot_bunny_panel(ax: plt.Axes, v: "np.ndarray", f: "np.ndarray", title: str, xlim, ylim, zlim, box_aspect) -> None:
+def _plot_bunny_panel(ax: plt.Axes, v: np.ndarray, f: np.ndarray, title: str, xlim, ylim, zlim, box_aspect) -> None:
     """Render a bunny mesh into a 3D axis with consistent view settings."""
     ax.plot_trisurf(
         v[:, 0], v[:, 2], v[:, 1], triangles=f,
@@ -1009,7 +1010,7 @@ def main() -> None:
     for name in targets:
         print(f"Generating {name}...")
         GENERATORS[name]()
-        print(f"  Done.")
+        print("  Done.")
 
 
 if __name__ == "__main__":

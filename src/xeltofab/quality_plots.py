@@ -150,7 +150,7 @@ def plot_metric_histogram(
     metric: str = "min_angle",
     bins: int = 50,
     threshold: float | None = None,
-) -> "Figure":
+) -> Figure:
     """Histogram of per-cell metric values with FEA threshold line.
 
     Parameters
@@ -212,7 +212,7 @@ def plot_metric_histogram(
 def plot_metric_overview(
     state: PipelineState,
     bins: int = 50,
-) -> "Figure":
+) -> Figure:
     """1x3 histogram panel for all three quality metrics.
 
     Returns a matplotlib Figure with three subplots showing the distribution

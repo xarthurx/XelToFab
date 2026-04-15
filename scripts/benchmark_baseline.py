@@ -22,12 +22,12 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
+from xeltofab.field_plots import plot_comparison
 from xeltofab.io import load_field, save_mesh
 from xeltofab.pipeline import process
 from xeltofab.quality import compute_quality
-from xeltofab.state import PipelineParams, PipelineState
-from xeltofab.field_plots import plot_comparison
 from xeltofab.quality_plots import plot_metric_overview, plot_quality_overview
+from xeltofab.state import PipelineParams, PipelineState
 
 # ---------------------------------------------------------------------------
 # Model registry

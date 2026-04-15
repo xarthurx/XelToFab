@@ -53,10 +53,9 @@ def _():
 def _():
     from pathlib import Path
 
-    from xeltofab.io import load_field
+    from xeltofab.field_plots import plot_comparison, plot_field, plot_result
     from xeltofab.pipeline import process
     from xeltofab.state import PipelineParams, PipelineState
-    from xeltofab.field_plots import plot_comparison, plot_field, plot_result
 
     return (
         Path,
