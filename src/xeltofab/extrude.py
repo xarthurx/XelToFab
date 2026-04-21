@@ -8,6 +8,7 @@ via mesh.export(...).
 
 from __future__ import annotations
 
+import warnings
 from typing import Literal
 
 import mapbox_earcut
@@ -141,6 +142,53 @@ def _triangulate_polygon(poly: Polygon) -> tuple[np.ndarray, np.ndarray]:
     flat_triangles = mapbox_earcut.triangulate_float64(vertices, np.asarray(ring_ends, dtype=np.uint32))
     triangles = np.asarray(flat_triangles, dtype=np.int64).reshape(-1, 3)
     return vertices, triangles
+
+
+def _build_prism_mesh(multi_poly: MultiPolygon, thickness: float) -> trimesh.Trimesh:
+    """Turn a MultiPolygon + thickness into a watertight trimesh.Trimesh."""
+    all_vertices: list[np.ndarray] = []
+    all_faces: list[np.ndarray] = []
+    vertex_offset = 0
+
+    for poly in multi_poly.geoms:
+        vertices_2d, cap_triangles = _triangulate_polygon(poly)
+        count = len(vertices_2d)
+
+        bottom = np.column_stack([vertices_2d, np.zeros(count)])
+        top = np.column_stack([vertices_2d, np.full(count, thickness)])
+        poly_vertices = np.vstack([bottom, top])
+
+        bottom_faces = cap_triangles[:, ::-1].copy()
+        top_faces = cap_triangles.copy() + count
+
+        wall_faces: list[list[int]] = []
+        ring_start = 0
+        for ring in [poly.exterior, *poly.interiors]:
+            coords = np.asarray(ring.coords, dtype=np.float64)
+            if len(coords) >= 2 and np.allclose(coords[0], coords[-1]):
+                coords = coords[:-1]
+            ring_count = len(coords)
+            for idx in range(ring_count):
+                idx_next = (idx + 1) % ring_count
+                bottom_i = ring_start + idx
+                bottom_next = ring_start + idx_next
+                top_i = bottom_i + count
+                top_next = bottom_next + count
+                wall_faces.append([bottom_i, bottom_next, top_next])
+                wall_faces.append([bottom_i, top_next, top_i])
+            ring_start += ring_count
+
+        poly_faces = np.vstack([bottom_faces, top_faces, np.asarray(wall_faces, dtype=np.int64)])
+        all_vertices.append(poly_vertices)
+        all_faces.append(poly_faces + vertex_offset)
+        vertex_offset += len(poly_vertices)
+
+    mesh = trimesh.Trimesh(vertices=np.vstack(all_vertices), faces=np.vstack(all_faces), process=True)
+
+    if not (mesh.is_watertight and mesh.is_winding_consistent):
+        warnings.warn("extruded mesh is not watertight; printing may fail", stacklevel=2)
+
+    return mesh
 
 
 def extrude_2d(

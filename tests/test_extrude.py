@@ -7,7 +7,7 @@ import pytest
 from shapely.geometry import MultiPolygon, Polygon
 
 import xeltofab as xtf
-from xeltofab.extrude import _build_binary, _polygonize, _trace_contours, _triangulate_polygon
+from xeltofab.extrude import _build_binary, _build_prism_mesh, _polygonize, _trace_contours, _triangulate_polygon
 
 
 def test_extrude_module_importable():
@@ -273,3 +273,51 @@ def test_triangulate_skips_closing_duplicate():
     poly = Polygon([(0, 0), (4, 0), (4, 4), (0, 4), (0, 0)])
     verts, _ = _triangulate_polygon(poly)
     assert verts.shape == (4, 2)
+
+
+def test_prism_mesh_from_square_is_watertight():
+    poly = Polygon([(0, 0), (9, 0), (9, 9), (0, 9)])
+    mp = MultiPolygon([poly])
+    mesh = _build_prism_mesh(mp, thickness=5.0)
+    assert mesh.is_watertight
+    assert mesh.is_winding_consistent
+
+
+def test_prism_mesh_volume_matches_extrusion():
+    """Volume = polygon_area * thickness."""
+    poly = Polygon([(0, 0), (4, 0), (4, 4), (0, 4)])
+    mp = MultiPolygon([poly])
+    mesh = _build_prism_mesh(mp, thickness=3.0)
+    assert mesh.volume == pytest.approx(4 * 4 * 3.0, rel=1e-6)
+
+
+def test_prism_mesh_z_bounds_start_at_zero():
+    poly = Polygon([(0, 0), (4, 0), (4, 4), (0, 4)])
+    mp = MultiPolygon([poly])
+    mesh = _build_prism_mesh(mp, thickness=7.0)
+    zmin = mesh.vertices[:, 2].min()
+    zmax = mesh.vertices[:, 2].max()
+    assert zmin == pytest.approx(0.0)
+    assert zmax == pytest.approx(7.0)
+
+
+def test_prism_mesh_polygon_with_hole_is_watertight():
+    """Annulus extrudes to a watertight genus-1 shell."""
+    outer = [(0, 0), (10, 0), (10, 10), (0, 10)]
+    hole = [(3, 3), (7, 3), (7, 7), (3, 7)][::-1]
+    poly = Polygon(outer, [hole])
+    mp = MultiPolygon([poly])
+    mesh = _build_prism_mesh(mp, thickness=2.0)
+    assert mesh.is_watertight
+    assert mesh.volume == pytest.approx(168.0, rel=1e-3)
+
+
+def test_prism_mesh_two_disjoint_blobs():
+    a = Polygon([(0, 0), (2, 0), (2, 2), (0, 2)])
+    b = Polygon([(5, 5), (7, 5), (7, 7), (5, 7)])
+    mp = MultiPolygon([a, b])
+    mesh = _build_prism_mesh(mp, thickness=1.0)
+    split = mesh.split(only_watertight=True)
+    assert len(split) == 2
+    for piece in split:
+        assert piece.is_watertight
