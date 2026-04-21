@@ -13,6 +13,8 @@ from typing import Literal
 import numpy as np
 import trimesh
 from scipy.ndimage import gaussian_filter
+from shapely.geometry import GeometryCollection, LinearRing, MultiPolygon, Polygon, box
+from shapely.ops import unary_union
 from skimage.measure import find_contours
 from skimage.morphology import closing, disk, opening, remove_small_objects
 
@@ -51,6 +53,71 @@ def _trace_contours(binary: np.ndarray) -> list[np.ndarray]:
     padded = np.pad(binary.astype(float), 1, constant_values=0.0)
     raw = find_contours(padded, 0.5)
     return [np.column_stack([contour[:, 1] - 1.0, contour[:, 0] - 1.0]) for contour in raw]
+
+
+def _collect_polygons(geom: object) -> list[Polygon]:
+    """Recursively flatten polygonal output from shapely set operations."""
+    if isinstance(geom, Polygon):
+        return [geom] if geom.area > 0 else []
+    if isinstance(geom, (MultiPolygon, GeometryCollection)):
+        polygons: list[Polygon] = []
+        for part in geom.geoms:
+            polygons.extend(_collect_polygons(part))
+        return polygons
+    return []
+
+
+def _polygonize(
+    contours: list[np.ndarray],
+    *,
+    height: int,
+    width: int,
+) -> MultiPolygon:
+    """Build a clean, flush-to-edge MultiPolygon from raw contours."""
+    shells: list[LinearRing] = []
+    holes: list[LinearRing] = []
+    for contour in contours:
+        if len(contour) < 4:
+            continue
+        ring = LinearRing(contour)
+        if ring.is_ccw:
+            shells.append(ring)
+        else:
+            holes.append(ring)
+
+    if not shells:
+        raise ValueError("no valid shell polygons after contour tracing")
+
+    shell_polys = [Polygon(shell) for shell in shells]
+    shell_holes: list[list[np.ndarray]] = [[] for _ in shell_polys]
+    for hole in holes:
+        hole_poly = Polygon(hole)
+        containing = [
+            idx for idx, shell_poly in enumerate(shell_polys) if shell_poly.contains(hole_poly.representative_point())
+        ]
+        if not containing:
+            continue
+        target = min(containing, key=lambda idx: shell_polys[idx].area)
+        shell_holes[target].append(np.asarray(hole.coords))
+
+    polygons = [
+        Polygon(np.asarray(shell.coords), holes_for_shell)
+        for shell, holes_for_shell in zip(shells, shell_holes, strict=True)
+    ]
+    merged = unary_union(polygons)
+    cleaned = merged.buffer(0)
+    image_rect = box(0, 0, width - 1, height - 1)
+    snapped = cleaned.intersection(image_rect)
+
+    if isinstance(snapped, Polygon):
+        return MultiPolygon([snapped])
+    if isinstance(snapped, MultiPolygon):
+        return snapped
+
+    polygons = _collect_polygons(snapped)
+    if not polygons:
+        raise ValueError("snapped geometry empty — no extrudable region")
+    return MultiPolygon(polygons)
 
 
 def extrude_2d(

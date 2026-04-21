@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
+from shapely.geometry import MultiPolygon
 
 import xeltofab as xtf
-from xeltofab.extrude import _build_binary, _trace_contours
+from xeltofab.extrude import _build_binary, _polygonize, _trace_contours
 
 
 def test_extrude_module_importable():
@@ -185,3 +186,62 @@ def test_trace_contours_blob_on_boundary_is_closed():
     assert len(contours) == 1
     c = contours[0]
     np.testing.assert_allclose(c[0], c[-1])
+
+
+def _contour_square(x0, x1, y0, y1):
+    """Helper: closed contour for an axis-aligned rectangle in (x, y)."""
+    return np.array(
+        [[x0, y0], [x1, y0], [x1, y1], [x0, y1], [x0, y0]],
+        dtype=float,
+    )
+
+
+def test_polygonize_single_blob():
+    """A single contour becomes one polygon inside a MultiPolygon."""
+    contours = [_contour_square(2, 6, 2, 6)]
+    mp = _polygonize(contours, height=10, width=10)
+    assert isinstance(mp, MultiPolygon)
+    assert len(mp.geoms) == 1
+    assert mp.geoms[0].area == pytest.approx(16.0, rel=0.05)
+
+
+def test_polygonize_with_interior_hole():
+    """Outer CCW + inner CW rings produce a polygon with one hole."""
+    outer = _contour_square(1, 9, 1, 9)
+    inner = _contour_square(3, 7, 3, 7)[::-1]
+    mp = _polygonize([outer, inner], height=10, width=10)
+    assert len(mp.geoms) == 1
+    poly = mp.geoms[0]
+    assert len(poly.interiors) == 1
+    assert poly.area == pytest.approx(64 - 16, rel=0.05)
+
+
+def test_polygonize_snaps_to_image_rectangle():
+    """When material touches the image edge, the resulting polygon has flush coords."""
+    contours = [_contour_square(-0.5, 9.5, -0.5, 9.5)]
+    mp = _polygonize(contours, height=10, width=10)
+    assert len(mp.geoms) == 1
+    minx, miny, maxx, maxy = mp.geoms[0].bounds
+    assert minx == pytest.approx(0.0)
+    assert miny == pytest.approx(0.0)
+    assert maxx == pytest.approx(9.0)
+    assert maxy == pytest.approx(9.0)
+
+
+def test_polygonize_two_disjoint():
+    """Two separate contours → MultiPolygon with two geoms."""
+    contours = [_contour_square(1, 3, 1, 3), _contour_square(1, 3, 6, 8)]
+    mp = _polygonize(contours, height=10, width=10)
+    assert len(mp.geoms) == 2
+
+
+def test_polygonize_corner_hugging_material():
+    """Material touching two adjacent image edges snaps flush on both axes."""
+    contours = [_contour_square(-0.5, 4.5, -0.5, 4.5)]
+    mp = _polygonize(contours, height=10, width=10)
+    assert len(mp.geoms) == 1
+    minx, miny, maxx, maxy = mp.geoms[0].bounds
+    assert minx == pytest.approx(0.0)
+    assert miny == pytest.approx(0.0)
+    assert maxx == pytest.approx(4.5)
+    assert maxy == pytest.approx(4.5)
