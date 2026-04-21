@@ -254,3 +254,7 @@ def extrude(
 
     mesh.export(output_path)
     click.echo(f"Saved extruded mesh to {output_path}")
+
+
+if __name__ == "__main__":
+    main()

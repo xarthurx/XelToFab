@@ -1,5 +1,7 @@
 """Tests for the `xtf extrude` CLI subcommand."""
 
+import subprocess
+import sys
 from pathlib import Path
 
 import numpy as np
@@ -59,3 +61,33 @@ def test_cli_extrude_rejects_3d_field(tmp_path: Path):
     assert result.exit_code != 0
     assert "2D" in result.output
     assert "process" in result.output
+
+
+def test_module_invocation_extrude_beam(tmp_path: Path):
+    """`python -m xeltofab.cli` supports the extrude subcommand."""
+    field = np.zeros((10, 10), dtype=float)
+    field[2:8, 2:8] = 1.0
+    input_path = tmp_path / "field.npy"
+    np.save(input_path, field)
+    output_path = tmp_path / "part.stl"
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "xeltofab.cli",
+            "extrude",
+            str(input_path),
+            "-o",
+            str(output_path),
+            "-t",
+            "5",
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr or result.stdout
+    assert output_path.exists()
+    mesh = trimesh.load(output_path, force="mesh")
+    assert mesh.volume > 0
