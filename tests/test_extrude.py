@@ -2,12 +2,17 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import numpy as np
 import pytest
+import trimesh as _trimesh
 from shapely.geometry import MultiPolygon, Polygon
 
 import xeltofab as xtf
 from xeltofab.extrude import _build_binary, _build_prism_mesh, _polygonize, _trace_contours, _triangulate_polygon
+
+FIXTURE_DIR = Path(__file__).parent.parent / "data" / "examples"
 
 
 def test_extrude_module_importable():
@@ -389,3 +394,45 @@ def test_cap_area_tracks_binary_pixel_count():
     mesh = xtf.extrude_2d(field, thickness=1.0)
     projected_area = mesh.volume
     assert projected_area == pytest.approx(36.0, rel=0.15)
+
+
+def test_beams2d_25x50_extrusion(tmp_path):
+    field = np.load(FIXTURE_DIR / "beams_2d_25x50_sample0.npy")
+    assert field.ndim == 2
+    mesh = xtf.extrude_2d(field, thickness=10.0)
+    assert mesh.volume > 0
+    stl_path = tmp_path / "beam.stl"
+    mesh.export(stl_path)
+    loaded = _trimesh.load(stl_path, force="mesh")
+    assert len(loaded.vertices) > 0
+
+
+def test_beams2d_100x200_extrusion():
+    field = np.load(FIXTURE_DIR / "beams_2d_100x200_sample1.npy")
+    mesh = xtf.extrude_2d(field, thickness=15.0, min_component_area=10)
+    assert mesh.volume > 0
+    assert len(mesh.faces) < 500_000
+
+
+def test_density_preprocess_parity():
+    """extrude_2d's internal binary matches preprocess() when parameters align."""
+    from xeltofab.preprocess import preprocess as pipeline_preprocess
+    from xeltofab.state import PipelineParams, PipelineState
+
+    field = np.load(FIXTURE_DIR / "beams_2d_25x50_sample0.npy")
+    params = PipelineParams(
+        threshold=0.5,
+        smooth_sigma=1.0,
+        morph_radius=1,
+    )
+    state = pipeline_preprocess(PipelineState(field=field, params=params))
+    heur_max_size = max(field.size // 200, 8) - 1
+    our_binary = _build_binary(
+        field,
+        field_type="density",
+        level=0.5,
+        smooth_sigma=1.0,
+        fill_holes=True,
+        min_component_area=heur_max_size + 1,
+    )
+    np.testing.assert_array_equal(our_binary, state.binary.astype(bool))
