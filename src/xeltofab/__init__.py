@@ -6,6 +6,7 @@ from xeltofab.convert import (
     sdf_to_density,
     sigmoid,
 )
+from xeltofab.extrude import extrude_2d
 from xeltofab.io import (
     load_field,
     save_mesh,
@@ -16,6 +17,7 @@ from xeltofab.state import PipelineParams, PipelineState
 __all__ = [
     "PipelineParams",
     "PipelineState",
+    "extrude_2d",
     "heaviside",
     "linear_ramp",
     "load_field",
