@@ -16,6 +16,7 @@ import numpy as np
 import trimesh
 from scipy.ndimage import gaussian_filter
 from shapely.geometry import GeometryCollection, LinearRing, MultiPolygon, Polygon, box
+from shapely.geometry.polygon import orient
 from shapely.ops import unary_union
 from skimage.measure import find_contours
 from skimage.morphology import closing, disk, opening, remove_small_objects
@@ -69,6 +70,11 @@ def _collect_polygons(geom: object) -> list[Polygon]:
     return []
 
 
+def _orient_polygon(poly: Polygon) -> Polygon:
+    """Normalize a polygon to CCW exterior and CW holes."""
+    return orient(poly, sign=1.0)
+
+
 def _polygonize(
     contours: list[np.ndarray],
     *,
@@ -112,14 +118,14 @@ def _polygonize(
     snapped = cleaned.intersection(image_rect)
 
     if isinstance(snapped, Polygon):
-        return MultiPolygon([snapped])
+        return MultiPolygon([_orient_polygon(snapped)])
     if isinstance(snapped, MultiPolygon):
-        return snapped
+        return MultiPolygon([_orient_polygon(poly) for poly in snapped.geoms])
 
     polygons = _collect_polygons(snapped)
     if not polygons:
         raise ValueError("snapped geometry empty — no extrudable region")
-    return MultiPolygon(polygons)
+    return MultiPolygon([_orient_polygon(poly) for poly in polygons])
 
 
 def _triangulate_polygon(poly: Polygon) -> tuple[np.ndarray, np.ndarray]:
@@ -201,9 +207,20 @@ def extrude_2d(
     smooth_sigma: float = 0.0,
     fill_holes: bool = False,
 ) -> trimesh.Trimesh:
-    """Extrude a 2D field into a 3D triangle mesh."""
+    """Extrude a 2D field into a 3D triangle mesh for fabrication."""
     if field.ndim != 2:
         raise ValueError(f"field must be 2D, got shape {field.shape}")
     if thickness <= 0:
         raise ValueError(f"thickness must be positive, got {thickness}")
-    raise NotImplementedError("extrude_2d body is filled in by later tasks")
+    binary = _build_binary(
+        field,
+        field_type=field_type,
+        level=level,
+        smooth_sigma=smooth_sigma,
+        fill_holes=fill_holes,
+        min_component_area=min_component_area,
+    )
+    contours = _trace_contours(binary)
+    height, width = binary.shape
+    multi_poly = _polygonize(contours, height=height, width=width)
+    return _build_prism_mesh(multi_poly, thickness=thickness)

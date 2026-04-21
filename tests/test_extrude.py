@@ -321,3 +321,51 @@ def test_prism_mesh_two_disjoint_blobs():
     assert len(split) == 2
     for piece in split:
         assert piece.is_watertight
+
+
+def test_extrude_2d_square_end_to_end():
+    field = np.ones((10, 10), dtype=float)
+    mesh = xtf.extrude_2d(field, thickness=5.0)
+    assert mesh.is_watertight
+    assert mesh.volume == pytest.approx(9 * 9 * 5.0, rel=1e-3)
+
+
+def test_extrude_2d_centered_hole():
+    field = np.zeros((20, 20), dtype=float)
+    field[2:18, 2:18] = 1.0
+    field[8:12, 8:12] = 0.0
+    mesh = xtf.extrude_2d(field, thickness=3.0)
+    assert mesh.is_watertight
+    assert mesh.volume > 0
+    assert mesh.volume < 20 * 20 * 3.0
+    assert mesh.euler_number == 0
+
+
+def test_extrude_2d_two_disjoint_blobs():
+    field = np.zeros((10, 20), dtype=float)
+    field[2:5, 2:5] = 1.0
+    field[2:5, 12:15] = 1.0
+    mesh = xtf.extrude_2d(field, thickness=2.0)
+    split = mesh.split(only_watertight=True)
+    assert len(split) == 2
+
+
+def test_extrude_2d_boundary_flush():
+    """Full-image square produces a mesh with vertices at exactly x=0 and x=W-1."""
+    field = np.ones((10, 10), dtype=float)
+    mesh = xtf.extrude_2d(field, thickness=1.0)
+    xs = mesh.vertices[:, 0]
+    ys = mesh.vertices[:, 1]
+    assert np.isclose(xs.min(), 0.0)
+    assert np.isclose(xs.max(), 9.0)
+    assert np.isclose(ys.min(), 0.0)
+    assert np.isclose(ys.max(), 9.0)
+
+
+def test_extrude_2d_sdf_input():
+    """SDF input with level=0.0 extrudes the inside (negative-value) region."""
+    y, x = np.mgrid[-10:10, -10:10].astype(float)
+    sdf = np.sqrt(x**2 + y**2) - 5.0
+    mesh = xtf.extrude_2d(sdf, thickness=2.0, field_type="sdf")
+    assert mesh.is_watertight
+    assert mesh.volume == pytest.approx(78.5 * 2.0, rel=0.15)
