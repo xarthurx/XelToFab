@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 
 import xeltofab as xtf
-from xeltofab.extrude import _build_binary
+from xeltofab.extrude import _build_binary, _trace_contours
 
 
 def test_extrude_module_importable():
@@ -154,3 +154,34 @@ def test_binary_min_component_area_drops_orphan():
     )
     assert b[1:4, 1:4].all()
     assert not b[7:9, 7:9].any()
+
+
+def test_trace_contours_single_blob():
+    """A single filled rectangle in the interior produces one closed contour."""
+    binary = np.zeros((10, 10), dtype=bool)
+    binary[3:7, 3:7] = True
+    contours = _trace_contours(binary)
+    assert len(contours) == 1
+    c = contours[0]
+    np.testing.assert_allclose(c[0], c[-1])
+    assert c[:, 0].min() >= 2.4
+    assert c[:, 0].max() <= 6.6
+
+
+def test_trace_contours_two_disjoint_blobs():
+    """Two disjoint filled regions produce two contours."""
+    binary = np.zeros((10, 20), dtype=bool)
+    binary[2:5, 2:5] = True
+    binary[2:5, 12:15] = True
+    contours = _trace_contours(binary)
+    assert len(contours) == 2
+
+
+def test_trace_contours_blob_on_boundary_is_closed():
+    """Material touching the image edge still yields a closed contour (via the zero pad)."""
+    binary = np.zeros((10, 10), dtype=bool)
+    binary[0:5, 0:5] = True
+    contours = _trace_contours(binary)
+    assert len(contours) == 1
+    c = contours[0]
+    np.testing.assert_allclose(c[0], c[-1])

@@ -13,6 +13,7 @@ from typing import Literal
 import numpy as np
 import trimesh
 from scipy.ndimage import gaussian_filter
+from skimage.measure import find_contours
 from skimage.morphology import closing, disk, opening, remove_small_objects
 
 
@@ -43,6 +44,13 @@ def _build_binary(
         raise ValueError("no material above threshold — check field values and level")
 
     return binary
+
+
+def _trace_contours(binary: np.ndarray) -> list[np.ndarray]:
+    """Trace closed contours from a bool mask in canonical (x, y) coordinates."""
+    padded = np.pad(binary.astype(float), 1, constant_values=0.0)
+    raw = find_contours(padded, 0.5)
+    return [np.column_stack([contour[:, 1] - 1.0, contour[:, 0] - 1.0]) for contour in raw]
 
 
 def extrude_2d(
