@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Literal
 
 import click
 
+from xeltofab.extrude import extrude_2d
 from xeltofab.field_plots import plot_comparison
 from xeltofab.io import load_field, save_mesh
 from xeltofab.loaders import get_supported_formats
@@ -201,3 +203,54 @@ def formats() -> None:
         exts = ", ".join(f["extensions"])
         status = "available" if f["available"] else "missing"
         click.echo(f"{f['name']:<10} {exts:<20} {status:<12} {f['install_hint']}")
+
+
+@main.command()
+@click.argument("input_path", type=click.Path(exists=True, path_type=Path))
+@click.option("-o", "--output", "output_path", type=click.Path(path_type=Path), required=True)
+@click.option("-t", "--thickness", type=float, required=True, help="Extrusion height in grid units (pixels)")
+@click.option("-f", "--field-name", default=None, help="Field/variable name to extract from container formats")
+@click.option("--shape", "shape_str", default=None, help="Grid shape for flat data, e.g. 25x50")
+@click.option("--field-type", type=click.Choice(["density", "sdf"]), default="density", help="Input field type")
+@click.option("--level", type=float, default=None, help="Threshold override (default: 0.5 density / 0.0 SDF)")
+@click.option("--min-component-area", type=int, default=0, help="Drop components smaller than N pixels")
+@click.option("--smooth-sigma", type=float, default=0.0, help="Pre-threshold Gaussian sigma (0 = disabled)")
+@click.option("--fill-holes", is_flag=True, help="Morphologically close pinholes before tracing")
+def extrude(
+    input_path: Path,
+    output_path: Path,
+    thickness: float,
+    field_name: str | None,
+    shape_str: str | None,
+    field_type: Literal["density", "sdf"],
+    level: float | None,
+    min_component_area: int,
+    smooth_sigma: float,
+    fill_holes: bool,
+) -> None:
+    """Extrude a 2D scalar field into a 3D mesh (STL, OBJ, PLY, ...)."""
+    shape = _parse_shape(shape_str) if shape_str else None
+
+    try:
+        state = load_field(input_path, field_name=field_name, shape=shape)
+    except (ValueError, KeyError, ImportError) as error:
+        raise click.ClickException(str(error)) from None
+
+    if state.ndim != 2:
+        raise click.ClickException(f"extrude requires a 2D field; got {state.ndim}D. Use 'xtf process' for 3D inputs.")
+
+    try:
+        mesh = extrude_2d(
+            state.field,
+            thickness=thickness,
+            field_type=field_type,
+            level=level,
+            min_component_area=min_component_area,
+            smooth_sigma=smooth_sigma,
+            fill_holes=fill_holes,
+        )
+    except ValueError as error:
+        raise click.ClickException(str(error)) from None
+
+    mesh.export(output_path)
+    click.echo(f"Saved extruded mesh to {output_path}")
