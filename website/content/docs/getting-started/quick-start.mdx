@@ -67,6 +67,21 @@ fig.savefig("comparison.png", dpi=150)
 
 The pipeline automatically detects 2D vs 3D based on the array dimensions. 2D fields produce contour arrays (stored in `result.contours`), while 3D fields produce triangle meshes (stored in `result.vertices` and `result.faces`).
 
+### 2D → 3D extrusion
+
+When you want a print-ready 3D part from a 2D density or SDF field — rather than contours for plotting — use `extrude_2d`:
+
+```python
+import numpy as np
+import xeltofab as xtf
+
+field = np.load("density_2d.npy")
+mesh = xtf.extrude_2d(field, thickness=10)
+mesh.export("part.stl")
+```
+
+This traces the field with marching squares, triangulates the resulting polygons, and stitches vertical walls into a watertight prism. See the [`extrude_2d` API reference](/docs/api/extrude-2d) or [`xtf extrude`](/docs/cli/extrude) for the full option set including SDF inputs, pinhole cleanup, and island removal.
+
 ### SDF fields
 
 For signed distance fields (from neural models like DeepSDF, NITO, or NTopo), set `field_type="sdf"`:

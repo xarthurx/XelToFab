@@ -13,7 +13,7 @@ Given either a scalar field (a numpy array) or an SDF function (analytical or ne
 
 1. **Evaluates SDF functions** *(optional)* — sample analytical or neural SDFs on a uniform or octree-adaptive grid via [`process_from_sdf()`](/docs/api/process-from-sdf)
 2. **Preprocesses** grid fields *(optional)* — Gaussian smoothing, thresholding, morphological cleanup
-3. **Extracts** geometry — marching cubes, dual contouring, surface nets, or manifold3d (3D → triangle mesh) or marching squares (2D → contours)
+3. **Extracts** geometry — marching cubes, dual contouring, surface nets, or manifold3d (3D → triangle mesh) or marching squares (2D → contours, or optionally an extruded 3D prism via [`extrude_2d()`](/docs/api/extrude-2d))
 4. **Smooths** the result — Taubin or bilateral filtering to remove staircase artifacts
 5. **Repairs** the mesh *(optional)* — non-manifold fixing for watertight geometry
 6. **Remeshes** for quality *(optional)* — isotropic remeshing for FEA-ready elements
@@ -24,7 +24,7 @@ Given either a scalar field (a numpy array) or an SDF function (analytical or ne
 ## Key features
 
 - **Multi-format input** — NumPy, MATLAB, VTK, HDF5, CSV
-- **2D and 3D** — contour extraction or triangle mesh generation
+- **2D and 3D** — contour extraction, 2D→3D extrusion, or native triangle mesh generation
 - **Multiple field types** — density fields, SDFs, occupancy fields, and neural field outputs
 - **SDF function evaluation** — process neural models and analytical SDFs directly via [`process_from_sdf()`](/docs/api/process-from-sdf) with optional octree acceleration
 - **Quality metrics** — aspect ratio, min angle, scaled Jacobian via PyVista

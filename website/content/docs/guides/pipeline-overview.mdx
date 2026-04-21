@@ -94,7 +94,10 @@ The pipeline automatically detects whether the input is 2D or 3D based on `field
 | 2D | Same (Gaussian, threshold, morphology with `disk` kernel) | `find_contours` (marching squares) | No-op for smooth/repair/remesh/decimate | Contour arrays in `state.contours` |
 | 3D | Same (Gaussian, threshold, morphology with `ball` kernel) | `marching_cubes` | Taubin or bilateral smoothing, repair, remesh, decimate | Triangle mesh in `state.vertices` / `state.faces` |
 
-For 2D fields, `save_mesh()` is not supported (raises an error). Use the visualization functions (`plot_result`, `plot_comparison`) to render contour output.
+For 2D fields, `save_mesh()` is not supported — `process()` produces contours, not a 3D mesh. Two options:
+
+- To **visualize** the contours, use `plot_result` or `plot_comparison` from `xeltofab.field_plots`.
+- To **build a 3D triangle mesh** from the same 2D input (for printing, laser cutting, or downstream CAD), use [`extrude_2d()`](/docs/api/extrude-2d) — an independent 2D→3D path that returns a watertight `trimesh.Trimesh` you can write with `mesh.export(...)`.
 
 ## Stage details
 

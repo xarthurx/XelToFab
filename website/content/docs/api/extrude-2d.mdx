@@ -1,0 +1,129 @@
+---
+title: extrude_2d
+description: Turn a 2D scalar field into a watertight extruded triangle mesh
+---
+
+## Import
+
+```python
+from xeltofab import extrude_2d
+```
+
+## Signature
+
+```python
+def extrude_2d(
+    field: np.ndarray,
+    thickness: float,
+    *,
+    field_type: Literal["density", "sdf"] = "density",
+    level: float | None = None,
+    min_component_area: int = 0,
+    smooth_sigma: float = 0.0,
+    fill_holes: bool = False,
+) -> trimesh.Trimesh
+```
+
+## Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `field` | `ndarray` | — | 2D scalar field. Density in `[0, 1]` or an SDF (unbounded, negative inside). |
+| `thickness` | `float` | — | Extrusion height along +z, in the same grid units as x and y. Must be `> 0`. |
+| `field_type` | `"density" \| "sdf"` | `"density"` | Selects the threshold direction: `density` keeps `field >= level`; `sdf` keeps `field <= level`. |
+| `level` | `float \| None` | `None` | Iso-level override. Defaults to `0.5` for density and `0.0` for SDF. |
+| `min_component_area` | `int` | `0` | Drop connected components smaller than this many pixels. `0` disables the filter. |
+| `smooth_sigma` | `float` | `0.0` | Pre-threshold Gaussian sigma. `0.0` skips smoothing. Useful for noisy SDFs or speckled density fields. |
+| `fill_holes` | `bool` | `False` | Apply a morphological opening+closing with a `disk(1)` kernel before tracing, closing single-pixel pinholes. |
+
+## Return value
+
+A [`trimesh.Trimesh`](https://trimesh.org/) instance representing the extruded prism. When the input has clean, non-touching contours the mesh is watertight and winding-consistent; `trimesh`'s mesh processing (vertex merge + winding fix) runs automatically via `process=True`. The caller is responsible for writing the mesh to disk with `mesh.export("part.stl")` (STL, OBJ, PLY, and any other format trimesh supports).
+
+## How it works
+
+1. **Binarize** — optional Gaussian smoothing, then threshold according to `field_type` and `level`. Optional `fill_holes` morphology and `min_component_area` cleanup.
+2. **Trace** — `skimage.measure.find_contours` on the padded binary mask; the pad ensures contours that hug the image border still close correctly.
+3. **Polygonize** — contours are split into shells and holes by orientation; each hole is assigned to its innermost containing shell, and the resulting polygons are merged with `shapely.ops.unary_union` and snapped to the image rectangle.
+4. **Triangulate caps** — each polygon (with holes) is triangulated via `mapbox_earcut`, producing the bottom and top face sets.
+5. **Stitch walls** — vertical quads between corresponding bottom/top ring vertices are split into two triangles each, yielding a closed prism.
+
+<Callout type="info" title="Bypasses the main pipeline">
+`extrude_2d` is an independent 2D→3D path. It does **not** run Taubin/bilateral smoothing, repair, remeshing, or decimation. The output is the raw extrusion. If you need mesh post-processing afterwards, wrap it yourself via the relevant modules in `xeltofab.smooth` / `xeltofab.remesh` / `xeltofab.decimate`.
+</Callout>
+
+## When to use this
+
+Use `extrude_2d` when your input is a 2D field and your output needs to be a 3D solid — typical cases:
+
+- **Printable parts from 2D topology optimization.** A density field from an EngiBench-style 2D beam solver becomes a 3D STL at a chosen wall thickness.
+- **Laser cutting or waterjet prep** from raster density fields — export the mesh, slice at z=0, drive toolpaths off the resulting polygon.
+- **Stamped, cast, or extruded profiles** where the part is defined entirely by a 2D cross-section.
+
+For 2D fields where you just want contours (plotting, vector export, further 2D processing), use [`process()`](/docs/api/process) instead — it produces `state.contours` and skips the 3D construction.
+
+## Examples
+
+### Basic density field → STL
+
+```python
+import numpy as np
+from xeltofab import extrude_2d
+
+field = np.load("beam_2d.npy")          # shape (H, W), values in [0, 1]
+mesh = extrude_2d(field, thickness=10)
+mesh.export("beam.stl")
+```
+
+### SDF input
+
+For a signed-distance field, set `field_type="sdf"`. The default `level` becomes `0.0` (the zero level set).
+
+```python
+mesh = extrude_2d(sdf_field, thickness=5, field_type="sdf")
+mesh.export("shape.stl")
+```
+
+Use `level` to offset the iso-surface (positive shrinks inward for an SDF, negative grows outward).
+
+### Cleanup pass for noisy TO output
+
+```python
+mesh = extrude_2d(
+    noisy_density,
+    thickness=15,
+    smooth_sigma=0.8,        # smooth speckles before thresholding
+    fill_holes=True,         # close single-pixel pinholes
+    min_component_area=20,   # drop islands smaller than 20 px
+)
+```
+
+Reach for these knobs in this order: `smooth_sigma` first (noise), then `fill_holes` (checkerboard patterns), then `min_component_area` (disconnected islands).
+
+### Inspecting the result
+
+```python
+mesh = extrude_2d(field, thickness=10)
+
+print(f"Watertight: {mesh.is_watertight}")
+print(f"Volume:     {mesh.volume:.2f}")
+print(f"Faces:      {len(mesh.faces)}")
+print(f"Vertices:   {len(mesh.vertices)}")
+```
+
+## Errors and warnings
+
+- `ValueError` — `field.ndim != 2`.
+- `ValueError` — `thickness <= 0`.
+- `ValueError` — `"no material above threshold"`: the chosen `level` produced an empty binary mask. Check field values and adjust `level`.
+- `ValueError` — `"no valid shell polygons after contour tracing"`: all traced contours collapsed below the 4-vertex minimum. Typically indicates a mask with only single-pixel features.
+- `ValueError` — `"snapped geometry empty"`: the merged polygon falls entirely outside the image rectangle. Rare; usually signals a pathological input.
+- `UserWarning` — `"extruded mesh is not watertight; printing may fail"`: emitted when the post-`trimesh.process` mesh fails `is_watertight` or `is_winding_consistent`. The mesh is still returned; callers that want to treat this as an error should filter warnings via `warnings.catch_warnings(record=True)`.
+
+## See also
+
+<Cards>
+  <Card title="xtf extrude" description="Command-line wrapper for extrude_2d" href="/docs/cli/extrude" />
+  <Card title="process()" description="Full pipeline; for 2D inputs it produces contours rather than an extruded mesh" href="/docs/api/process" />
+  <Card title="Field Types" description="How density and SDF inputs differ" href="/docs/guides/field-types" />
+</Cards>
