@@ -292,3 +292,15 @@ Images output to `website/public/images/getting-started/` and embedded in MDX pa
 **Resolution:** Added a standalone `extrude_2d()` API plus `xtf extrude` CLI command, backed by binary cleanup, contour tracing, polygonization with hole preservation, earcut cap triangulation, and prism mesh assembly. Also added regression/property/fixture/CLI coverage. Fix: `9e2c69b`.
 
 **Prevention:** `extrude_2d` is the canonical 2D print path. If `preprocess.py` changes shared density-cleanup behavior, update `_build_binary` and the preprocess parity test in the same change. After shapely cleanup/clipping, normalize polygon winding before using ring orientation for 3D face emission.
+
+---
+
+### 2026-04-21 — `python -m xeltofab.cli` Did Not Run the Click App
+
+**Problem:** Direct module invocation (`python -m xeltofab.cli extrude ...`) exited without creating output, even though the installed `xtf` console script worked.
+
+**Root cause:** `src/xeltofab/cli.py` defined the Click group and subcommands but had no `if __name__ == "__main__": main()` guard, so running the module executed only definitions.
+
+**Resolution:** Added the missing module-entry guard and a regression test covering `python -m xeltofab.cli extrude ...`. Fix: `df74c99`.
+
+**Prevention:** Any CLI module that is expected to work both as a console script target and via `python -m ...` needs an explicit `__main__` handoff plus a regression test for module invocation.
