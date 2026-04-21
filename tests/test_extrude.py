@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
-from shapely.geometry import MultiPolygon
+from shapely.geometry import MultiPolygon, Polygon
 
 import xeltofab as xtf
-from xeltofab.extrude import _build_binary, _polygonize, _trace_contours
+from xeltofab.extrude import _build_binary, _polygonize, _trace_contours, _triangulate_polygon
 
 
 def test_extrude_module_importable():
@@ -245,3 +245,31 @@ def test_polygonize_corner_hugging_material():
     assert miny == pytest.approx(0.0)
     assert maxx == pytest.approx(4.5)
     assert maxy == pytest.approx(4.5)
+
+
+def test_triangulate_simple_square():
+    """A 4-vertex square triangulates into 2 triangles, 4 vertices."""
+    poly = Polygon([(0, 0), (4, 0), (4, 4), (0, 4)])
+    verts, tris = _triangulate_polygon(poly)
+    assert verts.shape == (4, 2)
+    assert tris.shape == (2, 3)
+    assert tris.max() < len(verts)
+    assert tris.min() >= 0
+
+
+def test_triangulate_polygon_with_hole():
+    """A square with a central hole yields outer+hole vertices and enough triangles."""
+    outer = [(0, 0), (10, 0), (10, 10), (0, 10)]
+    hole = [(3, 3), (7, 3), (7, 7), (3, 7)]
+    poly = Polygon(outer, [hole])
+    verts, tris = _triangulate_polygon(poly)
+    assert verts.shape == (8, 2)
+    assert len(tris) >= 8
+    assert tris.max() < len(verts)
+
+
+def test_triangulate_skips_closing_duplicate():
+    """Shapely exteriors repeat the first point; _triangulate_polygon must drop it."""
+    poly = Polygon([(0, 0), (4, 0), (4, 4), (0, 4), (0, 0)])
+    verts, _ = _triangulate_polygon(poly)
+    assert verts.shape == (4, 2)

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from typing import Literal
 
+import mapbox_earcut
 import numpy as np
 import trimesh
 from scipy.ndimage import gaussian_filter
@@ -118,6 +119,28 @@ def _polygonize(
     if not polygons:
         raise ValueError("snapped geometry empty — no extrudable region")
     return MultiPolygon(polygons)
+
+
+def _triangulate_polygon(poly: Polygon) -> tuple[np.ndarray, np.ndarray]:
+    """Triangulate a shapely Polygon (with holes) via mapbox_earcut."""
+
+    def _ring_coords(ring: LinearRing) -> np.ndarray:
+        coords = np.asarray(ring.coords, dtype=np.float64)
+        if len(coords) >= 2 and np.allclose(coords[0], coords[-1]):
+            coords = coords[:-1]
+        return coords
+
+    exterior = _ring_coords(poly.exterior)
+    holes = [_ring_coords(interior) for interior in poly.interiors]
+
+    vertices = np.concatenate([exterior, *holes], axis=0) if holes else exterior
+    ring_ends = [len(exterior)]
+    for hole in holes:
+        ring_ends.append(ring_ends[-1] + len(hole))
+
+    flat_triangles = mapbox_earcut.triangulate_float64(vertices, np.asarray(ring_ends, dtype=np.uint32))
+    triangles = np.asarray(flat_triangles, dtype=np.int64).reshape(-1, 3)
+    return vertices, triangles
 
 
 def extrude_2d(
