@@ -280,3 +280,15 @@ Images output to `website/public/images/getting-started/` and embedded in MDX pa
 **Resolution:** Updated both locations to use `ayu-light`. Files: `website/source.config.ts` (line 23) and `website/app/(home)/page.tsx` (line 40).
 
 **Prevention:** When changing site-wide visual settings (themes, fonts, colors), grep for all occurrences of the current value across the website directory — don't assume a single config file controls everything. Fumadocs' `rehypeCodeOptions` only applies to MDX content, not standalone `codeToHtml()` calls in page components.
+
+---
+
+### 2026-04-21 — 2D Fields Had No Fabrication Output Path
+
+**Problem:** The repo could extract 2D marching-squares contours, but it had no supported path from a 2D density/SDF field to a fabrication-ready 3D mesh. EngiBench Beams2D-style inputs stopped at contours instead of producing STL/OBJ output.
+
+**Root cause:** The original pipeline architecture treated 2D extraction as a terminal contour artifact, and there was no standalone extrusion surface bridging 2D fields into the existing mesh export workflow.
+
+**Resolution:** Added a standalone `extrude_2d()` API plus `xtf extrude` CLI command, backed by binary cleanup, contour tracing, polygonization with hole preservation, earcut cap triangulation, and prism mesh assembly. Also added regression/property/fixture/CLI coverage. Fix: `9e2c69b`.
+
+**Prevention:** `extrude_2d` is the canonical 2D print path. If `preprocess.py` changes shared density-cleanup behavior, update `_build_binary` and the preprocess parity test in the same change. After shapely cleanup/clipping, normalize polygon winding before using ring orientation for 3D face emission.
