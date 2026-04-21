@@ -369,3 +369,23 @@ def test_extrude_2d_sdf_input():
     mesh = xtf.extrude_2d(sdf, thickness=2.0, field_type="sdf")
     assert mesh.is_watertight
     assert mesh.volume == pytest.approx(78.5 * 2.0, rel=0.15)
+
+
+def test_volume_monotone_in_thickness():
+    """Same field, different thickness: volume scales linearly."""
+    field = np.zeros((10, 10), dtype=float)
+    field[2:8, 2:8] = 1.0
+    v1 = xtf.extrude_2d(field, thickness=1.0).volume
+    v5 = xtf.extrude_2d(field, thickness=5.0).volume
+    v10 = xtf.extrude_2d(field, thickness=10.0).volume
+    assert v5 == pytest.approx(v1 * 5.0, rel=1e-6)
+    assert v10 == pytest.approx(v1 * 10.0, rel=1e-6)
+
+
+def test_cap_area_tracks_binary_pixel_count():
+    """Projected area tracks material pixel count within a loose discretization bound."""
+    field = np.zeros((12, 12), dtype=float)
+    field[3:9, 3:9] = 1.0
+    mesh = xtf.extrude_2d(field, thickness=1.0)
+    projected_area = mesh.volume
+    assert projected_area == pytest.approx(36.0, rel=0.15)
