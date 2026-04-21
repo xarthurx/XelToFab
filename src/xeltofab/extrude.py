@@ -25,4 +25,8 @@ def extrude_2d(
     fill_holes: bool = False,
 ) -> trimesh.Trimesh:
     """Extrude a 2D field into a 3D triangle mesh."""
+    if field.ndim != 2:
+        raise ValueError(f"field must be 2D, got shape {field.shape}")
+    if thickness <= 0:
+        raise ValueError(f"thickness must be positive, got {thickness}")
     raise NotImplementedError("extrude_2d body is filled in by later tasks")

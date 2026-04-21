@@ -13,8 +13,21 @@ def test_extrude_module_importable():
     assert callable(xtf.extrude_2d)
 
 
-def test_extrude_stub_raises_not_implemented():
-    """Skeleton stub raises NotImplementedError until later tasks fill it in."""
-    field = np.ones((4, 4), dtype=float)
-    with pytest.raises(NotImplementedError):
-        xtf.extrude_2d(field, thickness=1.0)
+def test_rejects_1d_field():
+    with pytest.raises(ValueError, match="2D"):
+        xtf.extrude_2d(np.ones(10), thickness=5.0)
+
+
+def test_rejects_3d_field():
+    with pytest.raises(ValueError, match="2D"):
+        xtf.extrude_2d(np.ones((4, 4, 4)), thickness=5.0)
+
+
+def test_rejects_zero_thickness():
+    with pytest.raises(ValueError, match="thickness"):
+        xtf.extrude_2d(np.ones((4, 4)), thickness=0.0)
+
+
+def test_rejects_negative_thickness():
+    with pytest.raises(ValueError, match="thickness"):
+        xtf.extrude_2d(np.ones((4, 4)), thickness=-1.0)
