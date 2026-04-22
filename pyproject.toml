@@ -21,6 +21,8 @@ dependencies = [
   "trimesh",
   "pydantic>=2.12.5",
   "matplotlib>=3.10.8",
+  "mapbox-earcut>=1.0.1",
+  "shapely>=2.0",
   "click>=8.3.1",
   "marimo>=0.20.4",
   "plotly>=6.6.0",
@@ -67,4 +69,5 @@ dev = [
     "marimo>=0.20.2",
     "pytest>=9.0.2",
     "ruff>=0.15.2",
+    "ty>=0.0.32",
 ]

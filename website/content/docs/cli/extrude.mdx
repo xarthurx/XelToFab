@@ -1,0 +1,89 @@
+---
+title: xtf extrude
+description: Extrude a 2D scalar field into a 3D triangle mesh
+---
+
+## Usage
+
+```bash
+xtf extrude [OPTIONS] INPUT_PATH
+```
+
+Load a 2D scalar field, build a watertight prism by marching-squares contour tracing and polygon triangulation, and write the result to an STL, OBJ, or PLY file.
+
+## Arguments
+
+| Argument | Description |
+|----------|-------------|
+| `INPUT_PATH` | Path to the input 2D scalar field file (must exist). Must resolve to a 2D array. |
+
+## Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `-o`, `--output` | `PATH` | *(required)* | Output mesh file path. Format determined by extension (`.stl`, `.obj`, `.ply`). |
+| `-t`, `--thickness` | `FLOAT` | *(required)* | Extrusion height in grid units. Must be `> 0`. |
+| `-f`, `--field-name` | `TEXT` | `None` | Variable name inside container formats (`.npz`, `.mat`, `.h5`, `.vtk`). |
+| `--shape` | `TEXT` | `None` | Grid shape for flat data, e.g. `25x50` (for CSV/TXT). |
+| `--field-type` | `density\|sdf` | `density` | Input field type. `sdf` flips the threshold direction and shifts the default `--level` to `0.0`. |
+| `--level` | `FLOAT` | *(auto)* | Iso-level override. Default: `0.5` for density, `0.0` for SDF. |
+| `--min-component-area` | `INT` | `0` | Drop connected components smaller than N pixels. |
+| `--smooth-sigma` | `FLOAT` | `0.0` | Pre-threshold Gaussian sigma. `0` disables. |
+| `--fill-holes` | flag | `False` | Morphologically close single-pixel pinholes before tracing. |
+
+## Examples
+
+### Basic density → STL
+
+```bash
+xtf extrude density_2d.npy -o part.stl --thickness 10
+```
+
+### SDF input
+
+```bash
+xtf extrude sdf_field.npy -o part.stl -t 10 --field-type sdf
+```
+
+The `--level` default becomes `0.0` automatically under `--field-type sdf`.
+
+### Printability cleanup
+
+```bash
+xtf extrude beam.npy -o beam.stl -t 15 \
+    --smooth-sigma 0.8 \
+    --fill-holes \
+    --min-component-area 20
+```
+
+Smooths noise, closes pinholes, and drops disconnected specks smaller than 20 pixels.
+
+### MATLAB input with named variable
+
+```bash
+xtf extrude result.mat -o mesh.stl -t 5 -f xPhys
+```
+
+If `-f` is omitted, the loader auto-detects common topology-optimization variable names (`xPhys`, `densities`, `x`, `rho`, `dc`, `density`).
+
+### Flat CSV with explicit shape
+
+```bash
+xtf extrude field_25x50.csv -o mesh.stl -t 8 --shape 25x50
+```
+
+### Custom iso-level
+
+```bash
+xtf extrude density.npy -o mesh.stl -t 10 --level 0.4
+```
+
+Lowering the level includes more material in the binarized mask — useful when the optimizer output has gray regions you want to retain.
+
+## See also
+
+<Cards>
+  <Card title="extrude_2d()" description="The Python API that powers this command" href="/docs/api/extrude-2d" />
+  <Card title="xtf process" description="Full pipeline; for 2D inputs it produces contours instead of an extruded mesh" href="/docs/cli/process" />
+  <Card title="Field Types" description="How density and SDF inputs differ" href="/docs/guides/field-types" />
+</Cards>

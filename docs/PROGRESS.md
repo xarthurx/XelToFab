@@ -6,6 +6,18 @@ Session log of learnings, failures, solutions discovered, and context gathered d
 
 ## Accumulated Project Wisdom
 
+### 2026-04-22 — extrude_2d Traced Binary Mask Instead of Continuous Field
+
+**Problem:** Extruded meshes produced by `extrude_2d` showed pronounced staircase zigzag on any sidewall not aligned with the pixel grid. Docs images revealed jagged oblique walls despite the mesh being mathematically watertight.
+
+**Root cause:** `_trace_contours` ran `skimage.measure.find_contours` on the boolean binary mask at iso=0.5. Because the binary only has values 0 or 1, the zero-iso lies exactly at pixel edges — all sub-pixel information from the original continuous field (and any `smooth_sigma`) was thrown away by the threshold step before tracing. The main pipeline (`extract.py::_extract_2d`) already traces the continuous field directly, so the staircase artifact was unique to `extrude_2d`.
+
+**Resolution:** Added `_build_signed_field(field, binary, *, field_type, level, smooth_sigma)` which rebuilds the continuous signed field (positive inside, zero on boundary) and selectively clamps only the regions that the cleanup steps (`fill_holes`, `min_component_area`) actively removed — leaving natural boundaries symmetric so a solid binary block still traces at integer pixel boundaries. `_trace_contours` now dispatches on dtype: bool → old pixel-aligned behavior (kept for existing tests), float → zero-iso on the signed field with sub-pixel precision. `extrude_2d` uses the float path. All 269 tests still pass. Fix: `a31d6a1`.
+
+**Prevention:** When a tracer operates on a thresholded mask, it should either be documented as pixel-aligned OR operate on the continuous pre-threshold field. The choice is not neutral — any oblique geometry inherits the tracer's sampling. Cross-check new modules that trace iso-surfaces against the established pipeline: if the main pipeline uses continuous tracing, a new path should too unless there's an explicit reason to diverge.
+
+---
+
 ### 2026-04-15 — SDF→Density Converter Added
 
 **Problem:** Third-party consumers (EngiBench and density-only TO solvers) needed to feed SDF arrays into the density-mode pipeline, but no explicit conversion utility existed. Callers had to hand-roll thresholds, risking inconsistent iso-surface conventions.
@@ -280,3 +292,27 @@ Images output to `website/public/images/getting-started/` and embedded in MDX pa
 **Resolution:** Updated both locations to use `ayu-light`. Files: `website/source.config.ts` (line 23) and `website/app/(home)/page.tsx` (line 40).
 
 **Prevention:** When changing site-wide visual settings (themes, fonts, colors), grep for all occurrences of the current value across the website directory — don't assume a single config file controls everything. Fumadocs' `rehypeCodeOptions` only applies to MDX content, not standalone `codeToHtml()` calls in page components.
+
+---
+
+### 2026-04-21 — 2D Fields Had No Fabrication Output Path
+
+**Problem:** The repo could extract 2D marching-squares contours, but it had no supported path from a 2D density/SDF field to a fabrication-ready 3D mesh. EngiBench Beams2D-style inputs stopped at contours instead of producing STL/OBJ output.
+
+**Root cause:** The original pipeline architecture treated 2D extraction as a terminal contour artifact, and there was no standalone extrusion surface bridging 2D fields into the existing mesh export workflow.
+
+**Resolution:** Added a standalone `extrude_2d()` API plus `xtf extrude` CLI command, backed by binary cleanup, contour tracing, polygonization with hole preservation, earcut cap triangulation, and prism mesh assembly. Also added regression/property/fixture/CLI coverage. Fix: `9e2c69b`.
+
+**Prevention:** `extrude_2d` is the canonical 2D print path. If `preprocess.py` changes shared density-cleanup behavior, update `_build_binary` and the preprocess parity test in the same change. After shapely cleanup/clipping, normalize polygon winding before using ring orientation for 3D face emission.
+
+---
+
+### 2026-04-21 — `python -m xeltofab.cli` Did Not Run the Click App
+
+**Problem:** Direct module invocation (`python -m xeltofab.cli extrude ...`) exited without creating output, even though the installed `xtf` console script worked.
+
+**Root cause:** `src/xeltofab/cli.py` defined the Click group and subcommands but had no `if __name__ == "__main__": main()` guard, so running the module executed only definitions.
+
+**Resolution:** Added the missing module-entry guard and a regression test covering `python -m xeltofab.cli extrude ...`. Fix: `df74c99`.
+
+**Prevention:** Any CLI module that is expected to work both as a console script target and via `python -m ...` needs an explicit `__main__` handoff plus a regression test for module invocation.

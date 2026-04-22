@@ -1,4 +1,4 @@
 {
   "title": "CLI Reference",
-  "pages": ["process", "viz", "formats"]
+  "pages": ["process", "extrude", "viz", "formats"]
 }

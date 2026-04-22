@@ -36,6 +36,27 @@ xtf process density.npy -o output.stl --threshold 0.4 --sigma 1.5 --viz
 xtf viz density_2d.npy -o comparison.png
 ```
 
+### 2D → 3D extrusion
+
+```bash
+# Turn a 2D density field into a print-ready STL
+xtf extrude density_2d.npy -o part.stl --thickness 10
+
+# Printability cleanup: drop small islands + pre-smooth
+xtf extrude beam.npy -o beam.stl -t 15 --min-component-area 20 --smooth-sigma 0.8
+```
+
+From Python:
+
+```python
+import numpy as np
+import xeltofab as xtf
+
+field = np.load("density_2d.npy")
+mesh = xtf.extrude_2d(field, thickness=10)
+mesh.export("part.stl")
+```
+
 ## Pipeline
 
 ```
