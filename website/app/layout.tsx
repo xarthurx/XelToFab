@@ -2,6 +2,7 @@ import { RootProvider } from 'fumadocs-ui/provider/next';
 import './global.css';
 import { Source_Sans_3, JetBrains_Mono } from 'next/font/google';
 import type { Metadata } from 'next';
+import { SITE_URL } from '@/lib/site';
 
 const body = Source_Sans_3({
   subsets: ['latin'],
@@ -17,7 +18,7 @@ const description =
   'Design fields to fabrication-ready geometry. Post-processing pipeline for topology optimization, neural fields, and computational design.';
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://xel-to-fab.vercel.app'),
+  metadataBase: new URL(SITE_URL),
   title: {
     default: 'XelToFab',
     template: '%s | XelToFab',

@@ -328,3 +328,15 @@ Images output to `website/public/images/getting-started/` and embedded in MDX pa
 **Resolution:** Updated workflow pins to Node 24-ready refs: `actions/checkout@v6`, `astral-sh/setup-uv@v8.0.0`, `actions/upload-artifact@v7`, and `actions/download-artifact@v8`. A follow-up GitHub run showed that `astral-sh/setup-uv` exposes an exact `v8.0.0` tag but not a moving `v8` major alias, so the workflow was corrected to the exact tag. Verified the remaining action refs in `.github/workflows` and left `oven-sh/setup-bun@v2` and `pypa/gh-action-pypi-publish@release/v1` unchanged because they were not part of the Node 20 warning surface. Fix: uncommitted working tree
 
 **Prevention:** When GitHub announces runtime deprecations, scan every `uses:` ref under `.github/workflows/` instead of patching only the action named in the warning. After choosing a new action version, verify that the exact ref is actually published and resolvable on GitHub Actions; some projects publish immutable release tags without maintaining the corresponding moving major alias.
+
+---
+
+### 2026-04-22 — Website Had No `robots.txt` or `sitemap.xml` Metadata Routes
+
+**Problem:** The docs site exposed indexable page metadata in `layout.tsx`, but it did not generate `robots.txt` or `sitemap.xml`, making crawler discovery weaker and leaving the canonical site URL duplicated in multiple places.
+
+**Root cause:** The initial Next.js/Fumadocs website setup relied on page metadata only. The app-router metadata file conventions for `robots.ts` and `sitemap.ts` had not been wired in.
+
+**Resolution:** Added `website/app/robots.ts` and `website/app/sitemap.ts`, backed by a shared `website/lib/site.ts` constant and the existing Fumadocs source loader so the sitemap includes the homepage plus docs routes. Updated `website/app/layout.tsx` to reuse the same site URL constant. Fix: uncommitted working tree
+
+**Prevention:** For Next.js app-router sites, add metadata route files (`robots.ts`, `sitemap.ts`) alongside `layout.tsx` as part of the initial SEO surface, and keep the canonical site URL in a single shared constant so metadata and crawler outputs cannot drift.
