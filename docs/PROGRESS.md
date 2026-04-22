@@ -6,6 +6,18 @@ Session log of learnings, failures, solutions discovered, and context gathered d
 
 ## Accumulated Project Wisdom
 
+### 2026-04-22 — extrude_2d Traced Binary Mask Instead of Continuous Field
+
+**Problem:** Extruded meshes produced by `extrude_2d` showed pronounced staircase zigzag on any sidewall not aligned with the pixel grid. Docs images revealed jagged oblique walls despite the mesh being mathematically watertight.
+
+**Root cause:** `_trace_contours` ran `skimage.measure.find_contours` on the boolean binary mask at iso=0.5. Because the binary only has values 0 or 1, the zero-iso lies exactly at pixel edges — all sub-pixel information from the original continuous field (and any `smooth_sigma`) was thrown away by the threshold step before tracing. The main pipeline (`extract.py::_extract_2d`) already traces the continuous field directly, so the staircase artifact was unique to `extrude_2d`.
+
+**Resolution:** Added `_build_signed_field(field, binary, *, field_type, level, smooth_sigma)` which rebuilds the continuous signed field (positive inside, zero on boundary) and selectively clamps only the regions that the cleanup steps (`fill_holes`, `min_component_area`) actively removed — leaving natural boundaries symmetric so a solid binary block still traces at integer pixel boundaries. `_trace_contours` now dispatches on dtype: bool → old pixel-aligned behavior (kept for existing tests), float → zero-iso on the signed field with sub-pixel precision. `extrude_2d` uses the float path. All 269 tests still pass. Fix: `<commit TBD>`.
+
+**Prevention:** When a tracer operates on a thresholded mask, it should either be documented as pixel-aligned OR operate on the continuous pre-threshold field. The choice is not neutral — any oblique geometry inherits the tracer's sampling. Cross-check new modules that trace iso-surfaces against the established pipeline: if the main pipeline uses continuous tracing, a new path should too unless there's an explicit reason to diverge.
+
+---
+
 ### 2026-04-15 — SDF→Density Converter Added
 
 **Problem:** Third-party consumers (EngiBench and density-only TO solvers) needed to feed SDF arrays into the density-mode pipeline, but no explicit conversion utility existed. Callers had to hand-roll thresholds, risking inconsistent iso-surface conventions.

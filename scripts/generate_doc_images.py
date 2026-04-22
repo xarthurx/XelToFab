@@ -840,7 +840,7 @@ def gen_extrude_2d_contour() -> None:
     from matplotlib.lines import Line2D
     from shapely.geometry import LinearRing
 
-    from xeltofab.extrude import _build_binary, _trace_contours
+    from xeltofab.extrude import _build_binary, _build_signed_field, _trace_contours
     from xeltofab.io import load_field
 
     state = load_field(_EXTRUDE_FIXTURE)
@@ -854,7 +854,14 @@ def gen_extrude_2d_contour() -> None:
         fill_holes=False,
         min_component_area=0,
     )
-    contours = _trace_contours(binary)
+    signed = _build_signed_field(
+        field,
+        binary,
+        field_type="density",
+        level=0.5,
+        smooth_sigma=0.0,
+    )
+    contours = _trace_contours(signed)
 
     fig, (ax_in, ax_out) = plt.subplots(1, 2, figsize=(10, 3.2))
     fig.patch.set_facecolor(BG_COLOR)
@@ -901,13 +908,24 @@ def gen_extrude_2d_mesh() -> None:
     state = load_field(_EXTRUDE_FIXTURE)
     mesh = extrude_2d(state.field, thickness=30.0)
 
-    # Custom render: drop edges (earcut fan triangulation reads as noise),
-    # enable smooth shading with a subtle light for depth cues.
     faces_pv = np.column_stack([np.full(len(mesh.faces), 3), mesh.faces]).ravel()
     pv_mesh = pv.PolyData(mesh.vertices.astype(np.float64), faces_pv)
 
+    # Flat shading (smooth_shading=False) with no edges: each cap facet
+    # uses its own +z face normal so the top reads as uniformly lit,
+    # revealing that it is actually planar (earcut's fan triangulation is
+    # geometrically flat; smooth shading averages normals across the
+    # cap-to-wall seam and falsely bands the cap).
     pl = pv.Plotter(off_screen=True, window_size=[960, 540])
-    pl.add_mesh(pv_mesh, color="#88BDE6", smooth_shading=True, specular=0.25, specular_power=15)
+    pl.add_mesh(
+        pv_mesh,
+        color="#88BDE6",
+        smooth_shading=False,
+        ambient=0.25,
+        diffuse=0.7,
+        specular=0.15,
+        specular_power=10,
+    )
     pl.camera_position = "iso"
     pl.camera.zoom(1.25)
     pl.set_background(BG_COLOR)

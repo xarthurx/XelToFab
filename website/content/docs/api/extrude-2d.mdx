@@ -45,7 +45,7 @@ A [`trimesh.Trimesh`](https://trimesh.org/) instance representing the extruded p
 ## How it works
 
 1. **Binarize** — optional Gaussian smoothing, then threshold according to `field_type` and `level`. Optional `fill_holes` morphology and `min_component_area` cleanup.
-2. **Trace** — `skimage.measure.find_contours` on the padded binary mask; the pad ensures contours that hug the image border still close correctly.
+2. **Trace** — contours are traced on the **continuous signed field** (positive inside, zero on boundary), not the binary mask. `skimage.measure.find_contours` interpolates the zero-iso with sub-pixel precision so oblique walls follow the true iso-surface rather than pixel-aligned staircases. Regions that cleanup has removed are clamped below zero so no contour re-surfaces there.
 3. **Polygonize** — contours are split into shells and holes by orientation; each hole is assigned to its innermost containing shell, and the resulting polygons are merged with `shapely.ops.unary_union` and snapped to the image rectangle.
 4. **Triangulate caps** — each polygon (with holes) is triangulated via `mapbox_earcut`, producing the bottom and top face sets.
 5. **Stitch walls** — vertical quads between corresponding bottom/top ring vertices are split into two triangles each, yielding a closed prism.

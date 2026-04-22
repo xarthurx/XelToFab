@@ -51,11 +51,49 @@ def _build_binary(
     return binary
 
 
-def _trace_contours(binary: np.ndarray) -> list[np.ndarray]:
-    """Trace closed contours from a bool mask in canonical (x, y) coordinates."""
-    padded = np.pad(binary.astype(float), 1, constant_values=0.0)
-    raw = find_contours(padded, 0.5)
+def _trace_contours(data: np.ndarray) -> list[np.ndarray]:
+    """Trace closed contours in canonical (x, y) coordinates.
+
+    Dispatches on dtype: a bool mask traces the pixel-aligned 0.5-iso of the
+    mask; a float signed field traces the zero-iso with sub-pixel precision.
+    ``extrude_2d`` drives the float path so sidewalls follow the continuous
+    iso-surface rather than pixel staircases.
+    """
+    if data.dtype == bool:
+        padded = np.pad(data.astype(float), 1, constant_values=0.0)
+        raw = find_contours(padded, 0.5)
+    else:
+        pad_value = min(float(data.min()), 0.0) - 1.0
+        padded = np.pad(data, 1, constant_values=pad_value)
+        raw = find_contours(padded, 0.0)
     return [np.column_stack([contour[:, 1] - 1.0, contour[:, 0] - 1.0]) for contour in raw]
+
+
+def _build_signed_field(
+    field: np.ndarray,
+    binary: np.ndarray,
+    *,
+    field_type: Literal["density", "sdf"],
+    level: float | None,
+    smooth_sigma: float,
+) -> np.ndarray:
+    """Build a continuous signed field aligned with the cleaned binary mask.
+
+    The returned array is positive where the material sits (inside the iso-
+    surface), negative outside, and zero on the boundary. Only pixels that
+    the cleanup steps (``fill_holes``, ``min_component_area``) actively
+    removed are clamped below zero — natural boundaries keep their
+    symmetric sub-pixel positions, so a solid binary block still traces as
+    an integer-sized rectangle.
+    """
+    eff_level = level if level is not None else (0.0 if field_type == "sdf" else 0.5)
+    smoothed = gaussian_filter(field, sigma=smooth_sigma) if smooth_sigma > 0.0 else field
+    signed = (eff_level - smoothed) if field_type == "sdf" else (smoothed - eff_level)
+    cleanup_removed = (~binary) & (signed > 0.0)
+    if cleanup_removed.any():
+        suppress = -(float(signed.max()) + 1.0)
+        signed = np.where(cleanup_removed, suppress, signed)
+    return signed
 
 
 def _collect_polygons(geom: object) -> list[Polygon]:
@@ -220,7 +258,14 @@ def extrude_2d(
         fill_holes=fill_holes,
         min_component_area=min_component_area,
     )
-    contours = _trace_contours(binary)
+    signed = _build_signed_field(
+        field,
+        binary,
+        field_type=field_type,
+        level=level,
+        smooth_sigma=smooth_sigma,
+    )
+    contours = _trace_contours(signed)
     height, width = binary.shape
     multi_poly = _polygonize(contours, height=height, width=width)
     return _build_prism_mesh(multi_poly, thickness=thickness)
