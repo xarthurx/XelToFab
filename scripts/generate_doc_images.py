@@ -5,7 +5,8 @@ Usage:
 
 Valid --only values: pipeline_diagram, pipeline_stages, field_types,
     parameter_sensitivity, quality_metrics, hero_overview,
-    quickstart_2d, quickstart_smoothing, hero_compare
+    quickstart_2d, quickstart_smoothing, extrude_2d_contour,
+    extrude_2d_mesh, hero_compare
 """
 
 from __future__ import annotations
@@ -831,6 +832,99 @@ def gen_quickstart_smoothing() -> None:
     plt.close(fig)
 
 
+_EXTRUDE_FIXTURE = "data/examples/beams_2d_100x200_sample1.npy"
+
+
+def gen_extrude_2d_contour() -> None:
+    """2D input field + traced shells/holes for the extrude_2d docs."""
+    from matplotlib.lines import Line2D
+    from shapely.geometry import LinearRing
+
+    from xeltofab.extrude import _build_binary, _trace_contours
+    from xeltofab.io import load_field
+
+    state = load_field(_EXTRUDE_FIXTURE)
+    field = state.field
+
+    binary = _build_binary(
+        field,
+        field_type="density",
+        level=0.5,
+        smooth_sigma=0.0,
+        fill_holes=False,
+        min_component_area=0,
+    )
+    contours = _trace_contours(binary)
+
+    fig, (ax_in, ax_out) = plt.subplots(1, 2, figsize=(10, 3.2))
+    fig.patch.set_facecolor(BG_COLOR)
+
+    ax_in.imshow(field, cmap="YlOrRd", origin="lower", vmin=0, vmax=1)
+    ax_in.set_title("Input Field", fontsize=11, fontweight="bold")
+    ax_in.axis("off")
+
+    ax_out.imshow(binary, cmap="Greys", origin="lower", alpha=0.3)
+    shell_color = "#265E8A"
+    hole_color = "#D45087"
+    for contour in contours:
+        if len(contour) < 4:
+            continue
+        ring = LinearRing(contour)
+        color = shell_color if ring.is_ccw else hole_color
+        ax_out.plot(contour[:, 0], contour[:, 1], color=color, linewidth=1.6)
+    ax_out.legend(
+        handles=[
+            Line2D([], [], color=shell_color, lw=2, label="Shell (CCW)"),
+            Line2D([], [], color=hole_color, lw=2, label="Hole (CW)"),
+        ],
+        loc="upper right",
+        fontsize=9,
+        frameon=True,
+        framealpha=0.9,
+    )
+    ax_out.set_title("Traced Shells & Holes", fontsize=11, fontweight="bold")
+    ax_out.axis("off")
+
+    fig.tight_layout(pad=1.5)
+    fig.savefig(OUTPUT_DIR / "extrude-2d-contour.png", dpi=DPI, bbox_inches="tight", facecolor=BG_COLOR)
+    plt.close(fig)
+
+
+def gen_extrude_2d_mesh() -> None:
+    """Isometric render of an extruded mesh for the extrude_2d docs."""
+    import numpy as np
+    import pyvista as pv
+
+    from xeltofab.extrude import extrude_2d
+    from xeltofab.io import load_field
+
+    state = load_field(_EXTRUDE_FIXTURE)
+    mesh = extrude_2d(state.field, thickness=30.0)
+
+    # Custom render: drop edges (earcut fan triangulation reads as noise),
+    # enable smooth shading with a subtle light for depth cues.
+    faces_pv = np.column_stack([np.full(len(mesh.faces), 3), mesh.faces]).ravel()
+    pv_mesh = pv.PolyData(mesh.vertices.astype(np.float64), faces_pv)
+
+    pl = pv.Plotter(off_screen=True, window_size=[960, 540])
+    pl.add_mesh(pv_mesh, color="#88BDE6", smooth_shading=True, specular=0.25, specular_power=15)
+    pl.camera_position = "iso"
+    pl.camera.zoom(1.25)
+    pl.set_background(BG_COLOR)
+    img = pl.screenshot(return_img=True)
+    pl.close()
+
+    fig, ax = plt.subplots(figsize=(7.5, 4.4))
+    fig.patch.set_facecolor(BG_COLOR)
+    ax.imshow(img)
+    ax.set_title("Extruded 3D Mesh (thickness = 30)", fontsize=11, fontweight="bold")
+    ax.axis("off")
+
+    fig.tight_layout(pad=0.6)
+    fig.savefig(OUTPUT_DIR / "extrude-2d-mesh.png", dpi=DPI, bbox_inches="tight", facecolor=BG_COLOR)
+    plt.close(fig)
+
+
 def gen_hero_compare() -> None:
     """Hero comparison slider images: before mesh, after mesh, input field."""
     from PIL import Image
@@ -1094,6 +1188,8 @@ GENERATORS = {
     "hero_overview": gen_hero_overview,
     "quickstart_2d": gen_quickstart_2d,
     "quickstart_smoothing": gen_quickstart_smoothing,
+    "extrude_2d_contour": gen_extrude_2d_contour,
+    "extrude_2d_mesh": gen_extrude_2d_mesh,
     "hero_compare": gen_hero_compare,
     "extraction_comparison": gen_extraction_comparison,
     "extraction_gradient_quality": gen_extraction_gradient_quality,

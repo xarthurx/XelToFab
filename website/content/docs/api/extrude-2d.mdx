@@ -3,6 +3,8 @@ title: extrude_2d
 description: Turn a 2D scalar field into a watertight extruded triangle mesh
 ---
 
+<img src="/images/guides/extrude-2d-mesh.png" alt="2D cantilever beam density field extruded into a 3D mesh" width={800} />
+
 ## Import
 
 ```python
@@ -47,6 +49,10 @@ A [`trimesh.Trimesh`](https://trimesh.org/) instance representing the extruded p
 3. **Polygonize** — contours are split into shells and holes by orientation; each hole is assigned to its innermost containing shell, and the resulting polygons are merged with `shapely.ops.unary_union` and snapped to the image rectangle.
 4. **Triangulate caps** — each polygon (with holes) is triangulated via `mapbox_earcut`, producing the bottom and top face sets.
 5. **Stitch walls** — vertical quads between corresponding bottom/top ring vertices are split into two triangles each, yielding a closed prism.
+
+<img src="/images/guides/extrude-2d-contour.png" alt="Input density field on the left, traced shells (CCW, blue) and holes (CW, rose) on the right" width={800} />
+
+The two panels above correspond to steps 1–3 on a cantilever-beam topology-optimization result: the raw density field is thresholded and morphologically cleaned, then contour tracing yields the shell/hole rings that feed the triangulator.
 
 <Callout type="info" title="Bypasses the main pipeline">
 `extrude_2d` is an independent 2D→3D path. It does **not** run Taubin/bilateral smoothing, repair, remeshing, or decimation. The output is the raw extrusion. If you need mesh post-processing afterwards, wrap it yourself via the relevant modules in `xeltofab.smooth` / `xeltofab.remesh` / `xeltofab.decimate`.

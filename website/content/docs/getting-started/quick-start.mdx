@@ -80,6 +80,8 @@ mesh = xtf.extrude_2d(field, thickness=10)
 mesh.export("part.stl")
 ```
 
+<img src="/images/guides/extrude-2d-mesh.png" alt="Cantilever-beam density field extruded into a watertight 3D mesh" width={720} />
+
 This traces the field with marching squares, triangulates the resulting polygons, and stitches vertical walls into a watertight prism. See the [`extrude_2d` API reference](/docs/api/extrude-2d) or [`xtf extrude`](/docs/cli/extrude) for the full option set including SDF inputs, pinhole cleanup, and island removal.
 
 ### SDF fields
