@@ -40,6 +40,16 @@ def test_rejects_negative_thickness():
         xtf.extrude_2d(np.ones((4, 4)), thickness=-1.0)
 
 
+def test_rejects_negative_smooth_sigma():
+    with pytest.raises(ValueError, match="smooth_sigma"):
+        xtf.extrude_2d(np.ones((4, 4)), thickness=1.0, smooth_sigma=-0.5)
+
+
+def test_rejects_negative_min_component_area():
+    with pytest.raises(ValueError, match="min_component_area"):
+        xtf.extrude_2d(np.ones((4, 4)), thickness=1.0, min_component_area=-1)
+
+
 def test_binary_density_default_level():
     """Density field thresholds at 0.5 by default."""
     field = np.array([[0.2, 0.8], [0.6, 0.4]])

@@ -250,6 +250,10 @@ def extrude_2d(
         raise ValueError(f"field must be 2D, got shape {field.shape}")
     if thickness <= 0:
         raise ValueError(f"thickness must be positive, got {thickness}")
+    if smooth_sigma < 0:
+        raise ValueError(f"smooth_sigma must be non-negative, got {smooth_sigma}")
+    if min_component_area < 0:
+        raise ValueError(f"min_component_area must be non-negative, got {min_component_area}")
     binary = _build_binary(
         field,
         field_type=field_type,
