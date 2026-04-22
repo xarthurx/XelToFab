@@ -316,3 +316,15 @@ Images output to `website/public/images/getting-started/` and embedded in MDX pa
 **Resolution:** Added the missing module-entry guard and a regression test covering `python -m xeltofab.cli extrude ...`. Fix: `df74c99`.
 
 **Prevention:** Any CLI module that is expected to work both as a console script target and via `python -m ...` needs an explicit `__main__` handoff plus a regression test for module invocation.
+
+---
+
+### 2026-04-22 — GitHub Actions Still Pinned Node 20-Era Action Versions
+
+**Problem:** CI/release workflows emitted GitHub's Node.js 20 deprecation warning because several actions were still pinned to versions that default to the older JavaScript runtime and will be forced onto Node.js 24 on 2026-06-02.
+
+**Root cause:** Workflow maintenance lagged behind upstream action major releases. `actions/checkout@v4`, `astral-sh/setup-uv@v4`, and `actions/upload-artifact@v4` were still in use, and the publish workflow still paired that surface with `actions/download-artifact@v4`.
+
+**Resolution:** Updated workflow pins to Node 24-ready majors: `actions/checkout@v6`, `astral-sh/setup-uv@v8`, `actions/upload-artifact@v7`, and `actions/download-artifact@v8`. Verified the remaining action refs in `.github/workflows` and left `oven-sh/setup-bun@v2` and `pypa/gh-action-pypi-publish@release/v1` unchanged because they were not part of the Node 20 warning surface. Fix: uncommitted working tree
+
+**Prevention:** When GitHub announces runtime deprecations, scan every `uses:` ref under `.github/workflows/` instead of patching only the action named in the warning. Prefer current maintained major tags for official actions unless the workflow depends on a documented breaking change.
