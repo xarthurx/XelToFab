@@ -180,7 +180,7 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for detailed architecture docum
 
 ## Documentation
 
-Full documentation is available at [xel-to-fab.vercel.app](https://xel-to-fab.vercel.app).
+Full documentation is available at [xeltofab.ethz.ch](https://xeltofab.ethz.ch).
 
 ## Requirements
 

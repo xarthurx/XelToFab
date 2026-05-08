@@ -39,8 +39,8 @@ all-formats = ["pyvista>=0.43", "h5py>=3.10"]
 all = ["pyvista>=0.43", "h5py>=3.10", "pymeshlab>=2023.12", "gpytoolbox>=0.3.0", "manifold3d>=3.0"]
 
 [project.urls]
-Homepage = "https://xel-to-fab.vercel.app"
-Documentation = "https://xel-to-fab.vercel.app"
+Homepage = "https://xeltofab.ethz.ch"
+Documentation = "https://xeltofab.ethz.ch"
 Repository = "https://github.com/xarthurx/XelToFab"
 Issues = "https://github.com/xarthurx/XelToFab/issues"
 
