@@ -16,6 +16,7 @@
 - [x] Update `ARCHITECTURE.md` — add decimate stage, update module map, CLI section
 - [x] Update website docs for decimation feature (pipeline overview, parameters, CLI pages)
 - [x] Commit pending `decimate.py`/`test_decimate.py` cleanup (`855adef`)
+- [ ] Port GPU DC to the isoext >= 0.6 API (`dual_contouring(grid, level, intersection)`) and lift the `<0.6` cap on the `cuda` extra; needs a CUDA >= 12.4 toolchain and a GPU to verify
 
 ## Benchmark Enhancements
 

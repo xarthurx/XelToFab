@@ -174,7 +174,7 @@ The `xtf` command (installed via `[project.scripts]`) exposes three subcommands:
 | Contour extraction | `scikit-image` (find_contours) |
 | Mesh extraction | `scikit-image` (marching_cubes), vendored `sdftoolbox` (DC, Surface Nets) |
 | Manifold extraction | `manifold3d` (optional — `uv sync --extra manifold`) |
-| GPU extraction | `isoext` (optional — `uv sync --extra cuda`, requires CUDA) |
+| GPU extraction | `isoext` 0.5.x (optional — `uv sync --extra cuda`, requires CUDA; capped `<0.6`, see PROGRESS.md) |
 | Mesh smoothing | `trimesh` (Taubin filter), `numpy` (bilateral filter) |
 | Mesh decimation | `pyfqmr` (QEM edge collapse) |
 | Mesh repair | `pymeshlab` (optional — `uv sync --extra mesh-quality`) |
