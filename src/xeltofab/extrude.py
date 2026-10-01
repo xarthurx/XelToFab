@@ -188,6 +188,13 @@ def _triangulate_polygon(poly: Polygon) -> tuple[np.ndarray, np.ndarray]:
     return vertices, triangles
 
 
+def _cap_boundary_edges(triangles: np.ndarray) -> np.ndarray:
+    """Directed edges of a triangulation that belong to exactly one triangle."""
+    edges = np.concatenate([triangles[:, [0, 1]], triangles[:, [1, 2]], triangles[:, [2, 0]]])
+    _, inverse, counts = np.unique(np.sort(edges, axis=1), axis=0, return_inverse=True, return_counts=True)
+    return edges[counts[inverse.ravel()] == 1]
+
+
 def _build_prism_mesh(multi_poly: MultiPolygon, thickness: float) -> trimesh.Trimesh:
     """Turn a MultiPolygon + thickness into a watertight trimesh.Trimesh."""
     all_vertices: list[np.ndarray] = []
@@ -205,29 +212,24 @@ def _build_prism_mesh(multi_poly: MultiPolygon, thickness: float) -> trimesh.Tri
         bottom_faces = cap_triangles[:, ::-1].copy()
         top_faces = cap_triangles.copy() + count
 
-        wall_faces: list[list[int]] = []
-        ring_start = 0
-        for ring in [poly.exterior, *poly.interiors]:
-            coords = np.asarray(ring.coords, dtype=np.float64)
-            if len(coords) >= 2 and np.allclose(coords[0], coords[-1]):
-                coords = coords[:-1]
-            ring_count = len(coords)
-            for idx in range(ring_count):
-                idx_next = (idx + 1) % ring_count
-                bottom_i = ring_start + idx
-                bottom_next = ring_start + idx_next
-                top_i = bottom_i + count
-                top_next = bottom_next + count
-                wall_faces.append([bottom_i, bottom_next, top_next])
-                wall_faces.append([bottom_i, top_next, top_i])
-            ring_start += ring_count
+        # Walls follow the cap's boundary edges rather than the ring vertices:
+        # earcut may skip collinear ring vertices (mapbox-earcut >= 2.1), and
+        # walls built on those would leave T-junctions against the caps.
+        bottom_i, bottom_next = _cap_boundary_edges(cap_triangles).T
+        wall_faces = np.concatenate(
+            [
+                np.column_stack([bottom_i, bottom_next, bottom_next + count]),
+                np.column_stack([bottom_i, bottom_next + count, bottom_i + count]),
+            ]
+        )
 
-        poly_faces = np.vstack([bottom_faces, top_faces, np.asarray(wall_faces, dtype=np.int64)])
+        poly_faces = np.vstack([bottom_faces, top_faces, wall_faces])
         all_vertices.append(poly_vertices)
         all_faces.append(poly_faces + vertex_offset)
         vertex_offset += len(poly_vertices)
 
     mesh = trimesh.Trimesh(vertices=np.vstack(all_vertices), faces=np.vstack(all_faces), process=True)
+    mesh.remove_unreferenced_vertices()
 
     if not (mesh.is_watertight and mesh.is_winding_consistent):
         warnings.warn("extruded mesh is not watertight; printing may fail", stacklevel=2)

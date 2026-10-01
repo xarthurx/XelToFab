@@ -446,3 +446,15 @@ def test_density_preprocess_parity():
         min_component_area=heur_max_size + 1,
     )
     np.testing.assert_array_equal(our_binary, state.binary.astype(bool))
+
+
+def test_prism_mesh_collinear_ring_vertices_stay_watertight():
+    """Walls must match the caps even when earcut skips collinear ring vertices."""
+    outer = [(0, 0), (5, 0), (10, 0), (10, 5), (10, 10), (5, 10), (0, 10), (0, 5)]
+    hole = [(3, 3), (5, 3), (7, 3), (7, 5), (7, 7), (5, 7), (3, 7), (3, 5)][::-1]
+    mp = MultiPolygon([Polygon(outer, [hole])])
+    mesh = _build_prism_mesh(mp, thickness=2.0)
+    assert mesh.is_watertight
+    assert mesh.is_winding_consistent
+    assert mesh.euler_number == 0
+    assert mesh.volume == pytest.approx(168.0, rel=1e-3)
