@@ -52,7 +52,7 @@ XelToFab adds morphological cleanup (opening/closing + connected component remov
 **Minimal bridge** (< 10 lines in TO_fixtures):
 ```python
 # Add to TO_fixtures at end of optimization loop:
-np.save('density_final.npy', rho_norm_cont)
+np.save("density_final.npy", rho_norm_cont)
 ```
 
 Then consume with XelToFab:
