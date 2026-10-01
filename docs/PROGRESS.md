@@ -340,3 +340,41 @@ Images output to `website/public/images/getting-started/` and embedded in MDX pa
 **Resolution:** Added `website/app/robots.ts` and `website/app/sitemap.ts`, backed by a shared `website/lib/site.ts` constant and the existing Fumadocs source loader so the sitemap includes the homepage plus docs routes. Updated `website/app/layout.tsx` to reuse the same site URL constant. Fix: uncommitted working tree
 
 **Prevention:** For Next.js app-router sites, add metadata route files (`robots.ts`, `sitemap.ts`) alongside `layout.tsx` as part of the initial SEO surface, and keep the canonical site URL in a single shared constant so metadata and crawler outputs cannot drift.
+
+---
+
+### 2026-10-01 — mapbox-earcut 2.1 Broke Watertightness of Extruded 2D Meshes
+
+**Problem:** After a dependency refresh, `test_extrude_2d_centered_hole` failed: `extrude_2d` on a field with a hole returned a non-watertight mesh (Euler number −18 instead of 0). Fresh PyPI installs were already affected because `mapbox-earcut>=1.0.1` resolves to 2.1.0.
+
+**Root cause:** mapbox-earcut 2.1.0 skips collinear ring vertices when triangulating (63 of 80 vertices unused on the pixel-staircase contour; total cap area still correct). `_build_prism_mesh` built the side walls from every ring vertex, so walls met the caps in T-junctions. The code relied on earcut referencing every input vertex, which earcut never promised. Bisecting with `uv run --with <pkg>==<old>` isolated earcut; trimesh 5 and shapely were not involved.
+
+**Resolution:** Walls are now built from the cap triangulation's boundary edges (edges used by exactly one cap triangle), so they match the caps under any earcut version; unreferenced vertices are dropped. Added a collinear-vertex regression test. Verified under both earcut 2.0.0 and 2.1.0. Fix: `43eaac1`
+
+**Prevention:** When stitching meshes from a third-party triangulation, derive the shared boundary from the triangulation output, not from the input polygon. After `uv lock --upgrade`, bisect test failures one package at a time with `uv run --with pkg==old` before pinning anything.
+
+---
+
+### 2026-10-01 — isoext 0.6 Changed the GPU Dual Contouring API
+
+**Problem:** `uv lock --upgrade` moved the `cuda` extra from isoext 0.5.1 to 1.0.0. The sdist failed to build locally, and the GPU DC call in `extract.py` would raise an uncaught `TypeError` on the new version.
+
+**Root cause:** isoext 0.6.0 changed `dual_contouring(grid, its, level)` to `dual_contouring(grid, level, intersection=None, ...)`. Passing `its` positionally now collides with `level=`, raising a `TypeError` that the ImportError/RuntimeError fallback does not catch. isoext 0.6+ also requires CUDA ≥ 12.4 to build, and the WSL toolchain here has 12.0, so the new API cannot be verified locally (no GPU either).
+
+**Resolution:** Capped the extra at `isoext>=0.5,<0.6` and added a TODO to port to the new API on a machine with a GPU. Fix: `27cce0c`
+
+**Prevention:** isoext ships sdist-only and is never exercised by the test suite (no torch or GPU in CI), so its API drift is invisible to tests. Inspect its sdist (`src/isoext_ext.cu` bindings) before allowing a version bump.
+
+**Related:** The universal `uv.lock` keeps numpy at 2.2.x and scipy at 1.15.x because gpytoolbox 0.3.7 (`mesh-quality` extra) caps them, while base installs from PyPI get the newest numpy and scipy. Test that combination separately in a scratch venv (`uv venv` + `uv pip install -e ".[vtk,hdf5,manifold]" pytest`). On 2026-10-01, numpy 2.5.3 + scipy 1.18.1 passed (284 passed, 2 skipped); the only deprecation warnings come from inside scikit-image 0.26.
+
+---
+
+### 2026-10-01 — fumadocs 16.15 Upgrade Broke the Website Type Check
+
+**Problem:** After upgrading to fumadocs-core/ui 16.15 and fumadocs-mdx 15, `next build` failed type checking in `app/llms.txt/route.ts` and `mdx-components.tsx`.
+
+**Root cause:** (1) `llms(source).index()` now returns `Promise<string>`. (2) fumadocs-ui 16.15 aliases MDX's `JSX.IntrinsicElements` to `React.JSX.IntrinsicElements`, which @react-three/fiber augments with every `THREE` export. Non-constructor exports (e.g. `createCanvasElement`) map to `never` props. An object spread of `MDXComponents` flattens the intersection, and those `Component<never>` members then fail the `NestedMDXComponents` index signature. Bisecting `@types/three`, `@types/mdx` and `@types/react` ruled each of them out.
+
+**Resolution:** Awaited `llms().index()`. Merged MDX components with `Object.assign({}, defaults, { MeshViewer }, components)`, which keeps the intersection type and needs no cast. Removed the stale, tracked `website/package-lock.json`; `bun.lock` is now the only lockfile. Verified with `bun run types:check`, `bun run build`, and a headless Chromium check showing the MeshViewer canvases render with no console errors. Fix: `e7cbff8`
+
+**Prevention:** Run `bun run types:check` after any fumadocs bump. In files that see react-three-fiber's JSX augmentation, avoid spreading `MDXComponents`-typed values.
