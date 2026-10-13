@@ -221,3 +221,9 @@ website/.source/
 
 # Local-only planning documents: never committed, never in a release (hatchling reads only this root file)
 /.private-docs/
+
+# Files git ignores through nested or global rules. hatchling reads only this root
+# file, so list them here to keep personal and generated files out of the sdist.
+**/.claude/settings.local.json
+/website/next-env.d.ts
+/website/*.tsbuildinfo

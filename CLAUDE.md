@@ -86,6 +86,8 @@ If the release workflow fails or the tag needs to move, delete the tag locally (
 Design docs and implementation plans are kept locally in `.private-docs/plans/`.
 The folder ignores itself, and the root `.gitignore` excludes it, so it never
 reaches the public repository or a PyPI release. Never commit or publish these files.
+Releases are built in CI from a clean checkout. A local `uv build` also packs untracked
+files unless the root `.gitignore` lists them, because hatchling reads only that file.
 
 ## docs/TODO.md — Feature Backlog
 
