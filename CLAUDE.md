@@ -83,8 +83,9 @@ If the release workflow fails or the tag needs to move, delete the tag locally (
 
 ## Confidential Plans
 
-Design docs and implementation plans are stored externally (not synced with this repo):
-`~/repo/repo_plans/xelToFab/`
+Design docs and implementation plans are kept locally in `.private-docs/plans/`.
+The folder ignores itself, and the root `.gitignore` excludes it, so it never
+reaches the public repository or a PyPI release. Never commit or publish these files.
 
 ## docs/TODO.md — Feature Backlog
 

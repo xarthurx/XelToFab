@@ -218,3 +218,6 @@ website/.source/
 .env*.local
 .gstack/
 .omx/
+
+# Local-only planning documents: never committed, never in a release (hatchling reads only this root file)
+/.private-docs/
